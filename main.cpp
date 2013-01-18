@@ -15,7 +15,14 @@ int main()
 
 	int pos[2] = {0, 0};
 	int delta[2] = {0, 0};
+	float held[2] = {0, 0};
+
+	float repeat_delay = 0.5;
+	float repeat_speed = 0.1;
+
 	sf::RectangleShape cursor(sf::Vector2f(PPB, PPB));
+	cursor.setFillColor(sf::Color(0, 0, 0, 0));
+	cursor.setOutlineThickness(5);
 	cursor.setOutlineColor(sf::Color(0, 200, 0));
 
 	sf::Clock clock;
@@ -46,7 +53,7 @@ int main()
 						break;
 				}
 			}
-			else if (event.type == sf::Event::KeyPressed)
+			else if (event.type == sf::Event::KeyReleased)
 			{
 				switch (event.key.code)
 				{
@@ -67,8 +74,23 @@ int main()
 		float time = clock.getElapsedTime().asSeconds();
 		clock.restart();
 
-		pos[0] += delta[0];
-		pos[1] += delta[1];
+		for (unsigned int i = 0; i < 2; i++)
+		{
+			if (delta[i] == 0)
+				held[i] = 0;
+			else
+			{
+				if (held[i] == 0)
+					pos[i] += delta[i];
+				else
+					while (held[i] > repeat_delay)
+					{
+						pos[i] += delta[i];
+						held[i] -= repeat_speed;
+					}
+				held[i] += time;
+			}
+		}
 
 		cursor.setPosition(pos[0] * PPB, pos[1] * PPB);
 
