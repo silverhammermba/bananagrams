@@ -1,13 +1,117 @@
+#include <sstream>
+#include <dequeue>
 #include <SFML/Graphics.hpp>
 
 #define PPB 32
 
 sf::Font font;
 
+sf::RenderTexture tile_texture[26];
+
+class Tile
+{
+	char character;
+	sf::Sprite sprite;
+public:
+	Tile(char ch) :
+		sprite(tile_texture[ch - 'A'].getTexture())
+	{
+		character = ch;
+	}
+
+	void set_pos(int x, int y)
+	{
+		sprite.setPosition(x * PPB, y * PPB);
+	}
+
+	void draw_on(sf::RenderWindow & window) const
+	{
+		window.draw(sprite);
+	}
+};
+
+class InfiniteGrid
+{
+	int min[2];
+	int max[2];
+	std::dequeue<std::dequeue<Tile*>> grid;
+public:
+	InfiniteGrid() : min {0, 0}, max {-1, -1}, grid()
+	{
+	}
+
+	Tile* get(int x, int y)
+	{
+		if (grid.size() == 0)
+			return nullptr;
+		if (min[0] <= x && x <= max[0] && min[1] <= y && y <= max[1])
+			return grid[x][y];
+		else
+			return nullptr;
+	}
+
+	void set(int x, int y, Tile* tile)
+	{
+		if (grid.size() == 0)
+		{
+			grid.push_back(std::dequeue());
+			grid[0].push_back(tile);
+			min[0] = 0;
+			min[1] = 0;
+			max[0] = 0;
+			max[1] = 0;
+		}
+		else
+		{
+			if (x < min[0])
+			{
+				for (int i = x; i < min[0]; i++)
+					grid.push_front(std::dequeue(height));
+				min[0] = x;
+			}
+			else if (x > max[0])
+			{
+				for (int i = x; i < max[0]; i++)
+					grid.push_back(std::dequeue(height));
+				max[0] = x;
+			}
+			if (y < min[1])
+			{
+				for (auto col : grid)
+					for (int i = y; i < min[1]; i++)
+						col->push_front(nullptr);
+				min[1] = y;
+			}
+			else if (y > max[1])
+			{
+				for (auto col : grid)
+					for (int i = y; i < min[1]; i++)
+						col->push_back(nullptr);
+				min[1] = y;
+			}
+		}
+	}
+};
+
 int main()
 {
-	// set up text
 	font.loadFromFile("/usr/share/fonts/TTF/VeraMono.ttf");
+
+	// create tile textures
+	for (char ch = 'A'; ch <= 'Z'; ch++)
+	{
+		sf::RectangleShape tile(sf::Vector2f(PPB, PPB));
+		tile.setFillColor(sf::Color(255, 255, 175));
+		tile_texture[ch - 'A'].draw(tile);
+
+		std::stringstream string;
+		string << ch;
+		sf::Text letter(string.str(), font, 24);
+		tile_texture[ch - 'A'].draw(letter);
+		tile_texture[ch - 'A'].display();
+	}
+
+	
 
 	sf::Color background(22, 22, 22);
 
