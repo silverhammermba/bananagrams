@@ -156,7 +156,30 @@ int main()
 				}
 		letter.setPosition((PPB - (maxx - minx + 1)) / 2.0 - minx, (PPB - (maxy - miny + 1)) / 2.0 - miny);
 
-		tile_texture[ch - 'A'].clear(sf::Color(255, 255, 175));
+		tile_texture[ch - 'A'].clear(sf::Color(0, 0, 0, 0));
+
+		sf::RectangleShape rect;
+		rect.setFillColor(sf::Color(255, 255, 175));
+
+		rect.setSize(sf::Vector2f(PPB - 10, PPB));
+		rect.setPosition(5, 0);
+		tile_texture[ch - 'A'].draw(rect);
+		rect.setSize(sf::Vector2f(PPB, PPB - 10));
+		rect.setPosition(0, 5);
+		tile_texture[ch - 'A'].draw(rect);
+
+		sf::CircleShape circle(5);
+		circle.setFillColor(sf::Color(255, 255, 175));
+
+		circle.setPosition(0, 0);
+		tile_texture[ch - 'A'].draw(circle);
+		circle.setPosition(PPB - 10, 0);
+		tile_texture[ch - 'A'].draw(circle);
+		circle.setPosition(0, PPB - 10);
+		tile_texture[ch - 'A'].draw(circle);
+		circle.setPosition(PPB - 10, PPB - 10);
+		tile_texture[ch - 'A'].draw(circle);
+
 		tile_texture[ch - 'A'].draw(letter);
 		tile_texture[ch - 'A'].display();
 
