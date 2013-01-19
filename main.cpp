@@ -1,6 +1,10 @@
+#include <iostream>
 #include <sstream>
-#include <dequeue>
+#include <vector>
 #include <SFML/Graphics.hpp>
+
+using std::cerr;
+using std::endl;
 
 #define PPB 32
 
@@ -32,86 +36,101 @@ public:
 
 class InfiniteGrid
 {
-	int min[2];
-	int max[2];
-	std::dequeue<std::dequeue<Tile*>> grid;
+	std::vector<Tile*> grid;
+
+	inline unsigned int bijection(unsigned x, unsigned int y) const
+	{
+		return ((x + y) * (x + y + 1)) / 2 + x;
+	}
+
+	unsigned int convert(int x, int y) const
+	{
+		if (x >= 0 && y >= 0)
+			return 4 * bijection(x, y);
+		if (x < 0 && y >= 0)
+			return 4 * bijection(-x - 1, y) + 1;
+		if (x >= 0 && y < 0)
+			return 4 * bijection(x, -y - 1) + 2;
+		else
+			return 4 * bijection(-x - 1, -y - 1) + 3;
+	}
 public:
-	InfiniteGrid() : min {0, 0}, max {-1, -1}, grid()
+	InfiniteGrid() : grid()
 	{
 	}
 
-	Tile* get(int x, int y)
+	Tile* get(int x, int y) const
 	{
-		if (grid.size() == 0)
+		unsigned int n = convert(x, y);
+		if (n >= grid.size())
 			return nullptr;
-		if (min[0] <= x && x <= max[0] && min[1] <= y && y <= max[1])
-			return grid[x][y];
-		else
-			return nullptr;
+		return grid[n];
 	}
 
-	void set(int x, int y, Tile* tile)
+	Tile* remove(int x, int y)
 	{
-		if (grid.size() == 0)
+		unsigned int n = convert(x, y);
+		if (n < grid.size())
 		{
-			grid.push_back(std::dequeue());
-			grid[0].push_back(tile);
-			min[0] = 0;
-			min[1] = 0;
-			max[0] = 0;
-			max[1] = 0;
+			Tile* tile = grid[n];
+			if (tile == nullptr)
+				return nullptr;
+
+			grid[n] = nullptr;
+			for (n = grid.size(); n --> 0;)
+				if (grid[n] != nullptr)
+					break;
+			// TODO won't ever shrink to 0
+			grid.resize(n + 1, nullptr);
+			return tile;
 		}
-		else
-		{
-			if (x < min[0])
-			{
-				for (int i = x; i < min[0]; i++)
-					grid.push_front(std::dequeue(height));
-				min[0] = x;
-			}
-			else if (x > max[0])
-			{
-				for (int i = x; i < max[0]; i++)
-					grid.push_back(std::dequeue(height));
-				max[0] = x;
-			}
-			if (y < min[1])
-			{
-				for (auto col : grid)
-					for (int i = y; i < min[1]; i++)
-						col->push_front(nullptr);
-				min[1] = y;
-			}
-			else if (y > max[1])
-			{
-				for (auto col : grid)
-					for (int i = y; i < min[1]; i++)
-						col->push_back(nullptr);
-				min[1] = y;
-			}
-		}
+		return nullptr;
+	}
+
+	Tile* swap(int x, int y, Tile* tile)
+	{
+		// TODO raise error if tile is null
+		unsigned int n = convert(x, y);
+		if (n >= grid.size())
+			// TODO catch failure
+			grid.resize(n + 1, nullptr);
+		Tile* swp = grid[n];
+		tile->set_pos(x, y);
+		grid[n] = tile;
+		return swp;
+	}
+
+	void draw_on(sf::RenderWindow& window) const
+	{
+		for (auto tile : grid)
+			if (tile != nullptr)
+				tile->draw_on(window);
 	}
 };
 
 int main()
 {
 	font.loadFromFile("/usr/share/fonts/TTF/VeraMono.ttf");
+	InfiniteGrid grid;
 
-	// create tile textures
+	cerr << "Generating textures...\n";
+	// create tiles
+	std::vector<Tile*> tiles;
 	for (char ch = 'A'; ch <= 'Z'; ch++)
 	{
-		sf::RectangleShape tile(sf::Vector2f(PPB, PPB));
-		tile.setFillColor(sf::Color(255, 255, 175));
-		tile_texture[ch - 'A'].draw(tile);
+		// TODO error check
+		tile_texture[ch - 'A'].create(PPB, PPB);
+		tile_texture[ch - 'A'].clear(sf::Color(255, 255, 175));
 
 		std::stringstream string;
 		string << ch;
 		sf::Text letter(string.str(), font, 24);
+		letter.setColor(sf::Color::Black);
 		tile_texture[ch - 'A'].draw(letter);
 		tile_texture[ch - 'A'].display();
-	}
 
-	
+		tiles.push_back(new Tile(ch));
+	}
 
 	sf::Color background(22, 22, 22);
 
@@ -126,7 +145,7 @@ int main()
 
 	sf::RectangleShape cursor(sf::Vector2f(PPB, PPB));
 	cursor.setFillColor(sf::Color(0, 0, 0, 0));
-	cursor.setOutlineThickness(5);
+	cursor.setOutlineThickness(3);
 	cursor.setOutlineColor(sf::Color(0, 200, 0));
 
 	sf::Clock clock;
@@ -155,6 +174,10 @@ int main()
 						break;
 					default:
 						break;
+				}
+				if (sf::Keyboard::A <= event.key.code && event.key.code <= sf::Keyboard::Z)
+				{
+					grid.swap(pos[0], pos[1], tiles[event.key.code - sf::Keyboard::A]);
 				}
 			}
 			else if (event.type == sf::Event::KeyReleased)
@@ -199,6 +222,7 @@ int main()
 		cursor.setPosition(pos[0] * PPB, pos[1] * PPB);
 
 		window.clear(background);
+		grid.draw_on(window);
 		window.draw(cursor);
 
 		window.display();
