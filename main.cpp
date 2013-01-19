@@ -23,6 +23,11 @@ public:
 		character = ch;
 	}
 
+	char ch() const
+	{
+		return character;
+	}
+
 	void set_pos(int x, int y)
 	{
 		sprite.setPosition(x * PPB, y * PPB);
@@ -120,12 +125,38 @@ int main()
 	{
 		// TODO error check
 		tile_texture[ch - 'A'].create(PPB, PPB);
-		tile_texture[ch - 'A'].clear(sf::Color(255, 255, 175));
+		tile_texture[ch - 'A'].clear(sf::Color::Red);
 
 		std::stringstream string;
 		string << ch;
 		sf::Text letter(string.str(), font, 24);
 		letter.setColor(sf::Color::Black);
+		tile_texture[ch - 'A'].draw(letter);
+		tile_texture[ch - 'A'].display();
+
+		// center character
+		unsigned int minx = PPB;
+		unsigned int miny = PPB;
+		unsigned int maxx = 0;
+		unsigned int maxy = 0;
+		auto image = tile_texture[ch - 'A'].getTexture().copyToImage();
+		auto size = image.getSize();
+		for (unsigned int x = 0; x < size.x; x++)
+			for (unsigned int y = 0; y < size.y; y++)
+				if (image.getPixel(x, y) != sf::Color::Red)
+				{
+					if (x < minx)
+						minx = x;
+					if (y < miny)
+						miny = y;
+					if (x > maxx)
+						maxx = x;
+					if (y > maxy)
+						maxy = y;
+				}
+		letter.setPosition((PPB - (maxx - minx + 1)) / 2.0 - minx, (PPB - (maxy - miny + 1)) / 2.0 - miny);
+
+		tile_texture[ch - 'A'].clear(sf::Color(255, 255, 175));
 		tile_texture[ch - 'A'].draw(letter);
 		tile_texture[ch - 'A'].display();
 
