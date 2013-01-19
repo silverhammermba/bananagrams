@@ -6,7 +6,9 @@
 using std::cerr;
 using std::endl;
 
-#define PPB 32
+#define PPB 64
+#define DIAM PPB / 4.0
+#define RAD PPB / 8.0
 
 sf::Font font;
 
@@ -39,7 +41,7 @@ public:
 	}
 };
 
-class InfiniteGrid
+class Grid
 {
 	std::vector<Tile*> grid;
 
@@ -60,7 +62,7 @@ class InfiniteGrid
 			return 4 * bijection(-x - 1, -y - 1) + 3;
 	}
 public:
-	InfiniteGrid() : grid()
+	Grid() : grid()
 	{
 	}
 
@@ -116,74 +118,81 @@ public:
 int main()
 {
 	font.loadFromFile("/usr/share/fonts/TTF/VeraMono.ttf");
-	InfiniteGrid grid;
+	Grid grid;
 
+	// create textures and tiles
 	cerr << "Generating textures...\n";
-	// create tiles
 	std::vector<Tile*> tiles;
-	for (char ch = 'A'; ch <= 'Z'; ch++)
 	{
-		// TODO error check
-		tile_texture[ch - 'A'].create(PPB, PPB);
-		tile_texture[ch - 'A'].clear(sf::Color::Red);
-
-		std::stringstream string;
-		string << ch;
-		sf::Text letter(string.str(), font, 24);
-		letter.setColor(sf::Color::Black);
-		tile_texture[ch - 'A'].draw(letter);
-		tile_texture[ch - 'A'].display();
-
-		// center character
-		unsigned int minx = PPB;
 		unsigned int miny = PPB;
-		unsigned int maxx = 0;
 		unsigned int maxy = 0;
-		auto image = tile_texture[ch - 'A'].getTexture().copyToImage();
-		auto size = image.getSize();
-		for (unsigned int x = 0; x < size.x; x++)
-			for (unsigned int y = 0; y < size.y; y++)
-				if (image.getPixel(x, y) != sf::Color::Red)
-				{
-					if (x < minx)
-						minx = x;
-					if (y < miny)
-						miny = y;
-					if (x > maxx)
-						maxx = x;
-					if (y > maxy)
-						maxy = y;
-				}
-		letter.setPosition((PPB - (maxx - minx + 1)) / 2.0 - minx, (PPB - (maxy - miny + 1)) / 2.0 - miny);
+		bool done_y = false;
+		for (char ch = 'A'; ch <= 'Z'; ch++)
+		{
+			// TODO error check
+			tile_texture[ch - 'A'].create(PPB, PPB);
+			tile_texture[ch - 'A'].clear(sf::Color::Red);
 
-		tile_texture[ch - 'A'].clear(sf::Color(0, 0, 0, 0));
+			std::stringstream string;
+			string << ch;
+			sf::Text letter(string.str(), font, (PPB * 2) / 3.0);
+			letter.setColor(sf::Color::Black);
+			tile_texture[ch - 'A'].draw(letter);
+			tile_texture[ch - 'A'].display();
 
-		sf::RectangleShape rect;
-		rect.setFillColor(sf::Color(255, 255, 175));
+			// center character
+			unsigned int minx = PPB;
+			unsigned int maxx = 0;
+			auto image = tile_texture[ch - 'A'].getTexture().copyToImage();
+			auto size = image.getSize();
+			for (unsigned int x = 0; x < size.x; x++)
+				for (unsigned int y = 0; y < size.y; y++)
+					if (image.getPixel(x, y) != sf::Color::Red)
+					{
+						if (x < minx)
+							minx = x;
+						if (x > maxx)
+							maxx = x;
+						if (!done_y)
+						{
+							if (y < miny)
+								miny = y;
+							if (y > maxy)
+								maxy = y;
+						}
+					}
+			done_y = true;
+			letter.setPosition((PPB - (maxx - minx + 1)) / 2.0 - minx, (PPB - (maxy - miny + 1)) / 2.0 - miny);
 
-		rect.setSize(sf::Vector2f(PPB - 10, PPB));
-		rect.setPosition(5, 0);
-		tile_texture[ch - 'A'].draw(rect);
-		rect.setSize(sf::Vector2f(PPB, PPB - 10));
-		rect.setPosition(0, 5);
-		tile_texture[ch - 'A'].draw(rect);
+			tile_texture[ch - 'A'].clear(sf::Color(0, 0, 0, 0));
 
-		sf::CircleShape circle(5);
-		circle.setFillColor(sf::Color(255, 255, 175));
+			sf::RectangleShape rect;
+			rect.setFillColor(sf::Color(255, 255, 175));
 
-		circle.setPosition(0, 0);
-		tile_texture[ch - 'A'].draw(circle);
-		circle.setPosition(PPB - 10, 0);
-		tile_texture[ch - 'A'].draw(circle);
-		circle.setPosition(0, PPB - 10);
-		tile_texture[ch - 'A'].draw(circle);
-		circle.setPosition(PPB - 10, PPB - 10);
-		tile_texture[ch - 'A'].draw(circle);
+			rect.setSize(sf::Vector2f(PPB - DIAM, PPB));
+			rect.setPosition(RAD, 0);
+			tile_texture[ch - 'A'].draw(rect);
+			rect.setSize(sf::Vector2f(PPB, PPB - DIAM));
+			rect.setPosition(0, RAD);
+			tile_texture[ch - 'A'].draw(rect);
 
-		tile_texture[ch - 'A'].draw(letter);
-		tile_texture[ch - 'A'].display();
+			sf::CircleShape circle(RAD);
+			circle.setFillColor(sf::Color(255, 255, 175));
 
-		tiles.push_back(new Tile(ch));
+			circle.setPosition(0, 0);
+			tile_texture[ch - 'A'].draw(circle);
+			circle.setPosition(PPB - DIAM, 0);
+			tile_texture[ch - 'A'].draw(circle);
+			circle.setPosition(0, PPB - DIAM);
+			tile_texture[ch - 'A'].draw(circle);
+			circle.setPosition(PPB - DIAM, PPB - DIAM);
+			tile_texture[ch - 'A'].draw(circle);
+
+			tile_texture[ch - 'A'].draw(letter);
+			tile_texture[ch - 'A'].display();
+
+			tiles.push_back(new Tile(ch));
+		}
 	}
 
 	sf::Color background(22, 22, 22);
