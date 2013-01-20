@@ -130,6 +130,36 @@ int main()
 	font.loadFromFile("/usr/share/fonts/TTF/VeraMono.ttf");
 	Grid grid;
 
+	unsigned int letter_count[26] =
+	{
+		13,
+		3,
+		3,
+		6,
+		18,
+		3,
+		4,
+		3,
+		12,
+		2,
+		2,
+		5,
+		3,
+		8,
+		11,
+		3,
+		2,
+		9,
+		6,
+		9,
+		6,
+		3,
+		3,
+		2,
+		3,
+		2
+	};
+
 	// create textures and tiles
 	cerr << "Generating textures...\n";
 	std::vector<Tile*> tiles[26];
@@ -204,7 +234,8 @@ int main()
 			tile_texture[ch - 'A'].draw(letter);
 			tile_texture[ch - 'A'].display();
 
-			tiles[ch - 'A'].push_back(new Tile(ch));
+			for (unsigned int i = 0; i < letter_count[ch - 'A']; i++)
+				tiles[ch - 'A'].push_back(new Tile(ch));
 		}
 	}
 
@@ -234,6 +265,7 @@ int main()
 				window.close();
 			else if (event.type == sf::Event::KeyPressed)
 			{
+				Tile* tile;
 				switch (event.key.code)
 				{
 					case sf::Keyboard::Left:
@@ -247,6 +279,11 @@ int main()
 						break;
 					case sf::Keyboard::Down:
 						delta[1] = 1;
+						break;
+					case sf::Keyboard::BackSpace:
+						tile = grid.remove(pos[0], pos[1]);
+						if (tile != nullptr)
+							tiles[tile->ch() - 'A'].push_back(tile);
 						break;
 					default:
 						break;
