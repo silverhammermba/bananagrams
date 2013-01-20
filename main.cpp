@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 #include <SFML/Graphics.hpp>
 
@@ -9,10 +10,8 @@ using std::endl;
 #define PPB 64
 #define DIAM PPB / 4.0
 #define RAD PPB / 8.0
-#define THICK PPB / 10.0
-#define DTHICK PPB / 5.0
-
-sf::Font font;
+#define THICK PPB / 16.0
+#define DTHICK PPB / 8.0
 
 sf::RenderTexture tile_texture[26];
 
@@ -68,6 +67,13 @@ public:
 	{
 	}
 
+	~Grid()
+	{
+		for (auto tile : grid)
+			if (tile != nullptr)
+				delete tile;
+	}
+
 	Tile* get(int x, int y) const
 	{
 		unsigned int n = convert(x, y);
@@ -98,10 +104,11 @@ public:
 
 	Tile* swap(int x, int y, Tile* tile)
 	{
-		// TODO raise error if tile is null
+		if (tile == nullptr)
+			throw std::runtime_error("attempt to place NULL tile");
 		unsigned int n = convert(x, y);
 		if (n >= grid.size())
-			// TODO catch failure
+			// TODO catch failure?
 			grid.resize(n + 1, nullptr);
 		Tile* swp = grid[n];
 		tile->set_pos(x, y);
@@ -119,6 +126,7 @@ public:
 
 int main()
 {
+	sf::Font font;
 	font.loadFromFile("/usr/share/fonts/TTF/VeraMono.ttf");
 	Grid grid;
 
@@ -134,6 +142,7 @@ int main()
 		for (char ch = 'A'; ch <= 'Z'; ch++)
 		{
 			// TODO error check
+			// TODO memory leak here?
 			tile_texture[ch - 'A'].create(PPB, PPB);
 			tile_texture[ch - 'A'].clear(sf::Color::Red);
 
@@ -300,6 +309,11 @@ int main()
 
 		window.display();
 	}
+
+	// delete unused tiles
+	for (char ch = 'A'; ch <= 'Z'; ch++)
+		for (auto tile: tiles[ch - 'A'])
+			delete tile;
 
 	return 0;
 }
