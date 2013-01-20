@@ -9,6 +9,8 @@ using std::endl;
 #define PPB 64
 #define DIAM PPB / 4.0
 #define RAD PPB / 8.0
+#define THICK PPB / 10.0
+#define DTHICK PPB / 5.0
 
 sf::Font font;
 
@@ -122,7 +124,9 @@ int main()
 
 	// create textures and tiles
 	cerr << "Generating textures...\n";
-	std::vector<Tile*> tiles;
+	std::vector<Tile*> tiles[26];
+	for (char ch = 'A'; ch <= 'Z'; ch++)
+		tiles[ch - 'A'] = std::vector<Tile*>();
 	{
 		unsigned int miny = PPB;
 		unsigned int maxy = 0;
@@ -191,7 +195,7 @@ int main()
 			tile_texture[ch - 'A'].draw(letter);
 			tile_texture[ch - 'A'].display();
 
-			tiles.push_back(new Tile(ch));
+			tiles[ch - 'A'].push_back(new Tile(ch));
 		}
 	}
 
@@ -206,9 +210,9 @@ int main()
 	float repeat_delay = 0.5;
 	float repeat_speed = 0.1;
 
-	sf::RectangleShape cursor(sf::Vector2f(PPB, PPB));
+	sf::RectangleShape cursor(sf::Vector2f(PPB - DTHICK, PPB - DTHICK));
 	cursor.setFillColor(sf::Color(0, 0, 0, 0));
-	cursor.setOutlineThickness(3);
+	cursor.setOutlineThickness(THICK);
 	cursor.setOutlineColor(sf::Color(0, 200, 0));
 
 	sf::Clock clock;
@@ -240,7 +244,13 @@ int main()
 				}
 				if (sf::Keyboard::A <= event.key.code && event.key.code <= sf::Keyboard::Z)
 				{
-					grid.swap(pos[0], pos[1], tiles[event.key.code - sf::Keyboard::A]);
+					if (tiles[event.key.code - sf::Keyboard::A].size() > 0)
+					{
+						Tile* tile = grid.swap(pos[0], pos[1], tiles[event.key.code - sf::Keyboard::A].back());
+						tiles[event.key.code - sf::Keyboard::A].pop_back();
+						if (tile != nullptr)
+							tiles[tile->ch() - 'A'].push_back(tile);
+					}
 				}
 			}
 			else if (event.type == sf::Event::KeyReleased)
@@ -282,7 +292,7 @@ int main()
 			}
 		}
 
-		cursor.setPosition(pos[0] * PPB, pos[1] * PPB);
+		cursor.setPosition(pos[0] * PPB + THICK, pos[1] * PPB + THICK);
 
 		window.clear(background);
 		grid.draw_on(window);
