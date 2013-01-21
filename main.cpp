@@ -263,6 +263,7 @@ int main()
 	sf::Clock clock;
 	bool zoom_key = false;
 	bool sprint_key = false;
+	int last[2] = {0, 0};
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -311,6 +312,15 @@ int main()
 						tiles[event.key.code - sf::Keyboard::A].pop_back();
 						if (tile != nullptr)
 							tiles[tile->ch() - 'A'].push_back(tile);
+						int next[2] = {0, 0};
+						if (pos[0] == last[0] + 1 && pos[1] == last[1])
+							next[0] = 1;
+						if (pos[0] == last[0] && pos[1] == last[1] + 1)
+							next[1] = 1;
+						last[0] = pos[0];
+						last[1] = pos[1];
+						pos[0] += next[0];
+						pos[1] += next[1];
 					}
 				}
 			}
