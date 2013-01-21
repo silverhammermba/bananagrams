@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -171,6 +172,7 @@ int main()
 		bool done_y = false;
 		for (char ch = 'A'; ch <= 'Z'; ch++)
 		{
+			// TODO antialiase these
 			// TODO error check
 			// TODO memory leak here?
 			tile_texture[ch - 'A'].create(PPB, PPB);
@@ -242,6 +244,9 @@ int main()
 	sf::Color background(22, 22, 22);
 
 	sf::RenderWindow window(sf::VideoMode(1024, 600), "Bananagrams", sf::Style::Titlebar);
+	sf::View view = window.getDefaultView();
+	view.setCenter(PPB / 2.0, PPB / 2.0);
+	window.setView(view);
 
 	int pos[2] = {0, 0};
 	int delta[2] = {0, 0};
@@ -256,6 +261,8 @@ int main()
 	cursor.setOutlineColor(sf::Color(0, 200, 0));
 
 	sf::Clock clock;
+	bool zoom_key = false;
+	bool sprint_key = false;
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -279,6 +286,14 @@ int main()
 						break;
 					case sf::Keyboard::Down:
 						delta[1] = 1;
+						break;
+					case sf::Keyboard::LControl:
+					case sf::Keyboard::RControl:
+						zoom_key = true;
+						break;
+					case sf::Keyboard::LShift:
+					case sf::Keyboard::RShift:
+						sprint_key = true;
 						break;
 					case sf::Keyboard::BackSpace:
 						tile = grid.remove(pos[0], pos[1]);
@@ -311,6 +326,14 @@ int main()
 					case sf::Keyboard::Down:
 						delta[1] = 0;
 						break;
+					case sf::Keyboard::LControl:
+					case sf::Keyboard::RControl:
+						zoom_key = false;
+						break;
+					case sf::Keyboard::LShift:
+					case sf::Keyboard::RShift:
+						sprint_key = false;
+						break;
 					default:
 						break;
 				}
@@ -320,23 +343,47 @@ int main()
 		float time = clock.getElapsedTime().asSeconds();
 		clock.restart();
 
-		for (unsigned int i = 0; i < 2; i++)
+		if (zoom_key)
 		{
-			if (delta[i] == 0)
-				held[i] = 0;
-			else
+			view.zoom(1 + delta[1] * (sprint_key ? 2 : 1) * time);
+		}
+		else
+		{
+			for (unsigned int i = 0; i < 2; i++)
 			{
-				if (held[i] == 0)
-					pos[i] += delta[i];
+				if (delta[i] == 0)
+					held[i] = 0;
 				else
-					while (held[i] > repeat_delay)
-					{
-						pos[i] += delta[i];
-						held[i] -= repeat_speed;
-					}
-				held[i] += time;
+				{
+					if (held[i] == 0)
+						pos[i] += delta[i] * (sprint_key ? 2 : 1);
+					else
+						while (held[i] > repeat_delay)
+						{
+							pos[i] += delta[i] * (sprint_key ? 2 : 1);
+							held[i] -= repeat_speed;
+						}
+					held[i] += time;
+				}
 			}
 		}
+
+		auto center = view.getCenter();
+		float max = time * 500.0 * (sprint_key ? 2 : 1);
+		sf::Vector2f diff(pos[0] * PPB + PPB / 2.0 - center.x, pos[1] * PPB + PPB / 2.0 - center.y);
+		float length = std::sqrt(diff.x * diff.x + diff.y * diff.y);
+		if (length > max)
+		{
+			diff.x = (diff.x * max) / length;
+			diff.y = (diff.y * max) / length;
+		}
+		view.move(diff.x, diff.y);
+		// don't allow zooming past default
+		auto size = view.getSize();
+		// TODO bleh hardcoded size
+		if (size.x < 1024 || size.y < 600)
+			view.setSize(1024, 600);
+		window.setView(view);
 
 		cursor.setPosition(pos[0] * PPB + THICK, pos[1] * PPB + THICK);
 
