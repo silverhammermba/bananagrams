@@ -128,7 +128,7 @@ public:
 int main()
 {
 	sf::Font font;
-	font.loadFromFile("/usr/share/fonts/TTF/VeraMono.ttf");
+	font.loadFromFile("/usr/share/fonts/TTF/FreeSans.ttf");
 	Grid grid;
 
 	unsigned int letter_count[26] =
@@ -263,6 +263,7 @@ int main()
 	sf::Clock clock;
 	bool zoom_key = false;
 	bool sprint_key = false;
+	int next[2];
 	int last[2] = {0, 0};
 	while (window.isOpen())
 	{
@@ -297,6 +298,14 @@ int main()
 						sprint_key = true;
 						break;
 					case sf::Keyboard::BackSpace:
+						// if the cursor is ahead of the last added character
+						if (pos[0] == last[0] + next[0] && pos[1] == last[1] + next[1])
+						{
+							pos[0] = last[0];
+							pos[1] = last[1];
+							last[0] -= next[0];
+							last[1] -= next[1];
+						}
 						tile = grid.remove(pos[0], pos[1]);
 						if (tile != nullptr)
 							tiles[tile->ch() - 'A'].push_back(tile);
@@ -312,7 +321,8 @@ int main()
 						tiles[event.key.code - sf::Keyboard::A].pop_back();
 						if (tile != nullptr)
 							tiles[tile->ch() - 'A'].push_back(tile);
-						int next[2] = {0, 0};
+						next[0] = 0;
+						next[1] = 0;
 						if (pos[0] == last[0] + 1 && pos[1] == last[1])
 							next[0] = 1;
 						if (pos[0] == last[0] && pos[1] == last[1] + 1)
