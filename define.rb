@@ -4,7 +4,7 @@
 require 'net/http'
 require 'rexml/document'
 
-STDERR.puts "Reading words..."
+STDOUT.puts "Reading words..."
 dictionary = {}
 File.open("defs.txt") do |list|
 	list.each_line do |line|
@@ -18,29 +18,36 @@ uri = URI('http://services.aonaware.com')
 http = Net::HTTP.start(uri.host, uri.port)
 
 count = 0
-limit = 1000
+limit = ARGV.shift.to_i
 
-STDERR.puts "Downloading definitions..."
+STDOUT.puts "Downloading definitions..."
 dictionary.each do |word, defn|
 	if not defn
 		if count < limit
 			response = http.post('/DictService/DictService.asmx/Define', "word=#{word}")
 			if response.is_a? Net::HTTPOK
 				doc = REXML::Document.new(response.body)
+				found = false
 				doc.elements.each('WordDefinition/Definitions/Definition') do |definition|
 					if definition.elements['Dictionary/Id'].text == 'wn' # WordNet seems good
+						found = true
 						# clean up text
 						text = definition.elements['WordDefinition'].text.gsub(/\s+/, ' ')
 						# try to extract first definition
 						if text =~ /(\d+)?: ([A-Za-z ()'",.]+)/
 							dictionary[word] = $2.strip
-							STDERR.puts "#{word}: #{dictionary[word]}"
+							STDOUT.puts "#{word}: #{dictionary[word]}"
+							count += 1
+						elsif text =~ /See \{([^}]+)\}/
+							dictionary[word] = "@#$1"
+							STDOUT.puts "#{word}: @#{dictionary[word]}"
 							count += 1
 						else
-							STDERR.puts "Unrecognized definition format:\n#{word} #{text}"
+							STDERR.puts "Unrecognized format: #{text}"
 						end
 					end
 				end
+				dictionary[word] = "#" unless found
 			else
 				STDERR.puts "Bad response when defining #{word}"
 			end
@@ -50,7 +57,9 @@ dictionary.each do |word, defn|
 	end
 end
 
-STDERR.puts "Writing words..."
+http.finish
+
+STDOUT.puts "Writing words..."
 File.open("defs.txt", "w") do |list|
 	dictionary.each do |word, defn|
 		if defn
@@ -61,4 +70,3 @@ File.open("defs.txt", "w") do |list|
 	end
 end
 
-http.finish
