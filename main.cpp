@@ -165,15 +165,21 @@ int main()
 	};
 
 	// load word list
-	cerr << "Loading dictionary...\n";
+	cerr << "Reading dictionary... \x1b[s";
+	unsigned char i = 0;
 	std::map<std::string, bool> dictionary;
 	{
 		std::ifstream words("words.txt");
 
 		std::string word;
 		while (words >> word)
+		{
 			dictionary[word] = true;
+			if ((i++ % 10) == 0)
+				cerr << "\x1b[u\x1b[K" << word;
+		}
 	}
+	cerr << "\x1b[u\x1b[K" << dictionary.size() << " words loaded\n";
 
 	// create textures and tiles
 	cerr << "Generating textures... ";
