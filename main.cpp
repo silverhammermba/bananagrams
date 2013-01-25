@@ -1,7 +1,10 @@
 #include <cmath>
 #include <iostream>
+#include <fstream>
+#include <map>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 #include <SFML/Graphics.hpp>
 
@@ -160,6 +163,17 @@ int main()
 		3,
 		2
 	};
+
+	// load word list
+	cerr << "Loading dictionary...\n";
+	std::map<std::string, bool> dictionary;
+	{
+		std::ifstream words("words.txt");
+
+		std::string word;
+		while (words >> word)
+			dictionary[word] = true;
+	}
 
 	// create textures and tiles
 	cerr << "Generating textures... ";
