@@ -166,7 +166,6 @@ int main()
 
 	// load word list
 	cerr << "Reading dictionary... \x1b[s";
-	unsigned char i = 0;
 	std::map<std::string, bool> dictionary;
 	{
 		std::ifstream words("words.txt");
@@ -175,7 +174,7 @@ int main()
 		while (words >> word)
 		{
 			dictionary[word] = true;
-			if ((i++ % 10) == 0)
+			if (std::rand() % 8 == 0)
 				cerr << "\x1b[u\x1b[K" << word;
 		}
 	}
