@@ -162,7 +162,7 @@ int main()
 	};
 
 	// create textures and tiles
-	cerr << "Generating textures...\n";
+	cerr << "Generating textures... ";
 	std::vector<Tile*> tiles[26];
 	for (char ch = 'A'; ch <= 'Z'; ch++)
 		tiles[ch - 'A'] = std::vector<Tile*>();
@@ -238,7 +238,11 @@ int main()
 
 			for (unsigned int i = 0; i < letter_count[ch - 'A']; i++)
 				tiles[ch - 'A'].push_back(new Tile(ch));
+
+			cerr << ch;
 		}
+
+		cerr << endl;
 	}
 
 	sf::Color background(22, 22, 22);
