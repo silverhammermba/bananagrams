@@ -1,9 +1,6 @@
 #!/usr/bin/env ruby
 # get definitions and add to word list
 
-require 'net/http'
-require 'rexml/document'
-
 STDOUT.puts "Reading words..."
 dictionary = {}
 File.open("defs.txt") do |list|
@@ -13,43 +10,28 @@ File.open("defs.txt") do |list|
 	end
 end
 
-uri = URI('http://services.aonaware.com')
-# open a connection to the dictionary service
-http = Net::HTTP.start(uri.host, uri.port)
+total = dictionary.size
 
-STDOUT.puts "Downloading definitions..."
-dictionary.each do |word, defn|
-	if not defn
-		response = http.post('/DictService/DictService.asmx/Define', "word=#{word}")
-		if response.is_a? Net::HTTPOK
-			doc = REXML::Document.new(response.body)
-			found = false
-			doc.elements.each('WordDefinition/Definitions/Definition') do |definition|
-				if definition.elements['Dictionary/Id'].text == 'wn' # WordNet seems good
-					found = true
-					# clean up text
-					text = definition.elements['WordDefinition'].text.gsub(/\s+/, ' ')
-					# try to extract first definition
-					if text =~ /(\d+)?: ([A-Za-z ()'",.]+)/
-						dictionary[word] = $2.strip
-						STDOUT.puts "#{word}: #{dictionary[word]}"
-					elsif text =~ /See \{([^}]+)\}/
-						dictionary[word] = "@#$1"
-						STDOUT.puts "#{word}: @#{dictionary[word]}"
-					else
-						STDERR.puts "Unrecognized format: #{text}"
-					end
+STDOUT.puts "Looking up words..."
+dictionary.each.with_index do |pair, i|
+	if not pair[1]
+		defs = []
+		`wn #{pair[0]} -over`.each_line do |line|
+			if line =~ /\d+\. (.*) -- \(([^;]+).*\)/
+				unless $1.split(?,).any? { |w| w != w.downcase }
+					defs << $2.strip
 				end
 			end
-			dictionary[word] = "#" unless found
-		else
-			STDERR.puts "Bad response when defining #{word}"
-			break
+		end
+		unless defs.empty?
+			dictionary[pair[0]] = defs.min_by(&:length)
 		end
 	end
+	if rand < 0.01
+		STDERR.print "\r#{i}/#{total}"
+	end
 end
-
-http.finish
+STDERR.puts
 
 STDOUT.puts "Writing words..."
 File.open("defs.txt", "w") do |list|
