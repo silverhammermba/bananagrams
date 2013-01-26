@@ -502,7 +502,10 @@ int main()
 
 	sf::Color background(22, 22, 22);
 
-	sf::RenderWindow window(sf::VideoMode(1920, 1080), "Bananagrams", sf::Style::Titlebar);
+	unsigned int res[2] = {1920, 1080};
+
+
+	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Titlebar);
 	sf::View view = window.getDefaultView();
 	view.setCenter(PPB / 2.0, PPB / 2.0);
 	window.setView(view);
@@ -633,8 +636,8 @@ int main()
 		// don't allow zooming past default
 		auto size = view.getSize();
 		// TODO bleh hardcoded size
-		if (size.x < 1024 || size.y < 600)
-			view.setSize(1024, 600);
+		if (size.x < res[0] || size.y < res[1])
+			view.setSize(res[0], res[1]);
 		window.setView(view);
 
 		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
