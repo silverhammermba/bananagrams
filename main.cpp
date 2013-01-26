@@ -166,16 +166,26 @@ int main()
 
 	// load word list
 	cerr << "Reading dictionary... \x1b[s";
-	std::map<std::string, bool> dictionary;
+	std::map<std::string, std::string> dictionary;
 	{
-		std::ifstream words("words.txt");
+		std::ifstream words("dictionary.txt");
 
-		std::string word;
-		while (words >> word)
+		std::string line;
+		while (std::getline(words, line))
 		{
-			dictionary[word] = true;
-			if (std::rand() % 8 == 0)
-				cerr << "\x1b[u\x1b[K" << word;
+			auto pos = line.find_first_of(' ');
+			if (pos == std::string::npos)
+			{
+				dictionary[line] = "";
+				if (std::rand() % 8 == 0)
+					cerr << "\x1b[u\x1b[K" << line;
+			}
+			else
+			{
+				dictionary[line.substr(0, pos)] = line.substr(pos + 1, std::string::npos);
+				if (std::rand() % 8 == 0)
+					cerr << "\x1b[u\x1b[K" << line.substr(0, pos);
+			}
 		}
 	}
 	cerr << "\x1b[u\x1b[K" << dictionary.size() << " words loaded\n";
