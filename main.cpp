@@ -133,19 +133,104 @@ public:
 
 class VimControls : public InputReader
 {
-	bool insert = false;
+	bool shift = false;
+	int* delta;
+	char* ch;
+	bool* zoom_key;
+	bool* backspace;
 public:
-	VimControls()
+	VimControls(int* d, char* c, bool* z, bool* b)
 	{
+		delta = d;
+		ch = c;
+		zoom_key = z;
+		backspace = b;
 	}
 
 	virtual bool process_event(const sf::Event& event)
 	{
-		if (insert)
+		if (event.type == sf::Event::KeyPressed)
 		{
+			// return to skip processing letter key as insert
+			switch (event.key.code)
+			{
+				// directions
+				case sf::Keyboard::H:
+					if (!shift)
+						break;
+				case sf::Keyboard::Left:
+					delta[0] = -1;
+					return true;
+				case sf::Keyboard::L:
+					if (!shift)
+						break;
+				case sf::Keyboard::Right:
+					delta[0] = 1;
+					return true;
+				case sf::Keyboard::K:
+					if (!(shift || *zoom_key))
+						break;
+				case sf::Keyboard::Up:
+					delta[1] = -1;
+					return true;
+				case sf::Keyboard::J:
+					if (!(shift || *zoom_key))
+						break;
+				case sf::Keyboard::Down:
+					delta[1] = 1;
+					return true;
+				// modifier keys
+				case sf::Keyboard::LControl:
+				case sf::Keyboard::RControl:
+					*zoom_key = true;
+					break;
+				case sf::Keyboard::LShift:
+				case sf::Keyboard::RShift:
+					shift = true;
+					break;
+				case sf::Keyboard::X:
+					if (!shift)
+						break;
+				case sf::Keyboard::BackSpace:
+					*backspace = true;
+					return true;
+				default:
+					break;
+			}
+			if (sf::Keyboard::A <= event.key.code && event.key.code <= sf::Keyboard::Z)
+				*ch = event.key.code - sf::Keyboard::A + 'A';
 		}
-		else
+		else if (event.type == sf::Event::KeyReleased)
 		{
+			switch (event.key.code)
+			{
+				case sf::Keyboard::H:
+				case sf::Keyboard::L:
+				case sf::Keyboard::Left:
+				case sf::Keyboard::Right:
+					delta[0] = 0;
+					break;
+				case sf::Keyboard::J:
+				case sf::Keyboard::K:
+				case sf::Keyboard::Up:
+				case sf::Keyboard::Down:
+					delta[1] = 0;
+					break;
+				case sf::Keyboard::LControl:
+				case sf::Keyboard::RControl:
+					*zoom_key = false;
+					if (!shift)
+						delta[1] = 0;
+					break;
+				case sf::Keyboard::LShift:
+				case sf::Keyboard::RShift:
+					shift = false;
+					delta[0] = 0;
+					delta[1] = 0;
+					break;
+				default:
+					break;
+			}
 		}
 		return true;
 	}
@@ -446,8 +531,9 @@ int main()
 	bool backspace = false;
 	int next[2];
 	int last[2] = {0, 0};
-	SimpleControls simple(delta, &ch, &zoom_key, &sprint_key, &backspace);
-	input_readers.push_back(&simple);
+	VimControls controls(delta, &ch, &zoom_key, &backspace);
+	input_readers.push_back(&controls);
+
 	clock.restart();
 	while (window.isOpen())
 	{
