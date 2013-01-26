@@ -12,10 +12,6 @@ using std::cerr;
 using std::endl;
 
 #define PPB 64
-#define DIAM PPB / 4.0
-#define RAD PPB / 8.0
-#define THICK PPB / 16.0
-#define DTHICK PPB / 8.0
 
 sf::RenderTexture tile_texture[26];
 
@@ -196,10 +192,8 @@ int main()
 	// create textures and tiles
 	cerr << "Generating textures... ";
 	std::vector<Tile*> tiles[26];
-	clock.restart();
-	for (char ch = 'A'; ch <= 'Z'; ch++)
-		tiles[ch - 'A'] = std::vector<Tile*>();
 
+	clock.restart();
 	{
 		unsigned int miny = PPB;
 		unsigned int maxy = 0;
@@ -210,12 +204,13 @@ int main()
 			// TODO error check
 			// TODO memory leak here?
 			tile_texture[ch - 'A'].create(PPB, PPB);
-			tile_texture[ch - 'A'].clear(sf::Color::Red);
 
+			// draw character for centering
 			std::stringstream string;
 			string << ch;
 			sf::Text letter(string.str(), font, (PPB * 2) / 3.0);
 			letter.setColor(sf::Color::Black);
+			tile_texture[ch - 'A'].clear(sf::Color::Red);
 			tile_texture[ch - 'A'].draw(letter);
 			tile_texture[ch - 'A'].display();
 
@@ -243,33 +238,37 @@ int main()
 			done_y = true;
 			letter.setPosition((PPB - (maxx - minx + 1)) / 2.0 - minx, (PPB - (maxy - miny + 1)) / 2.0 - miny);
 
+			float diam = PPB / 4.0;
+			float rad = PPB / 8.0;
+			// draw final tile
 			tile_texture[ch - 'A'].clear(sf::Color(0, 0, 0, 0));
 
 			sf::RectangleShape rect;
 			rect.setFillColor(sf::Color(255, 255, 175));
 
-			rect.setSize(sf::Vector2f(PPB - DIAM, PPB));
-			rect.setPosition(RAD, 0);
+			rect.setSize(sf::Vector2f(PPB - diam, PPB));
+			rect.setPosition(rad, 0);
 			tile_texture[ch - 'A'].draw(rect);
-			rect.setSize(sf::Vector2f(PPB, PPB - DIAM));
-			rect.setPosition(0, RAD);
+			rect.setSize(sf::Vector2f(PPB, PPB - diam));
+			rect.setPosition(0, rad);
 			tile_texture[ch - 'A'].draw(rect);
 
-			sf::CircleShape circle(RAD);
+			sf::CircleShape circle(rad);
 			circle.setFillColor(sf::Color(255, 255, 175));
 
 			circle.setPosition(0, 0);
 			tile_texture[ch - 'A'].draw(circle);
-			circle.setPosition(PPB - DIAM, 0);
+			circle.setPosition(PPB - diam, 0);
 			tile_texture[ch - 'A'].draw(circle);
-			circle.setPosition(0, PPB - DIAM);
+			circle.setPosition(0, PPB - diam);
 			tile_texture[ch - 'A'].draw(circle);
-			circle.setPosition(PPB - DIAM, PPB - DIAM);
+			circle.setPosition(PPB - diam, PPB - diam);
 			tile_texture[ch - 'A'].draw(circle);
 
 			tile_texture[ch - 'A'].draw(letter);
 			tile_texture[ch - 'A'].display();
 
+			// create tiles
 			for (unsigned int i = 0; i < letter_count[ch - 'A']; i++)
 				tiles[ch - 'A'].push_back(new Tile(ch));
 
@@ -282,7 +281,7 @@ int main()
 
 	sf::Color background(22, 22, 22);
 
-	sf::RenderWindow window(sf::VideoMode(1024, 600), "Bananagrams", sf::Style::Titlebar);
+	sf::RenderWindow window(sf::VideoMode(1920, 1080), "Bananagrams", sf::Style::Titlebar);
 	sf::View view = window.getDefaultView();
 	view.setCenter(PPB / 2.0, PPB / 2.0);
 	window.setView(view);
@@ -294,9 +293,10 @@ int main()
 	float repeat_delay = 0.5;
 	float repeat_speed = 0.1;
 
-	sf::RectangleShape cursor(sf::Vector2f(PPB - DTHICK, PPB - DTHICK));
+	float cursor_thickness = PPB / 16.0;
+	sf::RectangleShape cursor(sf::Vector2f(PPB - cursor_thickness * 2, PPB - cursor_thickness * 2));
 	cursor.setFillColor(sf::Color(0, 0, 0, 0));
-	cursor.setOutlineThickness(THICK);
+	cursor.setOutlineThickness(cursor_thickness);
 	cursor.setOutlineColor(sf::Color(0, 200, 0));
 
 	bool zoom_key = false;
@@ -444,7 +444,7 @@ int main()
 			view.setSize(1024, 600);
 		window.setView(view);
 
-		cursor.setPosition(pos[0] * PPB + THICK, pos[1] * PPB + THICK);
+		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
 
 		window.clear(background);
 		grid.draw_on(window);
