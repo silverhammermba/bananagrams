@@ -236,6 +236,102 @@ public:
 	}
 };
 
+class TileDisplay : public InputReader
+{
+	std::vector<Tile*>* tiles;
+	sf::RenderWindow* window;
+	std::list<Tile*> scram;
+
+	void counts()
+	{
+	}
+
+	void stacks()
+	{
+	}
+
+	void ordered()
+	{
+	}
+
+	void scrambled()
+	{
+		if (scram.size() == 0)
+			return;
+		float min_width = (PPB * 2) / 3.0;
+		auto size = window.getSize();
+		unsigned int max_per_row = (size.x - PPB) / (int)min_width + 1;
+		unsigned int i = 0;
+		for (auto tile: scram)
+		{
+			// TODO TODO
+			i++;
+		}
+	}
+
+	void (*draw_func)() = scrambled;
+
+	void reshuffle()
+	{
+		scram.clear();
+		for (char ch = 'A'; ch <= 'Z'; ch++)
+		{
+			for (auto tile: tiles[ch - 'A'])
+			{
+				auto it = scram.begin();
+				auto pos = std::rand() % (scram.size() + 1);
+				for (unsigned int i = 0; i != pos && it != end(); it++, i++);
+				scram.insert(it, tile);
+			}
+		}
+	}
+
+public:
+	TileDisplay(sf::RenderWindow* win, std::vector<Tile*>* t)
+	{
+		window = win;
+		tiles = t;
+		reshuffle();
+	}
+
+	virtual bool process_event(const sf::Event& event)
+	{
+		if (event.type == sf::Event::KeyPressed)
+		{
+			switch (event.key.code)
+			{
+				case sf::Keyboard::F1:
+					// TODO rescramble
+					if (draw_func == scrambled)
+						reshuffle();
+					else
+						draw_func = scrambled;
+					break;
+				case sf::Keyboard::F2:
+					draw_func = ordered;
+					break;
+				case sf::Keyboard::F3:
+					draw_func = counts;
+					break;
+				case sf::Keyboard::F4:
+					draw_func = stacks;
+					break;
+				default:
+					break;
+			}
+		}
+		return true;
+	}
+
+	void draw()
+	{
+		auto view = window->getView();
+		window->setView(window->getDefaultView());
+		draw_func();
+		window->setView(view);
+	}
+};
+
 class Tile
 {
 	char character;
@@ -599,9 +695,7 @@ int main()
 		clock.restart();
 
 		if (zoom_key)
-		{
 			view.zoom(1 + delta[1] * (sprint_key ? 2 : 1) * time);
-		}
 		else
 		{
 			for (unsigned int i = 0; i < 2; i++)
@@ -635,7 +729,6 @@ int main()
 		view.move(diff.x, diff.y);
 		// don't allow zooming past default
 		auto size = view.getSize();
-		// TODO bleh hardcoded size
 		if (size.x < res[0] || size.y < res[1])
 			view.setSize(res[0], res[1]);
 		window.setView(view);
