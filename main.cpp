@@ -164,6 +164,8 @@ int main()
 		2
 	};
 
+	sf::Clock clock;
+
 	// load word list
 	cerr << "Reading dictionary... \x1b[s";
 	std::map<std::string, std::string> dictionary;
@@ -188,13 +190,16 @@ int main()
 			}
 		}
 	}
-	cerr << "\x1b[u\x1b[K" << dictionary.size() << " words loaded\n";
+	float time = clock.getElapsedTime().asSeconds();
+	cerr << "\x1b[u\x1b[K" << dictionary.size() << " words loaded (" << time << ")\n";
 
 	// create textures and tiles
 	cerr << "Generating textures... ";
 	std::vector<Tile*> tiles[26];
+	clock.restart();
 	for (char ch = 'A'; ch <= 'Z'; ch++)
 		tiles[ch - 'A'] = std::vector<Tile*>();
+
 	{
 		unsigned int miny = PPB;
 		unsigned int maxy = 0;
@@ -271,7 +276,8 @@ int main()
 			cerr << ch;
 		}
 
-		cerr << endl;
+		float time = clock.getElapsedTime().asSeconds();
+		cerr << " (" << time << ")\n";
 	}
 
 	sf::Color background(22, 22, 22);
@@ -293,11 +299,11 @@ int main()
 	cursor.setOutlineThickness(THICK);
 	cursor.setOutlineColor(sf::Color(0, 200, 0));
 
-	sf::Clock clock;
 	bool zoom_key = false;
 	bool sprint_key = false;
 	int next[2];
 	int last[2] = {0, 0};
+	clock.restart();
 	while (window.isOpen())
 	{
 		sf::Event event;
