@@ -1,9 +1,15 @@
 #!/usr/bin/env ruby
 # get definitions and add to word list
 
+unless File.exist? 'dictionary.txt'
+	STDOUT.puts "Creating dictionary..."
+	require 'fileutils'
+	FileUtils.copy('words.txt', 'dictionary.txt')
+end
+
 STDOUT.puts "Reading words..."
 dictionary = {}
-File.open("defs.txt") do |list|
+File.open("dictionary.txt") do |list|
 	list.each_line do |line|
 		word, defn = line.strip.split(/\s+/, 2)
 		dictionary[word] = defn
@@ -34,7 +40,7 @@ end
 STDERR.puts
 
 STDOUT.puts "Writing words..."
-File.open("defs.txt", "w") do |list|
+File.open("dictionary.txt", "w") do |list|
 	dictionary.each do |word, defn|
 		if defn
 			list.puts "#{word} #{defn}"
