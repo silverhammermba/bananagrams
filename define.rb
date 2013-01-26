@@ -17,41 +17,33 @@ uri = URI('http://services.aonaware.com')
 # open a connection to the dictionary service
 http = Net::HTTP.start(uri.host, uri.port)
 
-count = 0
-limit = ARGV.shift.to_i
-
 STDOUT.puts "Downloading definitions..."
 dictionary.each do |word, defn|
 	if not defn
-		if count < limit
-			response = http.post('/DictService/DictService.asmx/Define', "word=#{word}")
-			if response.is_a? Net::HTTPOK
-				doc = REXML::Document.new(response.body)
-				found = false
-				doc.elements.each('WordDefinition/Definitions/Definition') do |definition|
-					if definition.elements['Dictionary/Id'].text == 'wn' # WordNet seems good
-						found = true
-						# clean up text
-						text = definition.elements['WordDefinition'].text.gsub(/\s+/, ' ')
-						# try to extract first definition
-						if text =~ /(\d+)?: ([A-Za-z ()'",.]+)/
-							dictionary[word] = $2.strip
-							STDOUT.puts "#{word}: #{dictionary[word]}"
-							count += 1
-						elsif text =~ /See \{([^}]+)\}/
-							dictionary[word] = "@#$1"
-							STDOUT.puts "#{word}: @#{dictionary[word]}"
-							count += 1
-						else
-							STDERR.puts "Unrecognized format: #{text}"
-						end
+		response = http.post('/DictService/DictService.asmx/Define', "word=#{word}")
+		if response.is_a? Net::HTTPOK
+			doc = REXML::Document.new(response.body)
+			found = false
+			doc.elements.each('WordDefinition/Definitions/Definition') do |definition|
+				if definition.elements['Dictionary/Id'].text == 'wn' # WordNet seems good
+					found = true
+					# clean up text
+					text = definition.elements['WordDefinition'].text.gsub(/\s+/, ' ')
+					# try to extract first definition
+					if text =~ /(\d+)?: ([A-Za-z ()'",.]+)/
+						dictionary[word] = $2.strip
+						STDOUT.puts "#{word}: #{dictionary[word]}"
+					elsif text =~ /See \{([^}]+)\}/
+						dictionary[word] = "@#$1"
+						STDOUT.puts "#{word}: @#{dictionary[word]}"
+					else
+						STDERR.puts "Unrecognized format: #{text}"
 					end
 				end
-				dictionary[word] = "#" unless found
-			else
-				STDERR.puts "Bad response when defining #{word}"
 			end
+			dictionary[word] = "#" unless found
 		else
+			STDERR.puts "Bad response when defining #{word}"
 			break
 		end
 	end
