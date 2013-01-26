@@ -15,6 +15,142 @@ using std::endl;
 
 sf::RenderTexture tile_texture[26];
 
+class InputReader
+{
+protected:
+	bool finished;
+public:
+	InputReader() { finished = false; }
+	virtual ~InputReader() {}
+
+	bool is_finished() const { return finished; }
+	virtual bool process_event(const sf::Event& event) = 0;
+};
+
+// class for handling game-related events
+class Game : public InputReader
+{
+	sf::RenderWindow* window;
+public:
+
+	Game(sf::RenderWindow* win)
+	{
+		window = win;
+	}
+
+	virtual bool process_event(const sf::Event& event)
+	{
+		if (event.type == sf::Event::Closed || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape))
+		{
+			window->close();
+
+			finished = true;
+			return false;
+		}
+		return true;
+	}
+};
+
+class SimpleControls : public InputReader
+{
+	int* delta;
+	char* ch;
+	bool* zoom_key;
+	bool* sprint_key;
+	bool* backspace;
+public:
+	SimpleControls(int* d, char* c, bool* z, bool* s, bool* b)
+	{
+		delta = d;
+		ch = c;
+		zoom_key = z;
+		sprint_key = s;
+		backspace = b;
+	}
+
+	virtual bool process_event(const sf::Event& event)
+	{
+		if (event.type == sf::Event::KeyPressed)
+		{
+			switch (event.key.code)
+			{
+				case sf::Keyboard::Left:
+					delta[0] = -1;
+					break;
+				case sf::Keyboard::Right:
+					delta[0] = 1;
+					break;
+				case sf::Keyboard::Up:
+					delta[1] = -1;
+					break;
+				case sf::Keyboard::Down:
+					delta[1] = 1;
+					break;
+				case sf::Keyboard::LControl:
+				case sf::Keyboard::RControl:
+					*zoom_key = true;
+					break;
+				case sf::Keyboard::LShift:
+				case sf::Keyboard::RShift:
+					*sprint_key = true;
+					break;
+				case sf::Keyboard::BackSpace:
+					*backspace = true;
+					break;
+				default:
+					break;
+			}
+			if (sf::Keyboard::A <= event.key.code && event.key.code <= sf::Keyboard::Z)
+				*ch = event.key.code - sf::Keyboard::A + 'A';
+		}
+		else if (event.type == sf::Event::KeyReleased)
+		{
+			switch (event.key.code)
+			{
+				case sf::Keyboard::Left:
+				case sf::Keyboard::Right:
+					delta[0] = 0;
+					break;
+				case sf::Keyboard::Up:
+				case sf::Keyboard::Down:
+					delta[1] = 0;
+					break;
+				case sf::Keyboard::LControl:
+				case sf::Keyboard::RControl:
+					*zoom_key = false;
+					break;
+				case sf::Keyboard::LShift:
+				case sf::Keyboard::RShift:
+					*sprint_key = false;
+					break;
+				default:
+					break;
+			}
+		}
+		return true;
+	}
+};
+
+class VimControls : public InputReader
+{
+	bool insert = false;
+public:
+	VimControls()
+	{
+	}
+
+	virtual bool process_event(const sf::Event& event)
+	{
+		if (insert)
+		{
+		}
+		else
+		{
+		}
+		return true;
+	}
+};
+
 class Tile
 {
 	char character;
@@ -299,104 +435,75 @@ int main()
 	cursor.setOutlineThickness(cursor_thickness);
 	cursor.setOutlineColor(sf::Color(0, 200, 0));
 
+	std::vector<InputReader*> input_readers;
+
+	Game game(&window);
+	input_readers.push_back(&game);
+
+	char ch = 'A' - 1;
 	bool zoom_key = false;
 	bool sprint_key = false;
+	bool backspace = false;
 	int next[2];
 	int last[2] = {0, 0};
+	SimpleControls simple(delta, &ch, &zoom_key, &sprint_key, &backspace);
+	input_readers.push_back(&simple);
 	clock.restart();
 	while (window.isOpen())
 	{
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
-			if (event.type == sf::Event::Closed || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape))
-				window.close();
-			else if (event.type == sf::Event::KeyPressed)
+			for (auto r = input_readers.begin(); r != input_readers.end();)
 			{
-				Tile* tile;
-				switch (event.key.code)
-				{
-					case sf::Keyboard::Left:
-						delta[0] = -1;
-						break;
-					case sf::Keyboard::Right:
-						delta[0] = 1;
-						break;
-					case sf::Keyboard::Up:
-						delta[1] = -1;
-						break;
-					case sf::Keyboard::Down:
-						delta[1] = 1;
-						break;
-					case sf::Keyboard::LControl:
-					case sf::Keyboard::RControl:
-						zoom_key = true;
-						break;
-					case sf::Keyboard::LShift:
-					case sf::Keyboard::RShift:
-						sprint_key = true;
-						break;
-					case sf::Keyboard::BackSpace:
-						// if the cursor is ahead of the last added character
-						if (pos[0] == last[0] + next[0] && pos[1] == last[1] + next[1])
-						{
-							pos[0] = last[0];
-							pos[1] = last[1];
-							last[0] -= next[0];
-							last[1] -= next[1];
-						}
-						tile = grid.remove(pos[0], pos[1]);
-						if (tile != nullptr)
-							tiles[tile->ch() - 'A'].push_back(tile);
-						break;
-					default:
-						break;
-				}
-				if (sf::Keyboard::A <= event.key.code && event.key.code <= sf::Keyboard::Z)
-				{
-					if (tiles[event.key.code - sf::Keyboard::A].size() > 0)
-					{
-						Tile* tile = grid.swap(pos[0], pos[1], tiles[event.key.code - sf::Keyboard::A].back());
-						tiles[event.key.code - sf::Keyboard::A].pop_back();
-						if (tile != nullptr)
-							tiles[tile->ch() - 'A'].push_back(tile);
-						next[0] = 0;
-						next[1] = 0;
-						if (pos[0] == last[0] + 1 && pos[1] == last[1])
-							next[0] = 1;
-						if (pos[0] == last[0] && pos[1] == last[1] + 1)
-							next[1] = 1;
-						last[0] = pos[0];
-						last[1] = pos[1];
-						pos[0] += next[0];
-						pos[1] += next[1];
-					}
-				}
+				bool cont = (*r)->process_event(event);
+				if ((*r)->is_finished())
+					r = input_readers.erase(r);
+				else
+					r++;
+				if (!cont)
+					break;
 			}
-			else if (event.type == sf::Event::KeyReleased)
+		}
+
+		if (backspace)
+		{
+			backspace = false;
+
+			// if the cursor is ahead of the last added character
+			if (pos[0] == last[0] + next[0] && pos[1] == last[1] + next[1])
 			{
-				switch (event.key.code)
-				{
-					case sf::Keyboard::Left:
-					case sf::Keyboard::Right:
-						delta[0] = 0;
-						break;
-					case sf::Keyboard::Up:
-					case sf::Keyboard::Down:
-						delta[1] = 0;
-						break;
-					case sf::Keyboard::LControl:
-					case sf::Keyboard::RControl:
-						zoom_key = false;
-						break;
-					case sf::Keyboard::LShift:
-					case sf::Keyboard::RShift:
-						sprint_key = false;
-						break;
-					default:
-						break;
-				}
+				pos[0] = last[0];
+				pos[1] = last[1];
+				last[0] -= next[0];
+				last[1] -= next[1];
 			}
+
+			auto tile = grid.remove(pos[0], pos[1]);
+			if (tile != nullptr)
+				tiles[tile->ch() - 'A'].push_back(tile);
+		}
+		else if (ch >= 'A' && ch <= 'Z')
+		{
+			if (tiles[ch - 'A'].size() > 0)
+			{
+				Tile* tile = grid.swap(pos[0], pos[1], tiles[ch - 'A'].back());
+				tiles[ch - 'A'].pop_back();
+				if (tile != nullptr)
+					tiles[tile->ch() - 'A'].push_back(tile);
+				next[0] = 0;
+				next[1] = 0;
+				if (pos[0] == last[0] + 1 && pos[1] == last[1])
+					next[0] = 1;
+				if (pos[0] == last[0] && pos[1] == last[1] + 1)
+					next[1] = 1;
+				last[0] = pos[0];
+				last[1] = pos[1];
+				pos[0] += next[0];
+				pos[1] += next[1];
+			}
+
+			ch = 'A' - 1;
 		}
 
 		float time = clock.getElapsedTime().asSeconds();
