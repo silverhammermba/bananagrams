@@ -269,6 +269,7 @@ class TileDisplay : public InputReader
 	std::vector<Tile*>* tiles;
 	sf::RenderWindow* window;
 	std::list<Tile*> scram;
+	std::vector<Tile*> sort;
 
 	void counts()
 	{
@@ -280,6 +281,33 @@ class TileDisplay : public InputReader
 
 	void ordered()
 	{
+		sort.clear();
+		for (char ch = 'A'; ch <= 'Z'; ch++)
+			for (auto tile: tiles[ch - 'A'])
+				sort.push_back(tile);
+		// TODO not DRY at all!
+		if (sort.size() == 0)
+			return;
+		float padding = PPB / 8.f;
+		float min_width = PPB + padding;
+		auto size = window->getSize();
+		// leave PPB/2 space on either side of tiles, one tile gets full PPB width
+		unsigned int max_per_row = (size.x - PPB - padding * 2) / (int)min_width + 1;
+		unsigned int rows = sort.size() / max_per_row + (sort.size() > (sort.size() / max_per_row) * max_per_row ? 1 : 0);
+		auto tile = sort.begin();
+		for (unsigned int i = 0; tile != sort.end(); i++, tile++)
+		{
+			// number of tiles in this row
+			unsigned int row_size = i >= (sort.size() / max_per_row) * max_per_row ? sort.size() % max_per_row : max_per_row;
+			float room_per_tile = row_size == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(row_size - 1);
+			// maximum PPB/4 spacing between tiles
+			if (room_per_tile > (PPB * 5) / 4.0)
+				room_per_tile = (PPB * 5) / 4.0;
+			// this should be <= size.x - PPB
+			float room_required = room_per_tile * (row_size - 1) + PPB;
+			(*tile)->set_pos((i % max_per_row) * room_per_tile + (size.x - room_required) / 2.f, size.y - (rows - (i / max_per_row)) * (PPB + padding));
+			(*tile)->draw_on(*window);
+		}
 	}
 
 	void scrambled()
