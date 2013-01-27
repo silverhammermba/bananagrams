@@ -715,6 +715,11 @@ int main()
 				last[0] -= next[0];
 				last[1] -= next[1];
 			}
+			else
+			{
+				last[0] = pos[0] - next[0];
+				last[1] = pos[1] - next[1];
+			}
 
 			auto tile = grid.remove(pos[0], pos[1]);
 			if (tile != nullptr)
