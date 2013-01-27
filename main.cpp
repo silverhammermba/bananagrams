@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <list>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -236,6 +237,33 @@ public:
 	}
 };
 
+class Tile
+{
+	char character;
+	sf::Sprite sprite;
+public:
+	Tile(char ch) :
+		sprite(tile_texture[ch - 'A'].getTexture())
+	{
+		character = ch;
+	}
+
+	char ch() const
+	{
+		return character;
+	}
+
+	void set_pos(float x, float y)
+	{
+		sprite.setPosition(x, y);
+	}
+
+	void draw_on(sf::RenderWindow & window) const
+	{
+		window.draw(sprite);
+	}
+};
+
 class TileDisplay : public InputReader
 {
 	std::vector<Tile*>* tiles;
@@ -258,18 +286,29 @@ class TileDisplay : public InputReader
 	{
 		if (scram.size() == 0)
 			return;
-		float min_width = (PPB * 2) / 3.0;
-		auto size = window.getSize();
-		unsigned int max_per_row = (size.x - PPB) / (int)min_width + 1;
-		unsigned int i = 0;
-		for (auto tile: scram)
+		float padding = PPB / 8.f;
+		float min_width = PPB + padding;
+		auto size = window->getSize();
+		// leave PPB/2 space on either side of tiles, one tile gets full PPB width
+		unsigned int max_per_row = (size.x - PPB - padding * 2) / (int)min_width + 1;
+		unsigned int rows = scram.size() / max_per_row + (scram.size() > (scram.size() / max_per_row) * max_per_row ? 1 : 0);
+		auto tile = scram.begin();
+		for (unsigned int i = 0; tile != scram.end(); i++, tile++)
 		{
-			// TODO TODO
-			i++;
+			// number of tiles in this row
+			unsigned int row_size = i >= (scram.size() / max_per_row) * max_per_row ? scram.size() % max_per_row : max_per_row;
+			float room_per_tile = row_size == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(row_size - 1);
+			// maximum PPB/4 spacing between tiles
+			if (room_per_tile > (PPB * 5) / 4.0)
+				room_per_tile = (PPB * 5) / 4.0;
+			// this should be <= size.x - PPB
+			float room_required = room_per_tile * (row_size - 1) + PPB;
+			(*tile)->set_pos((i % max_per_row) * room_per_tile + (size.x - room_required) / 2.f, size.y - (rows - (i / max_per_row)) * (PPB + padding));
+			(*tile)->draw_on(*window);
 		}
 	}
 
-	void (*draw_func)() = scrambled;
+	void (TileDisplay::*draw_func)(void) = &TileDisplay::scrambled;
 
 	void reshuffle()
 	{
@@ -280,7 +319,7 @@ class TileDisplay : public InputReader
 			{
 				auto it = scram.begin();
 				auto pos = std::rand() % (scram.size() + 1);
-				for (unsigned int i = 0; i != pos && it != end(); it++, i++);
+				for (unsigned int i = 0; i != pos && it != scram.end(); it++, i++);
 				scram.insert(it, tile);
 			}
 		}
@@ -294,6 +333,16 @@ public:
 		reshuffle();
 	}
 
+	void add_tile(Tile* tile)
+	{
+		scram.push_back(tile);
+	}
+
+	void remove_tile(Tile* tile)
+	{
+		scram.remove(tile);
+	}
+
 	virtual bool process_event(const sf::Event& event)
 	{
 		if (event.type == sf::Event::KeyPressed)
@@ -301,20 +350,19 @@ public:
 			switch (event.key.code)
 			{
 				case sf::Keyboard::F1:
-					// TODO rescramble
-					if (draw_func == scrambled)
+					if (draw_func == &TileDisplay::scrambled)
 						reshuffle();
 					else
-						draw_func = scrambled;
+						draw_func = &TileDisplay::scrambled;
 					break;
 				case sf::Keyboard::F2:
-					draw_func = ordered;
+					draw_func = &TileDisplay::ordered;
 					break;
 				case sf::Keyboard::F3:
-					draw_func = counts;
+					draw_func = &TileDisplay::counts;
 					break;
 				case sf::Keyboard::F4:
-					draw_func = stacks;
+					draw_func = &TileDisplay::stacks;
 					break;
 				default:
 					break;
@@ -327,35 +375,8 @@ public:
 	{
 		auto view = window->getView();
 		window->setView(window->getDefaultView());
-		draw_func();
+		(this->*draw_func)();
 		window->setView(view);
-	}
-};
-
-class Tile
-{
-	char character;
-	sf::Sprite sprite;
-public:
-	Tile(char ch) :
-		sprite(tile_texture[ch - 'A'].getTexture())
-	{
-		character = ch;
-	}
-
-	char ch() const
-	{
-		return character;
-	}
-
-	void set_pos(int x, int y)
-	{
-		sprite.setPosition(x * PPB, y * PPB);
-	}
-
-	void draw_on(sf::RenderWindow & window) const
-	{
-		window.draw(sprite);
 	}
 };
 
@@ -428,7 +449,7 @@ public:
 			// TODO catch failure?
 			grid.resize(n + 1, nullptr);
 		Tile* swp = grid[n];
-		tile->set_pos(x, y);
+		tile->set_pos(x * PPB, y * PPB);
 		grid[n] = tile;
 		return swp;
 	}
@@ -624,6 +645,9 @@ int main()
 	Game game(&window);
 	input_readers.push_back(&game);
 
+	TileDisplay display(&window, tiles);
+	input_readers.push_back(&display);
+
 	char ch = 'A' - 1;
 	bool zoom_key = false;
 	bool sprint_key = false;
@@ -666,16 +690,16 @@ int main()
 
 			auto tile = grid.remove(pos[0], pos[1]);
 			if (tile != nullptr)
+			{
 				tiles[tile->ch() - 'A'].push_back(tile);
+				display.add_tile(tile);
+			}
 		}
 		else if (ch >= 'A' && ch <= 'Z')
 		{
-			if (tiles[ch - 'A'].size() > 0)
+			// if you're out of the letter but the cursor is over that letter, just advance the cursor
+			if (grid.get(pos[0], pos[1]) != nullptr && grid.get(pos[0], pos[1])->ch() == ch)
 			{
-				Tile* tile = grid.swap(pos[0], pos[1], tiles[ch - 'A'].back());
-				tiles[ch - 'A'].pop_back();
-				if (tile != nullptr)
-					tiles[tile->ch() - 'A'].push_back(tile);
 				next[0] = 0;
 				next[1] = 0;
 				if (pos[0] == last[0] + 1 && pos[1] == last[1])
@@ -687,7 +711,28 @@ int main()
 				pos[0] += next[0];
 				pos[1] += next[1];
 			}
-
+			// otherwise we need a letter to place
+			else if (tiles[ch - 'A'].size() > 0)
+			{
+				Tile* tile = grid.swap(pos[0], pos[1], tiles[ch - 'A'].back());
+				display.remove_tile(tiles[ch - 'A'].back());
+				tiles[ch - 'A'].pop_back();
+				if (tile != nullptr)
+				{
+					tiles[tile->ch() - 'A'].push_back(tile);
+					display.add_tile(tile);
+				}
+				next[0] = 0;
+				next[1] = 0;
+				if (pos[0] == last[0] + 1 && pos[1] == last[1])
+					next[0] = 1;
+				if (pos[0] == last[0] && pos[1] == last[1] + 1)
+					next[1] = 1;
+				last[0] = pos[0];
+				last[1] = pos[1];
+				pos[0] += next[0];
+				pos[1] += next[1];
+			}
 			ch = 'A' - 1;
 		}
 
@@ -738,6 +783,8 @@ int main()
 		window.clear(background);
 		grid.draw_on(window);
 		window.draw(cursor);
+
+		display.draw();
 
 		window.display();
 	}
