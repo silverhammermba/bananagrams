@@ -266,10 +266,37 @@ public:
 
 class TileDisplay : public InputReader
 {
+	bool reposition = true;
 	std::vector<Tile*>* tiles;
 	sf::RenderWindow* window;
 	std::list<Tile*> scram;
-	std::vector<Tile*> sort;
+	std::list<Tile*> sort;
+	sf::Vector2u size;
+
+	// position tiles in list in nice rows
+	void position_list(std::list<Tile*>& list)
+	{
+		if (list.size() == 0)
+			return;
+		float padding = PPB / 8.f;
+		float min_width = PPB + padding;
+		// leave PPB/2 space on either side of tiles, one tile gets full PPB width
+		unsigned int max_per_row = (size.x - PPB - padding * 2) / (int)min_width + 1;
+		unsigned int rows = list.size() / max_per_row + (list.size() > (list.size() / max_per_row) * max_per_row ? 1 : 0);
+		auto tile = list.begin();
+		for (unsigned int i = 0; tile != list.end(); i++, tile++)
+		{
+			// number of tiles in this row
+			unsigned int row_size = i >= (list.size() / max_per_row) * max_per_row ? list.size() % max_per_row : max_per_row;
+			float room_per_tile = row_size == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(row_size - 1);
+			// maximum PPB/4 spacing between tiles
+			if (room_per_tile > (PPB * 5) / 4.0)
+				room_per_tile = (PPB * 5) / 4.0;
+			// this should be <= size.x - PPB
+			float room_required = room_per_tile * (row_size - 1) + PPB;
+			(*tile)->set_pos((i % max_per_row) * room_per_tile + (size.x - room_required) / 2.f, size.y - (rows - (i / max_per_row)) * (PPB + padding));
+		}
+	}
 
 	void counts()
 	{
@@ -277,69 +304,64 @@ class TileDisplay : public InputReader
 
 	void stacks()
 	{
+		if (reposition)
+		{
+			unsigned int nonempty = 0;
+			for (char ch = 'A'; ch <= 'Z'; ch++)
+				if (tiles[ch - 'A'].size() > 0)
+					nonempty++;
+			if (nonempty == 0)
+				return;
+			float padding = PPB / 8.f;
+			float room_per_tile = nonempty == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(nonempty - 1);
+			float x = padding;
+			for (char ch = 'A'; ch <= 'Z'; ch++)
+			{
+				if (tiles[ch - 'A'].size() > 0)
+				{
+					unsigned int i = 0;
+					for (auto tile: tiles[ch - 'A'])
+					{
+						tile->set_pos(x + (i * PPB) / 16.f, size.y - PPB - padding - (i * PPB) / 16.f);
+						i++;
+					}
+					x += room_per_tile;
+				}
+			}
+			reposition = false;
+		}
+		for (char ch = 'Z'; ch >= 'A'; --ch)
+			for (auto tile: tiles[ch - 'A'])
+				tile->draw_on(*window);
 	}
 
 	void ordered()
 	{
-		sort.clear();
-		for (char ch = 'A'; ch <= 'Z'; ch++)
-			for (auto tile: tiles[ch - 'A'])
-				sort.push_back(tile);
-		// TODO not DRY at all!
-		if (sort.size() == 0)
-			return;
-		float padding = PPB / 8.f;
-		float min_width = PPB + padding;
-		auto size = window->getSize();
-		// leave PPB/2 space on either side of tiles, one tile gets full PPB width
-		unsigned int max_per_row = (size.x - PPB - padding * 2) / (int)min_width + 1;
-		unsigned int rows = sort.size() / max_per_row + (sort.size() > (sort.size() / max_per_row) * max_per_row ? 1 : 0);
-		auto tile = sort.begin();
-		for (unsigned int i = 0; tile != sort.end(); i++, tile++)
+		if (reposition)
 		{
-			// number of tiles in this row
-			unsigned int row_size = i >= (sort.size() / max_per_row) * max_per_row ? sort.size() % max_per_row : max_per_row;
-			float room_per_tile = row_size == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(row_size - 1);
-			// maximum PPB/4 spacing between tiles
-			if (room_per_tile > (PPB * 5) / 4.0)
-				room_per_tile = (PPB * 5) / 4.0;
-			// this should be <= size.x - PPB
-			float room_required = room_per_tile * (row_size - 1) + PPB;
-			(*tile)->set_pos((i % max_per_row) * room_per_tile + (size.x - room_required) / 2.f, size.y - (rows - (i / max_per_row)) * (PPB + padding));
-			(*tile)->draw_on(*window);
+			position_list(sort);
+			reposition = false;
 		}
+		for (auto tile: sort)
+			tile->draw_on(*window);
 	}
 
 	void scrambled()
 	{
-		if (scram.size() == 0)
-			return;
-		float padding = PPB / 8.f;
-		float min_width = PPB + padding;
-		auto size = window->getSize();
-		// leave PPB/2 space on either side of tiles, one tile gets full PPB width
-		unsigned int max_per_row = (size.x - PPB - padding * 2) / (int)min_width + 1;
-		unsigned int rows = scram.size() / max_per_row + (scram.size() > (scram.size() / max_per_row) * max_per_row ? 1 : 0);
-		auto tile = scram.begin();
-		for (unsigned int i = 0; tile != scram.end(); i++, tile++)
+		if (reposition)
 		{
-			// number of tiles in this row
-			unsigned int row_size = i >= (scram.size() / max_per_row) * max_per_row ? scram.size() % max_per_row : max_per_row;
-			float room_per_tile = row_size == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(row_size - 1);
-			// maximum PPB/4 spacing between tiles
-			if (room_per_tile > (PPB * 5) / 4.0)
-				room_per_tile = (PPB * 5) / 4.0;
-			// this should be <= size.x - PPB
-			float room_required = room_per_tile * (row_size - 1) + PPB;
-			(*tile)->set_pos((i % max_per_row) * room_per_tile + (size.x - room_required) / 2.f, size.y - (rows - (i / max_per_row)) * (PPB + padding));
-			(*tile)->draw_on(*window);
+			position_list(scram);
+			reposition = false;
 		}
+		for (auto tile: scram)
+			tile->draw_on(*window);
 	}
 
 	void (TileDisplay::*draw_func)(void) = &TileDisplay::scrambled;
 
 	void reshuffle()
 	{
+		reposition = true;
 		scram.clear();
 		for (char ch = 'A'; ch <= 'Z'; ch++)
 		{
@@ -354,25 +376,45 @@ class TileDisplay : public InputReader
 	}
 
 public:
-	TileDisplay(sf::RenderWindow* win, std::vector<Tile*>* t)
+	TileDisplay(sf::RenderWindow* win, std::vector<Tile*>* t) : size(win->getSize())
 	{
 		window = win;
 		tiles = t;
+		// prepare persistent structures
 		reshuffle();
+		for (char ch = 'A'; ch <= 'Z'; ch++)
+			for (auto tile: tiles[ch - 'A'])
+				sort.push_back(tile);
 	}
 
 	void add_tile(Tile* tile)
 	{
+		reposition = true;
+		// update persistent structures
 		scram.push_back(tile);
+		bool added = false;
+		for (auto it = sort.begin(); it != sort.end(); it++)
+			if ((*it)->ch() >= tile->ch())
+			{
+				sort.insert(it, tile);
+				added = true;
+				break;
+			}
+		if (!added)
+			sort.push_back(tile);
 	}
 
 	void remove_tile(Tile* tile)
 	{
+		reposition = true;
+		// update persistent structures
 		scram.remove(tile);
+		sort.remove(tile);
 	}
 
 	virtual bool process_event(const sf::Event& event)
 	{
+		auto prev = draw_func;
 		if (event.type == sf::Event::KeyPressed)
 		{
 			switch (event.key.code)
@@ -396,6 +438,9 @@ public:
 					break;
 			}
 		}
+		// reposition tiles if drawing function changed
+		if (prev != draw_func)
+			reposition = true;
 		return true;
 	}
 
