@@ -611,6 +611,7 @@ int main()
 		bool done_y = false;
 		for (char ch = 'A'; ch <= 'Z'; ch++)
 		{
+			// TODO some kind of depth would help for stack appearance
 			// TODO antialiase these
 			// TODO error check
 			// TODO memory leak here?
@@ -760,6 +761,8 @@ int main()
 				last[0] -= next[0];
 				last[1] -= next[1];
 			}
+			// this behavior can be a little confusing sometimes
+			// TODO maybe detect nearby character to set as last?
 			else
 			{
 				last[0] = pos[0] - next[0];

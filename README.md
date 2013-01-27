@@ -12,5 +12,5 @@ TODO
  * Mouse controls
  * cut-and-paste
  * validity check
- * letter display
+ * more letter displays
  * multiplayer
