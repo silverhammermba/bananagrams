@@ -753,7 +753,8 @@ int main()
 		{
 			backspace = false;
 
-			// if the cursor is ahead of the last added character
+			// TODO DRY off autoadvancing
+			// if the cursor is ahead of the last added character, autoadvance
 			if (pos[0] == last[0] + next[0] && pos[1] == last[1] + next[1])
 			{
 				pos[0] = last[0];
@@ -761,12 +762,42 @@ int main()
 				last[0] -= next[0];
 				last[1] -= next[1];
 			}
-			// this behavior can be a little confusing sometimes
-			// TODO maybe detect nearby character to set as last?
-			else
+			// else if you are not near the last character and the space is empty, try to autoadvance
+			else if (grid.get(pos[0], pos[1]) == nullptr)
 			{
-				last[0] = pos[0] - next[0];
-				last[1] = pos[1] - next[1];
+				if (grid.get(pos[0] - 1, pos[1]) != nullptr)
+				{
+					next[0] = 1;
+					next[1] = 0;
+					pos[0] -= next[0];
+					last[0] = pos[0] - next[0];
+					last[1] = pos[1];
+				}
+				else if (grid.get(pos[0], pos[1] - 1) != nullptr)
+				{
+					next[0] = 0;
+					next[1] = 1;
+					pos[1] -= next[1];
+					last[0] = pos[0];
+					last[1] = pos[1] - next[1];
+				}
+			}
+			else // not near last character, position not empty, try to set autoadvance for next time
+			{
+				if (grid.get(pos[0] - 1, pos[1]) != nullptr)
+				{
+					next[0] = 1;
+					next[1] = 0;
+					last[0] = pos[0] - next[0];
+					last[1] = pos[1];
+				}
+				else if (grid.get(pos[0], pos[1] - 1) != nullptr)
+				{
+					next[0] = 0;
+					next[1] = 1;
+					last[0] = pos[0];
+					last[1] = pos[1] - next[1];
+				}
 			}
 
 			auto tile = grid.remove(pos[0], pos[1]);
@@ -778,42 +809,47 @@ int main()
 		}
 		else if (ch >= 'A' && ch <= 'Z')
 		{
-			// if you're out of the letter but the cursor is over that letter, just advance the cursor
-			if (grid.get(pos[0], pos[1]) != nullptr && grid.get(pos[0], pos[1])->ch() == ch)
+			bool placed = false;
+
+			// if space is empty or has a different letter
+			if (grid.get(pos[0], pos[1]) == nullptr || grid.get(pos[0], pos[1])->ch() != ch)
 			{
-				next[0] = 0;
-				next[1] = 0;
-				if (pos[0] == last[0] + 1 && pos[1] == last[1])
-					next[0] = 1;
-				if (pos[0] == last[0] && pos[1] == last[1] + 1)
-					next[1] = 1;
-				last[0] = pos[0];
-				last[1] = pos[1];
-				pos[0] += next[0];
-				pos[1] += next[1];
-			}
-			// otherwise we need a letter to place
-			else if (tiles[ch - 'A'].size() > 0)
-			{
-				Tile* tile = grid.swap(pos[0], pos[1], tiles[ch - 'A'].back());
-				display.remove_tile(tiles[ch - 'A'].back());
-				tiles[ch - 'A'].pop_back();
-				if (tile != nullptr)
+				if (tiles[ch - 'A'].size() > 0)
 				{
-					tiles[tile->ch() - 'A'].push_back(tile);
-					display.add_tile(tile);
+					Tile* tile = grid.swap(pos[0], pos[1], tiles[ch - 'A'].back());
+					display.remove_tile(tiles[ch - 'A'].back());
+					tiles[ch - 'A'].pop_back();
+					if (tile != nullptr)
+					{
+						tiles[tile->ch() - 'A'].push_back(tile);
+						display.add_tile(tile);
+					}
+					placed = true;
 				}
+			}
+			else // space already has the letter to be placed
+				placed = true;
+
+			// if we placed a letter, try to autoadvance
+			if (placed)
+			{
 				next[0] = 0;
 				next[1] = 0;
 				if (pos[0] == last[0] + 1 && pos[1] == last[1])
 					next[0] = 1;
-				if (pos[0] == last[0] && pos[1] == last[1] + 1)
+				else if (pos[0] == last[0] && pos[1] == last[1] + 1)
+					next[1] = 1;
+				else if (grid.get(pos[0] - 1, pos[1]) != nullptr)
+					next[0] = 1;
+				else if (grid.get(pos[0], pos[1] - 1) != nullptr)
 					next[1] = 1;
 				last[0] = pos[0];
 				last[1] = pos[1];
 				pos[0] += next[0];
 				pos[1] += next[1];
 			}
+
+			// clear character to place
 			ch = 'A' - 1;
 		}
 
