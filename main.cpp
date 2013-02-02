@@ -496,18 +496,23 @@ public:
 	Tile* remove(int x, int y)
 	{
 		unsigned int n = convert(x, y);
+		// if in bounds
 		if (n < grid.size())
 		{
 			Tile* tile = grid[n];
+
+			// return if nothing was changed
 			if (tile == nullptr)
 				return nullptr;
 
+			// shrink grid, if possible
 			grid[n] = nullptr;
-			for (n = grid.size(); n --> 0;)
-				if (grid[n] != nullptr)
+			for (n = grid.size(); n > 0; --n)
+				if (grid[n - 1] != nullptr)
 					break;
-			// TODO won't ever shrink to 0
-			grid.resize(n + 1, nullptr);
+
+			grid.resize(n, nullptr);
+
 			return tile;
 		}
 		return nullptr;
@@ -697,6 +702,7 @@ int main()
 
 
 	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Titlebar);
+	window.setVerticalSyncEnabled(true);
 	sf::View view = window.getDefaultView();
 	view.setCenter(PPB / 2.0, PPB / 2.0);
 	window.setView(view);
@@ -880,6 +886,7 @@ int main()
 		}
 
 		auto center = view.getCenter();
+		// TODO view moves too slowly. Perhaps scale speed by how far cursor is from center?
 		float max = time * 500.0 * (sprint_key ? 2 : 1);
 		sf::Vector2f diff(pos[0] * PPB + PPB / 2.0 - center.x, pos[1] * PPB + PPB / 2.0 - center.y);
 		float length = std::sqrt(diff.x * diff.x + diff.y * diff.y);
