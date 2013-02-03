@@ -511,7 +511,7 @@ namespace std
 	{
 		bool operator() (const sf::Vector2i& lhs, const sf::Vector2i& rhs)
 		{
-			return lhs.x < rhs.y || (lhs.x == rhs.x && lhs.y < rhs.y);
+			return lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y);
 		}
 	};
 }
@@ -578,28 +578,21 @@ public:
 
 			grid.resize(n, nullptr);
 
-			// check for created/destroyed words
-			hwords.erase(sf::Vector2i(x, y));
-			if (hwords.find(sf::Vector2i(x - 1, y)) != hwords.end())
-				hwords.erase(sf::Vector2i(x - 1, y));
+			// check for created words
 			if (get(x + 1, y) != nullptr && get(x + 2, y) != nullptr)
 				hwords[sf::Vector2i(x + 1, y)] = true;
 
-			vwords.erase(sf::Vector2i(x, y));
-			if (vwords.find(sf::Vector2i(x, y - 1)) != vwords.end())
-				vwords.erase(sf::Vector2i(x, y - 1));
 			if (get(x, y + 1) != nullptr && get(x, y + 2) != nullptr)
 				vwords[sf::Vector2i(x, y + 1)] = true;
 
-			cerr << "Hwords ";
-			for (auto& pair: hwords)
-				cerr << pair.first.x << "," << pair.first.y << " ";
-			cerr << endl;
+			// check for destroyed words
+			hwords.erase(sf::Vector2i(x, y));
+			if (get(x - 2, y) == nullptr)
+				hwords.erase(sf::Vector2i(x - 1, y));
 
-			cerr << "Vwords ";
-			for (auto& pair: vwords)
-				cerr << pair.first.x << "," << pair.first.y << " ";
-			cerr << endl;
+			vwords.erase(sf::Vector2i(x, y));
+			if (get(x, y - 2) == nullptr)
+				vwords.erase(sf::Vector2i(x, y - 1));
 
 			return tile;
 		}
@@ -621,7 +614,7 @@ public:
 		if (swp != nullptr)
 			return swp;
 
-		// check for newly created words
+		// check for created words
 		if (get(x - 1, y) == nullptr)
 		{
 			if (get(x + 1, y) != nullptr)
@@ -638,15 +631,12 @@ public:
 		else if (get(x, y - 2) == nullptr)
 			vwords[sf::Vector2i(x, y - 1)] = true;
 
-		cerr << "Hwords ";
-		for (auto& pair: hwords)
-			cerr << pair.first.x << "," << pair.first.y << " ";
-		cerr << endl;
+		// check for destroyed words
+		if (get(x + 1, y) != nullptr)
+			hwords.erase(sf::Vector2i(x + 1, y));
 
-		cerr << "Vwords ";
-		for (auto& pair: vwords)
-			cerr << pair.first.x << "," << pair.first.y << " ";
-		cerr << endl;
+		if (get(x, y + 1) != nullptr)
+			vwords.erase(sf::Vector2i(x, y + 1));
 
 		return nullptr;
 	}
