@@ -18,6 +18,7 @@ using std::vector;
 #define PPB 64
 
 sf::RenderTexture tile_texture[26];
+std::map<std::string, std::string> dictionary;
 
 class InputReader
 {
@@ -52,6 +53,264 @@ public:
 			return false;
 		}
 		return true;
+	}
+};
+
+class Tile
+{
+	char character;
+	sf::Sprite sprite;
+public:
+	bool marked;
+
+	Tile(char ch) :
+		sprite(tile_texture[ch - 'A'].getTexture())
+	{
+		character = ch;
+	}
+
+	char ch() const
+	{
+		return character;
+	}
+
+	void set_pos(float x, float y)
+	{
+		sprite.setPosition(x, y);
+	}
+
+	const sf::Vector2f& get_pos() const
+	{
+		return sprite.getPosition();
+	}
+
+	void draw_on(sf::RenderWindow & window) const
+	{
+		window.draw(sprite);
+	}
+};
+
+namespace std
+{
+	template<> struct less<sf::Vector2i>
+	{
+		bool operator() (const sf::Vector2i& lhs, const sf::Vector2i& rhs)
+		{
+			return lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y);
+		}
+	};
+}
+
+class Grid
+{
+	vector<Tile*> grid;
+	std::map<sf::Vector2i, bool> hwords;
+	std::map<sf::Vector2i, bool> vwords;
+
+	inline unsigned int bijection(unsigned x, unsigned int y) const
+	{
+		return ((x + y) * (x + y + 1)) / 2 + x;
+	}
+
+	unsigned int convert(int x, int y) const
+	{
+		if (x >= 0 && y >= 0)
+			return 4 * bijection(x, y);
+		if (x < 0 && y >= 0)
+			return 4 * bijection(-x - 1, y) + 1;
+		if (x >= 0 && y < 0)
+			return 4 * bijection(x, -y - 1) + 2;
+		else
+			return 4 * bijection(-x - 1, -y - 1) + 3;
+	}
+public:
+	Grid() : grid()
+	{
+	}
+
+	~Grid()
+	{
+		for (auto tile : grid)
+			if (tile != nullptr)
+				delete tile;
+	}
+
+	Tile* get(int x, int y) const
+	{
+		unsigned int n = convert(x, y);
+		if (n >= grid.size())
+			return nullptr;
+		return grid[n];
+	}
+
+	Tile* remove(int x, int y)
+	{
+		unsigned int n = convert(x, y);
+		// if in bounds
+		if (n < grid.size())
+		{
+			Tile* tile = grid[n];
+
+			// return if nothing was changed
+			if (tile == nullptr)
+				return nullptr;
+
+			// shrink grid, if possible
+			grid[n] = nullptr;
+			for (n = grid.size(); n > 0; --n)
+				if (grid[n - 1] != nullptr)
+					break;
+
+			grid.resize(n, nullptr);
+
+			// check for created words
+			if (get(x + 1, y) != nullptr && get(x + 2, y) != nullptr)
+				hwords[sf::Vector2i(x + 1, y)] = true;
+
+			if (get(x, y + 1) != nullptr && get(x, y + 2) != nullptr)
+				vwords[sf::Vector2i(x, y + 1)] = true;
+
+			// check for destroyed words
+			hwords.erase(sf::Vector2i(x, y));
+			if (get(x - 2, y) == nullptr)
+				hwords.erase(sf::Vector2i(x - 1, y));
+
+			vwords.erase(sf::Vector2i(x, y));
+			if (get(x, y - 2) == nullptr)
+				vwords.erase(sf::Vector2i(x, y - 1));
+
+			return tile;
+		}
+		return nullptr;
+	}
+
+	Tile* swap(int x, int y, Tile* tile)
+	{
+		if (tile == nullptr)
+			throw std::runtime_error("attempt to place NULL tile");
+		unsigned int n = convert(x, y);
+		if (n >= grid.size())
+			// TODO catch failure?
+			grid.resize(n + 1, nullptr);
+		Tile* swp = grid[n];
+		tile->set_pos(x * PPB, y * PPB);
+		grid[n] = tile;
+
+		if (swp != nullptr)
+			return swp;
+
+		// check for created words
+		if (get(x - 1, y) == nullptr)
+		{
+			if (get(x + 1, y) != nullptr)
+				hwords[sf::Vector2i(x, y)] = true;
+		}
+		else if (get(x - 2, y) == nullptr)
+			hwords[sf::Vector2i(x - 1, y)] = true;
+
+		if (get(x, y - 1) == nullptr)
+		{
+			if (get(x, y + 1) != nullptr)
+				vwords[sf::Vector2i(x, y)] = true;
+		}
+		else if (get(x, y - 2) == nullptr)
+			vwords[sf::Vector2i(x, y - 1)] = true;
+
+		// check for destroyed words
+		if (get(x + 1, y) != nullptr)
+			hwords.erase(sf::Vector2i(x + 1, y));
+
+		if (get(x, y + 1) != nullptr)
+			vwords.erase(sf::Vector2i(x, y + 1));
+
+		return nullptr;
+	}
+
+	void traverse(int x, int y)
+	{
+		Tile* tile = get(x, y);
+		if (tile == nullptr || tile->marked)
+			return;
+
+		tile->marked = true;
+		traverse(x - 1, y);
+		traverse(x + 1, y);
+		traverse(x, y - 1);
+		traverse(x, y + 1);
+	}
+
+	bool is_valid()
+	{
+		// need at least one word to be valid
+		if (hwords.size() == 0 && vwords.size() == 0)
+			return false;
+
+		auto start = hwords.begin();
+		if (hwords.size() == 0)
+			start = vwords.begin();
+
+		// grid must be continuous
+		for (auto tile: grid)
+			if (tile != nullptr)
+				tile->marked = false;
+
+		// guaranteed to be non-null
+		traverse(start->first.x, start->first.y);
+
+		bool valid = true;
+		for (auto tile: grid)
+			if (tile != nullptr && !tile->marked)
+			{
+				valid = false;
+				break;
+			}
+
+		if (!valid)
+			return false;
+
+		stringstream word;
+		Tile* tile;
+		for (auto& pair: hwords)
+		{
+			word.str("");
+			for (unsigned int x = pair.first.x; (tile = get(x, pair.first.y)) != nullptr; x++)
+				word << (char)(tile->ch() - 'A' + 'a');
+
+			auto it = dictionary.find(word.str());
+
+			if (it == dictionary.end())
+			{
+				valid = false;
+				break;
+			}
+		}
+
+		if (!valid)
+			return false;
+
+		for (auto& pair: vwords)
+		{
+			word.str("");
+			for (unsigned int y = pair.first.y; (tile = get(pair.first.x, y)) != nullptr; y++)
+				word << (char)(tile->ch() - 'A' + 'a');
+
+			auto it = dictionary.find(word.str());
+
+			if (it == dictionary.end())
+			{
+				valid = false;
+				break;
+			}
+		}
+
+		return valid;
+	}
+
+	void draw_on(sf::RenderWindow& window) const
+	{
+		for (auto tile: grid)
+			if (tile != nullptr)
+				tile->draw_on(window);
 	}
 };
 
@@ -142,13 +401,15 @@ class VimControls : public InputReader
 	char* ch;
 	bool* zoom_key;
 	bool* backspace;
+	Grid* grid;
 public:
-	VimControls(int* d, char* c, bool* z, bool* b)
+	VimControls(int* d, char* c, bool* z, bool* b, Grid* g)
 	{
 		delta = d;
 		ch = c;
 		zoom_key = z;
 		backspace = b;
+		grid = g;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -198,6 +459,10 @@ public:
 				case sf::Keyboard::BackSpace:
 					*backspace = true;
 					return true;
+				case sf::Keyboard::Space:
+					// TODO do something with this
+					grid->is_valid();
+					break;
 				default:
 					break;
 			}
@@ -237,38 +502,6 @@ public:
 			}
 		}
 		return true;
-	}
-};
-
-class Tile
-{
-	char character;
-	sf::Sprite sprite;
-public:
-	Tile(char ch) :
-		sprite(tile_texture[ch - 'A'].getTexture())
-	{
-		character = ch;
-	}
-
-	char ch() const
-	{
-		return character;
-	}
-
-	void set_pos(float x, float y)
-	{
-		sprite.setPosition(x, y);
-	}
-
-	const sf::Vector2f& get_pos() const
-	{
-		return sprite.getPosition();
-	}
-
-	void draw_on(sf::RenderWindow & window) const
-	{
-		window.draw(sprite);
 	}
 };
 
@@ -505,150 +738,6 @@ public:
 	}
 };
 
-namespace std
-{
-	template<> struct less<sf::Vector2i>
-	{
-		bool operator() (const sf::Vector2i& lhs, const sf::Vector2i& rhs)
-		{
-			return lhs.x < rhs.x || (lhs.x == rhs.x && lhs.y < rhs.y);
-		}
-	};
-}
-
-class Grid
-{
-	vector<Tile*> grid;
-	std::map<sf::Vector2i, bool> hwords;
-	std::map<sf::Vector2i, bool> vwords;
-
-	inline unsigned int bijection(unsigned x, unsigned int y) const
-	{
-		return ((x + y) * (x + y + 1)) / 2 + x;
-	}
-
-	unsigned int convert(int x, int y) const
-	{
-		if (x >= 0 && y >= 0)
-			return 4 * bijection(x, y);
-		if (x < 0 && y >= 0)
-			return 4 * bijection(-x - 1, y) + 1;
-		if (x >= 0 && y < 0)
-			return 4 * bijection(x, -y - 1) + 2;
-		else
-			return 4 * bijection(-x - 1, -y - 1) + 3;
-	}
-public:
-	Grid() : grid()
-	{
-	}
-
-	~Grid()
-	{
-		for (auto tile : grid)
-			if (tile != nullptr)
-				delete tile;
-	}
-
-	Tile* get(int x, int y) const
-	{
-		unsigned int n = convert(x, y);
-		if (n >= grid.size())
-			return nullptr;
-		return grid[n];
-	}
-
-	Tile* remove(int x, int y)
-	{
-		unsigned int n = convert(x, y);
-		// if in bounds
-		if (n < grid.size())
-		{
-			Tile* tile = grid[n];
-
-			// return if nothing was changed
-			if (tile == nullptr)
-				return nullptr;
-
-			// shrink grid, if possible
-			grid[n] = nullptr;
-			for (n = grid.size(); n > 0; --n)
-				if (grid[n - 1] != nullptr)
-					break;
-
-			grid.resize(n, nullptr);
-
-			// check for created words
-			if (get(x + 1, y) != nullptr && get(x + 2, y) != nullptr)
-				hwords[sf::Vector2i(x + 1, y)] = true;
-
-			if (get(x, y + 1) != nullptr && get(x, y + 2) != nullptr)
-				vwords[sf::Vector2i(x, y + 1)] = true;
-
-			// check for destroyed words
-			hwords.erase(sf::Vector2i(x, y));
-			if (get(x - 2, y) == nullptr)
-				hwords.erase(sf::Vector2i(x - 1, y));
-
-			vwords.erase(sf::Vector2i(x, y));
-			if (get(x, y - 2) == nullptr)
-				vwords.erase(sf::Vector2i(x, y - 1));
-
-			return tile;
-		}
-		return nullptr;
-	}
-
-	Tile* swap(int x, int y, Tile* tile)
-	{
-		if (tile == nullptr)
-			throw std::runtime_error("attempt to place NULL tile");
-		unsigned int n = convert(x, y);
-		if (n >= grid.size())
-			// TODO catch failure?
-			grid.resize(n + 1, nullptr);
-		Tile* swp = grid[n];
-		tile->set_pos(x * PPB, y * PPB);
-		grid[n] = tile;
-
-		if (swp != nullptr)
-			return swp;
-
-		// check for created words
-		if (get(x - 1, y) == nullptr)
-		{
-			if (get(x + 1, y) != nullptr)
-				hwords[sf::Vector2i(x, y)] = true;
-		}
-		else if (get(x - 2, y) == nullptr)
-			hwords[sf::Vector2i(x - 1, y)] = true;
-
-		if (get(x, y - 1) == nullptr)
-		{
-			if (get(x, y + 1) != nullptr)
-				vwords[sf::Vector2i(x, y)] = true;
-		}
-		else if (get(x, y - 2) == nullptr)
-			vwords[sf::Vector2i(x, y - 1)] = true;
-
-		// check for destroyed words
-		if (get(x + 1, y) != nullptr)
-			hwords.erase(sf::Vector2i(x + 1, y));
-
-		if (get(x, y + 1) != nullptr)
-			vwords.erase(sf::Vector2i(x, y + 1));
-
-		return nullptr;
-	}
-
-	void draw_on(sf::RenderWindow& window) const
-	{
-		for (auto tile : grid)
-			if (tile != nullptr)
-				tile->draw_on(window);
-	}
-};
-
 int main()
 {
 	sf::Font font;
@@ -689,7 +778,6 @@ int main()
 
 	// load word list
 	cerr << "Reading dictionary... \x1b[s";
-	std::map<std::string, std::string> dictionary;
 	{
 		std::ifstream words("dictionary.txt");
 
@@ -856,7 +944,7 @@ int main()
 	bool backspace = false;
 	int next[2];
 	int last[2] = {0, 0};
-	VimControls controls(delta, &ch, &zoom_key, &backspace);
+	VimControls controls(delta, &ch, &zoom_key, &backspace, &grid);
 	input_readers.push_back(&controls);
 
 	clock.restart();
