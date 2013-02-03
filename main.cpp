@@ -505,9 +505,22 @@ public:
 	}
 };
 
+namespace std
+{
+	template<> struct less<sf::Vector2i>
+	{
+		bool operator() (const sf::Vector2i& lhs, const sf::Vector2i& rhs)
+		{
+			return lhs.x < rhs.y || (lhs.x == rhs.x && lhs.y < rhs.y);
+		}
+	};
+}
+
 class Grid
 {
 	vector<Tile*> grid;
+	std::map<sf::Vector2i, bool> hwords;
+	std::map<sf::Vector2i, bool> vwords;
 
 	inline unsigned int bijection(unsigned x, unsigned int y) const
 	{
@@ -565,6 +578,29 @@ public:
 
 			grid.resize(n, nullptr);
 
+			// check for created/destroyed words
+			hwords.erase(sf::Vector2i(x, y));
+			if (hwords.find(sf::Vector2i(x - 1, y)) != hwords.end())
+				hwords.erase(sf::Vector2i(x - 1, y));
+			if (get(x + 1, y) != nullptr && get(x + 2, y) != nullptr)
+				hwords[sf::Vector2i(x + 1, y)] = true;
+
+			vwords.erase(sf::Vector2i(x, y));
+			if (vwords.find(sf::Vector2i(x, y - 1)) != vwords.end())
+				vwords.erase(sf::Vector2i(x, y - 1));
+			if (get(x, y + 1) != nullptr && get(x, y + 2) != nullptr)
+				vwords[sf::Vector2i(x, y + 1)] = true;
+
+			cerr << "Hwords ";
+			for (auto& pair: hwords)
+				cerr << pair.first.x << "," << pair.first.y << " ";
+			cerr << endl;
+
+			cerr << "Vwords ";
+			for (auto& pair: vwords)
+				cerr << pair.first.x << "," << pair.first.y << " ";
+			cerr << endl;
+
 			return tile;
 		}
 		return nullptr;
@@ -581,7 +617,38 @@ public:
 		Tile* swp = grid[n];
 		tile->set_pos(x * PPB, y * PPB);
 		grid[n] = tile;
-		return swp;
+
+		if (swp != nullptr)
+			return swp;
+
+		// check for newly created words
+		if (get(x - 1, y) == nullptr)
+		{
+			if (get(x + 1, y) != nullptr)
+				hwords[sf::Vector2i(x, y)] = true;
+		}
+		else if (get(x - 2, y) == nullptr)
+			hwords[sf::Vector2i(x - 1, y)] = true;
+
+		if (get(x, y - 1) == nullptr)
+		{
+			if (get(x, y + 1) != nullptr)
+				vwords[sf::Vector2i(x, y)] = true;
+		}
+		else if (get(x, y - 2) == nullptr)
+			vwords[sf::Vector2i(x, y - 1)] = true;
+
+		cerr << "Hwords ";
+		for (auto& pair: hwords)
+			cerr << pair.first.x << "," << pair.first.y << " ";
+		cerr << endl;
+
+		cerr << "Vwords ";
+		for (auto& pair: vwords)
+			cerr << pair.first.x << "," << pair.first.y << " ";
+		cerr << endl;
+
+		return nullptr;
 	}
 
 	void draw_on(sf::RenderWindow& window) const
