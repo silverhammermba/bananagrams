@@ -284,20 +284,20 @@ class TileDisplay : public InputReader
 	sf::Text number[26];
 
 	// position tiles in list in nice rows
-	void position_list(list<Tile*>& list)
+	void position_list(list<Tile*>& l)
 	{
-		if (list.size() == 0)
+		if (l.size() == 0)
 			return;
 		float padding = PPB / 8.f;
 		float min_width = PPB + padding;
 		// leave PPB/2 space on either side of tiles, one tile gets full PPB width
 		unsigned int max_per_row = (size.x - PPB - padding * 2) / (int)min_width + 1;
-		unsigned int rows = list.size() / max_per_row + (list.size() > (list.size() / max_per_row) * max_per_row ? 1 : 0);
-		auto tile = list.begin();
-		for (unsigned int i = 0; tile != list.end(); i++, tile++)
+		unsigned int rows = l.size() / max_per_row + (l.size() > (l.size() / max_per_row) * max_per_row ? 1 : 0);
+		auto tile = l.begin();
+		for (unsigned int i = 0; tile != l.end(); i++, tile++)
 		{
 			// number of tiles in this row
-			unsigned int row_size = i >= (list.size() / max_per_row) * max_per_row ? list.size() % max_per_row : max_per_row;
+			unsigned int row_size = i >= (l.size() / max_per_row) * max_per_row ? l.size() % max_per_row : max_per_row;
 			float room_per_tile = row_size == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(row_size - 1);
 			// maximum PPB/4 spacing between tiles
 			if (room_per_tile > (PPB * 5) / 4.0)
@@ -716,7 +716,7 @@ int main()
 
 	// create textures and tiles
 	cerr << "Generating textures... ";
-	vector<Tile*> tiles[26];
+	std::list<Tile*> bunch;
 
 	clock.restart();
 	{
@@ -796,13 +796,26 @@ int main()
 
 			// create tiles
 			for (unsigned int i = 0; i < letter_count[ch - 'A']; i++)
-				tiles[ch - 'A'].push_back(new Tile(ch));
+			{
+				auto it = bunch.begin();
+				auto pos = std::rand() % (bunch.size() + 1);
+				for (unsigned int i = 0; i != pos && it != bunch.end(); it++, i++);
+				bunch.insert(it, new Tile(ch));
+			}
 
 			cerr << ch;
 		}
 
 		float time = clock.getElapsedTime().asSeconds();
 		cerr << " (" << time << ")\n";
+	}
+
+	vector<Tile*> tiles[26];
+	for (unsigned int i = 0; i < 21; i++)
+	{
+		Tile* tile = bunch.back();
+		bunch.pop_back();
+		tiles[tile->ch() - 'A'].push_back(tile);
 	}
 
 	sf::Color background(22, 22, 22);
@@ -1023,6 +1036,9 @@ int main()
 	}
 
 	// delete unused tiles
+	for (auto tile: bunch)
+		delete tile;
+
 	for (char ch = 'A'; ch <= 'Z'; ch++)
 		for (auto tile: tiles[ch - 'A'])
 			delete tile;
