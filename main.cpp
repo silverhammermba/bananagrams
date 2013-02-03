@@ -319,7 +319,7 @@ class TileDisplay : public InputReader
 		for (auto tile: single)
 		{
 			tile->draw_on(*window);
-			number[tile->ch() - 'A'].setPosition(tile->get_pos() + sf::Vector2f(PPB / 20.0, PPB / 32.0));
+			number[tile->ch() - 'A'].setPosition(tile->get_pos() + sf::Vector2f(PPB / 32.0, 0));
 			window->draw(number[tile->ch() - 'A']);
 		}
 	}
