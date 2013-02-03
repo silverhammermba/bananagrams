@@ -269,8 +269,9 @@ class TileDisplay : public InputReader
 	bool reposition = true;
 	std::vector<Tile*>* tiles;
 	sf::RenderWindow* window;
-	std::list<Tile*> scram;
-	std::list<Tile*> sort;
+	std::list<Tile*> scram; // for shuffle
+	std::list<Tile*> sort; // for ordered
+	std::list<Tile*> single; // for counts
 	sf::Vector2u size;
 
 	// position tiles in list in nice rows
@@ -300,6 +301,14 @@ class TileDisplay : public InputReader
 
 	void counts()
 	{
+		if (reposition)
+		{
+			position_list(single);
+			reposition = false;
+		}
+
+		for (auto tile: single)
+			tile->draw_on(*window);
 	}
 
 	void stacks()
@@ -330,6 +339,7 @@ class TileDisplay : public InputReader
 			}
 			reposition = false;
 		}
+
 		for (char ch = 'Z'; ch >= 'A'; --ch)
 			for (auto tile: tiles[ch - 'A'])
 				tile->draw_on(*window);
@@ -383,6 +393,9 @@ public:
 		// prepare persistent structures
 		reshuffle();
 		for (char ch = 'A'; ch <= 'Z'; ch++)
+			if (tiles[ch - 'A'].size() > 0)
+				single.push_back(tiles[ch - 'A'][0]);
+		for (char ch = 'A'; ch <= 'Z'; ch++)
 			for (auto tile: tiles[ch - 'A'])
 				sort.push_back(tile);
 	}
@@ -392,16 +405,21 @@ public:
 		reposition = true;
 		// update persistent structures
 		scram.push_back(tile);
-		bool added = false;
-		for (auto it = sort.begin(); it != sort.end(); it++)
-			if ((*it)->ch() >= tile->ch())
+		if (tiles[tile->ch() - 'A'].size() == 1)
+		{
+			for (auto it = single.begin(); ; it++)
+				if (it == single.end() || (*it)->ch() > tile->ch())
+				{
+					single.insert(it, tiles[tile->ch() - 'A'][0]);
+					break;
+				}
+		}
+		for (auto it = sort.begin(); ; it++)
+			if (it == sort.end() || (*it)->ch() >= tile->ch())
 			{
 				sort.insert(it, tile);
-				added = true;
 				break;
 			}
-		if (!added)
-			sort.push_back(tile);
 	}
 
 	void remove_tile(Tile* tile)
@@ -409,6 +427,9 @@ public:
 		reposition = true;
 		// update persistent structures
 		scram.remove(tile);
+		// Note: check for size 1 since the tile is removed *after* this function call
+		if (tiles[tile->ch() - 'A'].size() == 1)
+			single.remove(tile);
 		sort.remove(tile);
 	}
 
