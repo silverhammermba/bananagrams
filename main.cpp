@@ -11,6 +11,9 @@
 
 using std::cerr;
 using std::endl;
+using std::list;
+using std::stringstream;
+using std::vector;
 
 #define PPB 64
 
@@ -258,6 +261,11 @@ public:
 		sprite.setPosition(x, y);
 	}
 
+	const sf::Vector2f& get_pos() const
+	{
+		return sprite.getPosition();
+	}
+
 	void draw_on(sf::RenderWindow & window) const
 	{
 		window.draw(sprite);
@@ -267,15 +275,16 @@ public:
 class TileDisplay : public InputReader
 {
 	bool reposition = true;
-	std::vector<Tile*>* tiles;
+	vector<Tile*>* tiles;
 	sf::RenderWindow* window;
-	std::list<Tile*> scram; // for shuffle
-	std::list<Tile*> sort; // for ordered
-	std::list<Tile*> single; // for counts
+	list<Tile*> scram; // for shuffle
+	list<Tile*> sort; // for ordered
+	list<Tile*> single; // for counts
 	sf::Vector2u size;
+	sf::Text number[26];
 
 	// position tiles in list in nice rows
-	void position_list(std::list<Tile*>& list)
+	void position_list(list<Tile*>& list)
 	{
 		if (list.size() == 0)
 			return;
@@ -308,7 +317,11 @@ class TileDisplay : public InputReader
 		}
 
 		for (auto tile: single)
+		{
 			tile->draw_on(*window);
+			number[tile->ch() - 'A'].setPosition(tile->get_pos() + sf::Vector2f(PPB / 20.0, PPB / 32.0));
+			window->draw(number[tile->ch() - 'A']);
+		}
 	}
 
 	void stacks()
@@ -386,18 +399,27 @@ class TileDisplay : public InputReader
 	}
 
 public:
-	TileDisplay(sf::RenderWindow* win, std::vector<Tile*>* t) : size(win->getSize())
+	TileDisplay(sf::RenderWindow* win, vector<Tile*>* t, const sf::Font& font) : size(win->getSize())
 	{
 		window = win;
 		tiles = t;
 		// prepare persistent structures
 		reshuffle();
 		for (char ch = 'A'; ch <= 'Z'; ch++)
+		{
+			number[ch - 'A'].setFont(font);
+			number[ch - 'A'].setCharacterSize(PPB / 4.0);
 			if (tiles[ch - 'A'].size() > 0)
+			{
 				single.push_back(tiles[ch - 'A'][0]);
-		for (char ch = 'A'; ch <= 'Z'; ch++)
+				stringstream string;
+				string << tiles[ch - 'A'].size();
+				number[ch - 'A'].setString(string.str());
+				number[ch - 'A'].setColor(sf::Color::Black);
+			}
 			for (auto tile: tiles[ch - 'A'])
 				sort.push_back(tile);
+		}
 	}
 
 	void add_tile(Tile* tile)
@@ -414,6 +436,9 @@ public:
 					break;
 				}
 		}
+		stringstream string;
+		string << tiles[tile->ch() - 'A'].size();
+		number[tile->ch() - 'A'].setString(string.str());
 		for (auto it = sort.begin(); ; it++)
 			if (it == sort.end() || (*it)->ch() >= tile->ch())
 			{
@@ -430,6 +455,12 @@ public:
 		// Note: check for size 1 since the tile is removed *after* this function call
 		if (tiles[tile->ch() - 'A'].size() == 1)
 			single.remove(tile);
+		else
+		{
+			stringstream string;
+			string << (tiles[tile->ch() - 'A'].size() - 1);
+			number[tile->ch() - 'A'].setString(string.str());
+		}
 		sort.remove(tile);
 	}
 
@@ -476,7 +507,7 @@ public:
 
 class Grid
 {
-	std::vector<Tile*> grid;
+	vector<Tile*> grid;
 
 	inline unsigned int bijection(unsigned x, unsigned int y) const
 	{
@@ -628,7 +659,7 @@ int main()
 
 	// create textures and tiles
 	cerr << "Generating textures... ";
-	std::vector<Tile*> tiles[26];
+	vector<Tile*> tiles[26];
 
 	clock.restart();
 	{
@@ -644,7 +675,7 @@ int main()
 			tile_texture[ch - 'A'].create(PPB, PPB);
 
 			// draw character for centering
-			std::stringstream string;
+			stringstream string;
 			string << ch;
 			sf::Text letter(string.str(), font, (PPB * 2) / 3.0);
 			letter.setColor(sf::Color::Black);
@@ -741,12 +772,12 @@ int main()
 	cursor.setOutlineThickness(cursor_thickness);
 	cursor.setOutlineColor(sf::Color(0, 200, 0));
 
-	std::vector<InputReader*> input_readers;
+	vector<InputReader*> input_readers;
 
 	Game game(&window);
 	input_readers.push_back(&game);
 
-	TileDisplay display(&window, tiles);
+	TileDisplay display(&window, tiles, font);
 	input_readers.push_back(&display);
 
 	char ch = 'A' - 1;
