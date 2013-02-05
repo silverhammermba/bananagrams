@@ -401,14 +401,16 @@ class VimControls : public InputReader
 	char* ch;
 	bool* zoom_key;
 	bool* backspace;
+	vector<Tile*>* tiles;
 	Grid* grid;
 public:
-	VimControls(int* d, char* c, bool* z, bool* b, Grid* g)
+	VimControls(int* d, char* c, bool* z, bool* b, vector<Tile*>* t, Grid* g)
 	{
 		delta = d;
 		ch = c;
 		zoom_key = z;
 		backspace = b;
+		tiles = t;
 		grid = g;
 	}
 
@@ -461,7 +463,8 @@ public:
 					return true;
 				case sf::Keyboard::Space:
 					// TODO do something with this
-					grid->is_valid();
+					for (char ch = 'A'; ch <= 'Z'; ch++)
+					if (grid->is_valid())
 					break;
 				default:
 					break;
