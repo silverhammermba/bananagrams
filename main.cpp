@@ -1,4 +1,6 @@
 #include <cmath>
+#include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <fstream>
 #include <list>
@@ -401,17 +403,17 @@ class VimControls : public InputReader
 	char* ch;
 	bool* zoom_key;
 	bool* backspace;
-	vector<Tile*>* tiles;
 	Grid* grid;
+	bool* peel;
 public:
-	VimControls(int* d, char* c, bool* z, bool* b, vector<Tile*>* t, Grid* g)
+	VimControls(int* d, char* c, bool* z, bool* b, Grid* g, bool* p)
 	{
 		delta = d;
 		ch = c;
 		zoom_key = z;
 		backspace = b;
-		tiles = t;
 		grid = g;
+		peel = p;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -462,9 +464,7 @@ public:
 					*backspace = true;
 					return true;
 				case sf::Keyboard::Space:
-					// TODO do something with this
-					for (char ch = 'A'; ch <= 'Z'; ch++)
-					if (grid->is_valid())
+					*peel = true;
 					break;
 				default:
 					break;
@@ -743,6 +743,8 @@ public:
 
 int main()
 {
+	std::srand((unsigned int)std::time(nullptr));
+
 	sf::Font font;
 	font.loadFromFile("/usr/share/fonts/TTF/FreeSans.ttf");
 	Grid grid;
@@ -945,9 +947,10 @@ int main()
 	bool zoom_key = false;
 	bool sprint_key = false;
 	bool backspace = false;
+	bool peel = false;
 	int next[2];
 	int last[2] = {0, 0};
-	VimControls controls(delta, &ch, &zoom_key, &backspace, tiles, &grid);
+	VimControls controls(delta, &ch, &zoom_key, &backspace, &grid, &peel);
 	input_readers.push_back(&controls);
 
 	clock.restart();
@@ -966,6 +969,38 @@ int main()
 				if (!cont)
 					break;
 			}
+		}
+
+		if (peel)
+		{
+			bool spent = true;
+			for (char ch = 'A'; ch <= 'Z'; ch++)
+				if (tiles[ch - 'A'].size() > 0)
+				{
+					spent = false;
+					break;
+				}
+			if (spent)
+			{
+				if (grid.is_valid())
+				{
+					if (bunch.size() > 0)
+					{
+						Tile* tile = bunch.back();
+						// TODO it sucks that these don't sync automatically
+						tiles[tile->ch() - 'A'].push_back(tile);
+						display.add_tile(tile);
+						bunch.pop_back();
+					}
+					else
+						cerr << "You win!\n";
+				}
+				else
+					cerr << "Grid is not valid.\n";
+			}
+			else
+				cerr << "You have not used all of your letters.\n";
+			peel = false;
 		}
 
 		if (backspace)
