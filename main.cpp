@@ -947,7 +947,7 @@ int main()
 	bool backspace = false;
 	int next[2];
 	int last[2] = {0, 0};
-	VimControls controls(delta, &ch, &zoom_key, &backspace, &grid);
+	VimControls controls(delta, &ch, &zoom_key, &backspace, tiles, &grid);
 	input_readers.push_back(&controls);
 
 	clock.restart();
