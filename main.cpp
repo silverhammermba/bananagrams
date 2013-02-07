@@ -14,13 +14,14 @@
 using std::cerr;
 using std::endl;
 using std::list;
+using std::string;
 using std::stringstream;
 using std::vector;
 
 #define PPB 64
 
 sf::RenderTexture tile_texture[26];
-std::map<std::string, std::string> dictionary;
+std::map<string, string> dictionary;
 
 class InputReader
 {
@@ -648,9 +649,9 @@ public:
 			if (tiles[ch - 'A'].size() > 0)
 			{
 				single.push_back(tiles[ch - 'A'][0]);
-				stringstream string;
-				string << tiles[ch - 'A'].size();
-				number[ch - 'A'].setString(string.str());
+				stringstream str;
+				str << tiles[ch - 'A'].size();
+				number[ch - 'A'].setString(str.str());
 				number[ch - 'A'].setColor(sf::Color::Black);
 			}
 			for (auto tile: tiles[ch - 'A'])
@@ -672,9 +673,9 @@ public:
 					break;
 				}
 		}
-		stringstream string;
-		string << tiles[tile->ch() - 'A'].size();
-		number[tile->ch() - 'A'].setString(string.str());
+		stringstream str;
+		str << tiles[tile->ch() - 'A'].size();
+		number[tile->ch() - 'A'].setString(str.str());
 		for (auto it = sort.begin(); ; it++)
 			if (it == sort.end() || (*it)->ch() >= tile->ch())
 			{
@@ -693,9 +694,9 @@ public:
 			single.remove(tile);
 		else
 		{
-			stringstream string;
-			string << (tiles[tile->ch() - 'A'].size() - 1);
-			number[tile->ch() - 'A'].setString(string.str());
+			stringstream str;
+			str << (tiles[tile->ch() - 'A'].size() - 1);
+			number[tile->ch() - 'A'].setString(str.str());
 		}
 		sort.remove(tile);
 	}
@@ -741,6 +742,39 @@ public:
 	}
 };
 
+class Error
+{
+	sf::Text message;
+	float lifetime = 0;
+public:
+	Error(const string& mes, const sf::Font& font, unsigned int size = 20, const sf::Color& color) : message(mes, font, size)
+	{
+		message.setColor(color);
+	}
+
+	void age(float time)
+	{
+		lifetime += time;
+	}
+
+	void set_pos(const sf::Vector2f& pos)
+	{
+		message.setPosition(pos);
+	}
+
+	void draw_on(sf::RenderWindow& window) const
+	{
+		window.draw(message);
+	}
+};
+
+class ErrorDisplay
+{
+	list<Error*> errors;
+public:
+	// TODO
+}
+
 int main()
 {
 	std::srand((unsigned int)std::time(nullptr));
@@ -782,15 +816,16 @@ int main()
 	sf::Clock clock;
 
 	// load word list
+	// TODO validate somehow
 	cerr << "Reading dictionary... \x1b[s";
 	{
 		std::ifstream words("dictionary.txt");
 
-		std::string line;
+		string line;
 		while (std::getline(words, line))
 		{
 			auto pos = line.find_first_of(' ');
-			if (pos == std::string::npos)
+			if (pos == string::npos)
 			{
 				dictionary[line] = "";
 				if (std::rand() % 8 == 0)
@@ -798,7 +833,7 @@ int main()
 			}
 			else
 			{
-				dictionary[line.substr(0, pos)] = line.substr(pos + 1, std::string::npos);
+				dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
 				if (std::rand() % 8 == 0)
 					cerr << "\x1b[u\x1b[K" << line.substr(0, pos);
 			}
