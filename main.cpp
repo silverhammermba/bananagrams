@@ -304,7 +304,7 @@ public:
 				std::strcpy(str, word.str().c_str());
 				for (unsigned int i = 0; i < word.str().length(); i++)
 					str[i] = str[i] - 'a' + 'A';
-				*message = string(str) + " is not a valid word.";
+				*message = string(str) + " is not a word.";
 				delete[] str;
 				valid = false;
 				break;
@@ -791,6 +791,11 @@ public:
 		message.setPosition(x, y);
 	}
 
+	float get_height() const
+	{
+		return message.getGlobalBounds().height;
+	}
+
 	void draw_on(sf::RenderWindow& window) const
 	{
 		window.draw(message);
@@ -801,11 +806,14 @@ class MessageQueue
 {
 	list<Message*> messages;
 	sf::Font font;
+	float bottom;
+	static constexpr float padding = 10;
 public:
 	enum severity_t {LOW, HIGH};
 
 	MessageQueue(const sf::Font& f) : font(f)
 	{
+		bottom = 0;
 	}
 
 	void add(const string& message, severity_t severity)
@@ -819,10 +827,12 @@ public:
 				break;
 			case HIGH:
 				color = sf::Color::Red;
+				size = 18;
 		}
 		messages.push_back(new Message(message, font, size, color));
 		// TODO bleh hardcoded
-		messages.back()->set_pos(12, (messages.size() - 1) * 18 + 12);
+		messages.back()->set_pos(padding, bottom + padding);
+		bottom += padding + messages.back()->get_height();
 	}
 
 	void age(float time)
@@ -841,11 +851,11 @@ public:
 		}
 		if (change)
 		{
-			unsigned int i = 12;
+			bottom = 0;
 			for (auto message : messages)
 			{
-				message->set_pos(12, i);
-				i += 18;
+				message->set_pos(padding, bottom + padding);
+				bottom += padding + message->get_height();
 			}
 		}
 	}
@@ -1318,6 +1328,12 @@ int main()
 				last[1] = pos[1];
 				pos[0] += next[0];
 				pos[1] += next[1];
+			}
+			else
+			{
+				stringstream letter;
+				letter << state.ch;
+				messages.add("You are out of " + letter.str() + "s!", MessageQueue::HIGH);
 			}
 
 			// clear character to place
