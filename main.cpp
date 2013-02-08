@@ -242,7 +242,7 @@ public:
 		traverse(x, y + 1);
 	}
 
-	bool is_valid()
+	bool is_valid(string* message)
 	{
 		// need at least one word to be valid
 		if (hwords.size() == 0 && vwords.size() == 0)
@@ -269,7 +269,10 @@ public:
 			}
 
 		if (!valid)
+		{
+			*message = "Your tiles are not all connected.";
 			return false;
+		}
 
 		stringstream word;
 		Tile* tile;
@@ -283,6 +286,7 @@ public:
 
 			if (it == dictionary.end())
 			{
+				*message = "'" + word.str() + "' is not a valid word.";
 				valid = false;
 				break;
 			}
@@ -301,6 +305,7 @@ public:
 
 			if (it == dictionary.end())
 			{
+				*message = "'" + word.str() + "' is not a valid word.";
 				valid = false;
 				break;
 			}
@@ -742,12 +747,12 @@ public:
 	}
 };
 
-class Error
+class Message
 {
 	sf::Text message;
 	float lifetime = 0;
 public:
-	Error(const string& mes, const sf::Font& font, unsigned int size = 20, const sf::Color& color = sf::Color::Black) : message(mes, font, size)
+	Message(const string& mes, const sf::Font& font, unsigned int size = 20, const sf::Color& color = sf::Color::Black) : message(mes, font, size)
 	{
 		message.setColor(color);
 	}
@@ -757,9 +762,14 @@ public:
 		lifetime += time;
 	}
 
-	void set_pos(const sf::Vector2f& pos)
+	float age()
 	{
-		message.setPosition(pos);
+		return lifetime;
+	}
+
+	void set_pos(float x, float y)
+	{
+		message.setPosition(x, y);
 	}
 
 	void draw_on(sf::RenderWindow& window) const
@@ -768,11 +778,67 @@ public:
 	}
 };
 
-class ErrorDisplay
+class MessageQueue
 {
-	list<Error*> errors;
+	list<Message*> messages;
+	sf::Font font;
 public:
-	// TODO
+	enum severity_t {LOW, HIGH};
+
+	MessageQueue(const sf::Font& f) : font(f)
+	{
+	}
+
+	void add(const string& message, severity_t severity)
+	{
+		sf::Color color = sf::Color::Black;
+		unsigned int size = 12;
+		switch (severity)
+		{
+			case LOW:
+				color = sf::Color::White;
+				break;
+			case HIGH:
+				color = sf::Color::Red;
+		}
+		messages.push_back(new Message(message, font, size, color));
+		// TODO bleh hardcoded
+		messages.back()->set_pos(12, (messages.size() - 1) * 18 + 12);
+	}
+
+	void age(float time)
+	{
+		bool change = false;
+		for (auto mess = messages.begin(); mess != messages.end();)
+		{
+			(*mess)->age(time);
+			if ((*mess)->age() > 10)
+			{
+				mess = messages.erase(mess);
+				change = true;
+			}
+			else
+				mess++;
+		}
+		if (change)
+		{
+			unsigned int i = 12;
+			for (auto message : messages)
+			{
+				message->set_pos(12, i);
+				i += 18;
+			}
+		}
+	}
+
+	void draw_on(sf::RenderWindow& window) const
+	{
+		auto view = window.getView();
+		window.setView(window.getDefaultView());
+		for (auto message : messages)
+			message->draw_on(window);
+		window.setView(view);
+	}
 };
 
 int main()
@@ -782,6 +848,8 @@ int main()
 	sf::Font font;
 	font.loadFromFile("C:\\Windows\\Fonts\\Vera.ttf");
 	Grid grid;
+
+	MessageQueue messages(font);
 
 	unsigned int letter_count[26] =
 	{
@@ -817,6 +885,7 @@ int main()
 
 	// load word list
 	// TODO validate somehow
+	// TODO not being loaded...
 	cerr << "Reading dictionary... \x1b[s";
 	{
 		std::ifstream words("dictionary.txt");
@@ -829,6 +898,7 @@ int main()
 			{
 				dictionary[line] = "";
 				if (std::rand() % 8 == 0)
+					// TODO these escape characters don't work...
 					cerr << "\x1b[u\x1b[K" << line;
 			}
 			else
@@ -1017,7 +1087,8 @@ int main()
 				}
 			if (spent)
 			{
-				if (grid.is_valid())
+				string mess;
+				if (grid.is_valid(&mess))
 				{
 					if (bunch.size() > 0)
 					{
@@ -1028,13 +1099,13 @@ int main()
 						bunch.pop_back();
 					}
 					else
-						cerr << "You win!\n";
+						messages.add("You win!", MessageQueue::LOW);
 				}
 				else
-					cerr << "Grid is not valid.\n";
+					messages.add(mess, MessageQueue::HIGH);
 			}
 			else
-				cerr << "You have not used all of your letters.\n";
+				messages.add("You have not used all of your letters.", MessageQueue::HIGH);
 			peel = false;
 		}
 
@@ -1145,6 +1216,8 @@ int main()
 		float time = clock.getElapsedTime().asSeconds();
 		clock.restart();
 
+		messages.age(time);
+
 		if (zoom_key)
 			view.zoom(1 + delta[1] * (sprint_key ? 2 : 1) * time);
 		else
@@ -1192,6 +1265,7 @@ int main()
 		window.draw(cursor);
 
 		display.draw();
+		messages.draw_on(window);
 
 		window.display();
 	}
