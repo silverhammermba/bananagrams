@@ -670,8 +670,8 @@ public:
 				stringstream str;
 				str << tiles[ch - 'A'].size();
 				number[ch - 'A'].setString(str.str());
-				number[ch - 'A'].setColor(sf::Color::Black);
 			}
+			number[ch - 'A'].setColor(sf::Color::Black);
 			for (auto tile: tiles[ch - 'A'])
 				sort.push_back(tile);
 		}
@@ -959,7 +959,6 @@ int main()
 
 	while (window.isOpen())
 	{
-		window.clear(background);
 		if (loading)
 		{
 			if (loading_words)
@@ -984,6 +983,7 @@ int main()
 							dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
 							loading_text.setString(line.substr(0, pos));
 						}
+						loading_text.setPosition(loading_text.getGlobalBounds().width / -2, 0);
 
 						elapsed = clock.getElapsedTime().asSeconds();
 					}
@@ -993,19 +993,18 @@ int main()
 						stringstream foo;
 						foo << dictionary.size();
 						loading_text.setString(foo.str() + " words loaded.");
-						loading_text.move(loading_text.getGlobalBounds().width / -2, -60);
+						loading_text.move(loading_text.getGlobalBounds().width / -2, -90);
 						break;
 					}
 				}
 
 				clock.restart();
 
+				window.clear(background);
 				window.draw(loading_text);
 			}
 			else
 			{
-				window.draw(loading_text);
-
 				// TODO some kind of depth would help for stack appearance
 				// TODO antialiase these
 				// TODO error check
@@ -1068,7 +1067,10 @@ int main()
 					bunch.insert(it, new Tile(load_char));
 				}
 
-				window.draw(sf::Sprite(tile_texture[load_char - 'A'].getTexture()));
+				sf::Sprite sprite(tile_texture[load_char - 'A'].getTexture());
+				float padding = PPB / 2.0;
+				sprite.setPosition(((load_char - 'A') * (res[0] - 2 * padding - PPB)) / 25.0 + padding - res[0] / 2, PPB / -2.0);
+				window.draw(sprite);
 
 				load_char++;
 				if(load_char > 'Z')
@@ -1087,6 +1089,7 @@ int main()
 		}
 		else
 		{
+			window.clear(background);
 			sf::Event event;
 			while (window.pollEvent(event))
 			{
