@@ -33,6 +33,7 @@ struct State
 	bool sprint;
 	bool remove;
 	bool peel;
+	bool dump;
 };
 
 class InputReader
@@ -381,8 +382,15 @@ public:
 				case sf::Keyboard::RShift:
 					state->sprint = true;
 					break;
+				case sf::Keyboard::D:
+					if (state->zoom)
+						state->dump = true;
+					break;
 				case sf::Keyboard::BackSpace:
 					state->remove = true;
+					break;
+				case sf::Keyboard::Space:
+					state->peel = true;
 					break;
 				default:
 					break;
@@ -474,6 +482,11 @@ public:
 						break;
 				case sf::Keyboard::BackSpace:
 					state->remove = true;
+					return true;
+				case sf::Keyboard::D:
+					if (!shift)
+						break;
+					state->dump = true;
 					return true;
 				case sf::Keyboard::Space:
 					state->peel = true;
@@ -1116,6 +1129,7 @@ int main()
 	state.sprint = false;
 	state.remove = false;
 	state.peel = false;
+	state.dump = false;
 
 	VimControls controls(&state);
 	input_readers.push_back(&controls);
@@ -1139,6 +1153,38 @@ int main()
 				if (!cont)
 					break;
 			}
+		}
+
+		if (state.dump)
+		{
+			if (bunch.size() >= 3)
+			{
+				auto dumped = grid.remove(pos[0], pos[1]);
+				if (dumped == nullptr)
+					messages.add("You need to select a tile to dump.", MessageQueue::LOW);
+				else
+				{
+					// take three
+					for (unsigned int i = 0; i < 3; i++)
+					{
+						Tile* tile = bunch.back();
+						// TODO it sucks that these don't sync automatically
+						tiles[tile->ch() - 'A'].push_back(tile);
+						display.add_tile(tile);
+						bunch.pop_back();
+					}
+
+					// add tile to bunch
+					auto it = bunch.begin();
+					auto pos = std::rand() % (bunch.size() + 1);
+					for (unsigned int i = 0; i != pos && it != bunch.end(); it++, i++);
+					bunch.insert(it, dumped);
+				}
+			}
+			else
+				messages.add("There are not enough tiles left to dump!", MessageQueue::HIGH);
+
+			state.dump = false;
 		}
 
 		if (state.peel)
