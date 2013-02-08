@@ -24,6 +24,17 @@ using std::vector;
 sf::RenderTexture tile_texture[26];
 std::map<string, string> dictionary;
 
+// for passing around game state
+struct State
+{
+	int delta[2];
+	char ch;
+	bool zoom;
+	bool sprint;
+	bool remove;
+	bool peel;
+};
+
 class InputReader
 {
 protected:
@@ -337,19 +348,11 @@ public:
 
 class SimpleControls : public InputReader
 {
-	int* delta;
-	char* ch;
-	bool* zoom_key;
-	bool* sprint_key;
-	bool* backspace;
+	State* state;
 public:
-	SimpleControls(int* d, char* c, bool* z, bool* s, bool* b)
+	SimpleControls(State* s)
 	{
-		delta = d;
-		ch = c;
-		zoom_key = z;
-		sprint_key = s;
-		backspace = b;
+		state = s;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -359,33 +362,33 @@ public:
 			switch (event.key.code)
 			{
 				case sf::Keyboard::Left:
-					delta[0] = -1;
+					state->delta[0] = -1;
 					break;
 				case sf::Keyboard::Right:
-					delta[0] = 1;
+					state->delta[0] = 1;
 					break;
 				case sf::Keyboard::Up:
-					delta[1] = -1;
+					state->delta[1] = -1;
 					break;
 				case sf::Keyboard::Down:
-					delta[1] = 1;
+					state->delta[1] = 1;
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
-					*zoom_key = true;
+					state->zoom = true;
 					break;
 				case sf::Keyboard::LShift:
 				case sf::Keyboard::RShift:
-					*sprint_key = true;
+					state->sprint = true;
 					break;
 				case sf::Keyboard::BackSpace:
-					*backspace = true;
+					state->remove = true;
 					break;
 				default:
 					break;
 			}
 			if (sf::Keyboard::A <= event.key.code && event.key.code <= sf::Keyboard::Z)
-				*ch = event.key.code - sf::Keyboard::A + 'A';
+				state->ch = event.key.code - sf::Keyboard::A + 'A';
 		}
 		else if (event.type == sf::Event::KeyReleased)
 		{
@@ -393,19 +396,19 @@ public:
 			{
 				case sf::Keyboard::Left:
 				case sf::Keyboard::Right:
-					delta[0] = 0;
+					state->delta[0] = 0;
 					break;
 				case sf::Keyboard::Up:
 				case sf::Keyboard::Down:
-					delta[1] = 0;
+					state->delta[1] = 0;
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
-					*zoom_key = false;
+					state->zoom = false;
 					break;
 				case sf::Keyboard::LShift:
 				case sf::Keyboard::RShift:
-					*sprint_key = false;
+					state->sprint = false;
 					break;
 				default:
 					break;
@@ -418,21 +421,11 @@ public:
 class VimControls : public InputReader
 {
 	bool shift = false;
-	int* delta;
-	char* ch;
-	bool* zoom_key;
-	bool* backspace;
-	Grid* grid;
-	bool* peel;
+	State* state;
 public:
-	VimControls(int* d, char* c, bool* z, bool* b, Grid* g, bool* p)
+	VimControls(State* s)
 	{
-		delta = d;
-		ch = c;
-		zoom_key = z;
-		backspace = b;
-		grid = g;
-		peel = p;
+		state = s;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -447,30 +440,30 @@ public:
 					if (!shift)
 						break;
 				case sf::Keyboard::Left:
-					delta[0] = -1;
+					state->delta[0] = -1;
 					return true;
 				case sf::Keyboard::L:
 					if (!shift)
 						break;
 				case sf::Keyboard::Right:
-					delta[0] = 1;
+					state->delta[0] = 1;
 					return true;
 				case sf::Keyboard::K:
-					if (!(shift || *zoom_key))
+					if (!(shift || state->zoom))
 						break;
 				case sf::Keyboard::Up:
-					delta[1] = -1;
+					state->delta[1] = -1;
 					return true;
 				case sf::Keyboard::J:
-					if (!(shift || *zoom_key))
+					if (!(shift || state->zoom))
 						break;
 				case sf::Keyboard::Down:
-					delta[1] = 1;
+					state->delta[1] = 1;
 					return true;
 				// modifier keys
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
-					*zoom_key = true;
+					state->zoom = true;
 					break;
 				case sf::Keyboard::LShift:
 				case sf::Keyboard::RShift:
@@ -480,16 +473,16 @@ public:
 					if (!shift)
 						break;
 				case sf::Keyboard::BackSpace:
-					*backspace = true;
+					state->remove = true;
 					return true;
 				case sf::Keyboard::Space:
-					*peel = true;
+					state->peel = true;
 					break;
 				default:
 					break;
 			}
 			if (sf::Keyboard::A <= event.key.code && event.key.code <= sf::Keyboard::Z)
-				*ch = event.key.code - sf::Keyboard::A + 'A';
+				state->ch = event.key.code - sf::Keyboard::A + 'A';
 		}
 		else if (event.type == sf::Event::KeyReleased)
 		{
@@ -499,25 +492,25 @@ public:
 				case sf::Keyboard::L:
 				case sf::Keyboard::Left:
 				case sf::Keyboard::Right:
-					delta[0] = 0;
+					state->delta[0] = 0;
 					break;
 				case sf::Keyboard::J:
 				case sf::Keyboard::K:
 				case sf::Keyboard::Up:
 				case sf::Keyboard::Down:
-					delta[1] = 0;
+					state->delta[1] = 0;
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
-					*zoom_key = false;
+					state->zoom = false;
 					if (!shift)
-						delta[1] = 0;
+						state->delta[1] = 0;
 					break;
 				case sf::Keyboard::LShift:
 				case sf::Keyboard::RShift:
 					shift = false;
-					delta[0] = 0;
-					delta[1] = 0;
+					state->delta[0] = 0;
+					state->delta[1] = 0;
 					break;
 				default:
 					break;
@@ -920,7 +913,6 @@ int main()
 	}
 
 	bool loading = true;
-	string loading_str;
 	sf::Text loading_text("", font, 30);
 
 	// load words
@@ -945,7 +937,7 @@ int main()
 		float elapsed = 0;
 
 		// TODO there must be a better way to get just the right speed...
-		while (elapsed < 0.03)
+		while (elapsed < 0.02)
 		{
 			if (std::getline(words, line))
 			{
@@ -1113,17 +1105,19 @@ int main()
 
 	int last[2] = {-1, 0};
 	int pos[2] = {0, 0};
-	int delta[2] = {0, 0};
 	float held[2] = {0, 0};
-
-	char ch = 'A' - 1;
-	bool zoom_key = false;
-	bool sprint_key = false;
-	bool backspace = false;
-	bool peel = false;
 	int next[2];
 
-	VimControls controls(delta, &ch, &zoom_key, &backspace, &grid, &peel);
+	State state;
+	state.delta[0] = 0;
+	state.delta[1] = 0;
+	state.ch = 'A' - 1;
+	state.zoom = false;
+	state.sprint = false;
+	state.remove = false;
+	state.peel = false;
+
+	VimControls controls(&state);
 	input_readers.push_back(&controls);
 
 	float repeat_delay = 0.5;
@@ -1147,7 +1141,7 @@ int main()
 			}
 		}
 
-		if (peel)
+		if (state.peel)
 		{
 			bool spent = true;
 			for (char ch = 'A'; ch <= 'Z'; ch++)
@@ -1177,12 +1171,12 @@ int main()
 			}
 			else
 				messages.add("You have not used all of your letters.", MessageQueue::HIGH);
-			peel = false;
+			state.peel = false;
 		}
 
-		if (backspace)
+		if (state.remove)
 		{
-			backspace = false;
+			state.remove = false;
 
 			// TODO DRY off autoadvancing
 			// if the cursor is ahead of the last added character, autoadvance
@@ -1238,18 +1232,18 @@ int main()
 				display.add_tile(tile);
 			}
 		}
-		else if (ch >= 'A' && ch <= 'Z')
+		else if (state.ch >= 'A' && state.ch <= 'Z')
 		{
 			bool placed = false;
 
 			// if space is empty or has a different letter
-			if (grid.get(pos[0], pos[1]) == nullptr || grid.get(pos[0], pos[1])->ch() != ch)
+			if (grid.get(pos[0], pos[1]) == nullptr || grid.get(pos[0], pos[1])->ch() != state.ch)
 			{
-				if (tiles[ch - 'A'].size() > 0)
+				if (tiles[state.ch - 'A'].size() > 0)
 				{
-					Tile* tile = grid.swap(pos[0], pos[1], tiles[ch - 'A'].back());
-					display.remove_tile(tiles[ch - 'A'].back());
-					tiles[ch - 'A'].pop_back();
+					Tile* tile = grid.swap(pos[0], pos[1], tiles[state.ch - 'A'].back());
+					display.remove_tile(tiles[state.ch - 'A'].back());
+					tiles[state.ch - 'A'].pop_back();
 					if (tile != nullptr)
 					{
 						tiles[tile->ch() - 'A'].push_back(tile);
@@ -1281,7 +1275,7 @@ int main()
 			}
 
 			// clear character to place
-			ch = 'A' - 1;
+			state.ch = 'A' - 1;
 		}
 
 		float time = clock.getElapsedTime().asSeconds();
@@ -1289,23 +1283,23 @@ int main()
 
 		messages.age(time);
 
-		if (zoom_key)
-			view.zoom(1 + delta[1] * (sprint_key ? 2 : 1) * time);
+		if (state.zoom)
+			view.zoom(1 + state.delta[1] * (state.sprint ? 2 : 1) * time);
 		else
 		{
 			// TODO is this useless?
 			for (unsigned int i = 0; i < 2; i++)
 			{
-				if (delta[i] == 0)
+				if (state.delta[i] == 0)
 					held[i] = 0;
 				else
 				{
 					if (held[i] == 0)
-						pos[i] += delta[i] * (sprint_key ? 2 : 1);
+						pos[i] += state.delta[i] * (state.sprint ? 2 : 1);
 					else
 						while (held[i] > repeat_delay)
 						{
-							pos[i] += delta[i] * (sprint_key ? 2 : 1);
+							pos[i] += state.delta[i] * (state.sprint ? 2 : 1);
 							held[i] -= repeat_speed;
 						}
 					held[i] += time;
@@ -1315,7 +1309,7 @@ int main()
 
 		auto center = view.getCenter();
 		// TODO view moves too slowly. Perhaps scale speed by how far cursor is from center?
-		float max = time * 500.0 * (sprint_key ? 2 : 1);
+		float max = time * 500.0 * (state.sprint ? 2 : 1);
 		sf::Vector2f diff(pos[0] * PPB + PPB / 2.0 - center.x, pos[1] * PPB + PPB / 2.0 - center.y);
 		float length = std::sqrt(diff.x * diff.x + diff.y * diff.y);
 		if (length > max)
