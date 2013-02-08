@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <iostream>
 #include <fstream>
@@ -286,7 +287,13 @@ public:
 
 			if (it == dictionary.end())
 			{
-				*message = "'" + word.str() + "' is not a valid word.";
+				// TODO this seems real fucking dirty
+				char* str = new char[word.str().length() + 1];
+				std::strcpy(str, word.str().c_str());
+				for (unsigned int i = 0; i < word.str().length(); i++)
+					str[i] = str[i] - 'a' + 'A';
+				*message = string(str) + " is not a valid word.";
+				delete[] str;
 				valid = false;
 				break;
 			}
@@ -305,7 +312,13 @@ public:
 
 			if (it == dictionary.end())
 			{
-				*message = "'" + word.str() + "' is not a valid word.";
+				// TODO same here. not DRY
+				char* str = new char[word.str().length() + 1];
+				std::strcpy(str, word.str().c_str());
+				for (unsigned int i = 0; i < word.str().length(); i++)
+					str[i] = str[i] - 'a' + 'A';
+				*message = string(str) + " is not a valid word.";
+				delete[] str;
 				valid = false;
 				break;
 			}
@@ -885,136 +898,9 @@ int main()
 
 	// load word list
 	// TODO validate somehow
-	// TODO not being loaded...
-	cerr << "Reading dictionary... \x1b[s";
-	{
-		std::ifstream words("dictionary.txt");
+	std::ifstream words("dictionary.txt");
 
-		string line;
-		while (std::getline(words, line))
-		{
-			auto pos = line.find_first_of(' ');
-			if (pos == string::npos)
-			{
-				dictionary[line] = "";
-				if (std::rand() % 8 == 0)
-					// TODO these escape characters don't work...
-					cerr << "\x1b[u\x1b[K" << line;
-			}
-			else
-			{
-				dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
-				if (std::rand() % 8 == 0)
-					cerr << "\x1b[u\x1b[K" << line.substr(0, pos);
-			}
-		}
-	}
-	float time = clock.getElapsedTime().asSeconds();
-	cerr << "\x1b[u\x1b[K" << dictionary.size() << " words loaded (" << time << ")\n";
-
-	// create textures and tiles
-	cerr << "Generating textures... ";
 	std::list<Tile*> bunch;
-
-	clock.restart();
-	{
-		unsigned int miny = PPB;
-		unsigned int maxy = 0;
-		bool done_y = false;
-		for (char ch = 'A'; ch <= 'Z'; ch++)
-		{
-			// TODO some kind of depth would help for stack appearance
-			// TODO antialiase these
-			// TODO error check
-			// TODO memory leak here?
-			tile_texture[ch - 'A'].create(PPB, PPB);
-
-			// draw character for centering
-			stringstream string;
-			string << ch;
-			sf::Text letter(string.str(), font, (PPB * 2) / 3.0);
-			letter.setColor(sf::Color::Black);
-			tile_texture[ch - 'A'].clear(sf::Color::Red);
-			tile_texture[ch - 'A'].draw(letter);
-			tile_texture[ch - 'A'].display();
-
-			// center character
-			unsigned int minx = PPB;
-			unsigned int maxx = 0;
-			auto image = tile_texture[ch - 'A'].getTexture().copyToImage();
-			auto size = image.getSize();
-			for (unsigned int x = 0; x < size.x; x++)
-				for (unsigned int y = 0; y < size.y; y++)
-					if (image.getPixel(x, y) != sf::Color::Red)
-					{
-						if (x < minx)
-							minx = x;
-						if (x > maxx)
-							maxx = x;
-						if (!done_y)
-						{
-							if (y < miny)
-								miny = y;
-							if (y > maxy)
-								maxy = y;
-						}
-					}
-			done_y = true;
-			letter.setPosition((PPB - (maxx - minx + 1)) / 2.0 - minx, (PPB - (maxy - miny + 1)) / 2.0 - miny);
-
-			float diam = PPB / 4.0;
-			float rad = PPB / 8.0;
-			// draw final tile
-			tile_texture[ch - 'A'].clear(sf::Color(0, 0, 0, 0));
-
-			sf::RectangleShape rect;
-			rect.setFillColor(sf::Color(255, 255, 175));
-
-			rect.setSize(sf::Vector2f(PPB - diam, PPB));
-			rect.setPosition(rad, 0);
-			tile_texture[ch - 'A'].draw(rect);
-			rect.setSize(sf::Vector2f(PPB, PPB - diam));
-			rect.setPosition(0, rad);
-			tile_texture[ch - 'A'].draw(rect);
-
-			sf::CircleShape circle(rad);
-			circle.setFillColor(sf::Color(255, 255, 175));
-
-			circle.setPosition(0, 0);
-			tile_texture[ch - 'A'].draw(circle);
-			circle.setPosition(PPB - diam, 0);
-			tile_texture[ch - 'A'].draw(circle);
-			circle.setPosition(0, PPB - diam);
-			tile_texture[ch - 'A'].draw(circle);
-			circle.setPosition(PPB - diam, PPB - diam);
-			tile_texture[ch - 'A'].draw(circle);
-
-			tile_texture[ch - 'A'].draw(letter);
-			tile_texture[ch - 'A'].display();
-
-			// create tiles
-			for (unsigned int i = 0; i < letter_count[ch - 'A']; i++)
-			{
-				auto it = bunch.begin();
-				auto pos = std::rand() % (bunch.size() + 1);
-				for (unsigned int i = 0; i != pos && it != bunch.end(); it++, i++);
-				bunch.insert(it, new Tile(ch));
-			}
-
-			cerr << ch;
-		}
-
-		float time = clock.getElapsedTime().asSeconds();
-		cerr << " (" << time << ")\n";
-	}
-
-	vector<Tile*> tiles[26];
-	for (unsigned int i = 0; i < 21; i++)
-	{
-		Tile* tile = bunch.back();
-		bunch.pop_back();
-		tiles[tile->ch() - 'A'].push_back(tile);
-	}
 
 	sf::Color background(22, 22, 22);
 
@@ -1045,6 +931,7 @@ int main()
 	Game game(&window);
 	input_readers.push_back(&game);
 
+	vector<Tile*> tiles[26];
 	TileDisplay display(&window, tiles, font);
 	input_readers.push_back(&display);
 
@@ -1059,213 +946,352 @@ int main()
 	input_readers.push_back(&controls);
 
 	clock.restart();
+
+	// loading stuff
+	bool loading = true;
+	bool loading_words = true;
+	char load_char = 'A';
+	float miny;
+	float height;
+	bool done_y = false;
+	string loading_str;
+	sf::Text loading_text("", font, 30);
+
 	while (window.isOpen())
 	{
-		sf::Event event;
-		while (window.pollEvent(event))
+		window.clear(background);
+		if (loading)
 		{
-			for (auto r = input_readers.begin(); r != input_readers.end();)
+			if (loading_words)
 			{
-				bool cont = (*r)->process_event(event);
-				if ((*r)->is_finished())
-					r = input_readers.erase(r);
-				else
-					r++;
-				if (!cont)
-					break;
-			}
-		}
+				string line;
+				string word;
+				float elapsed = 0;
 
-		if (peel)
-		{
-			bool spent = true;
-			for (char ch = 'A'; ch <= 'Z'; ch++)
-				if (tiles[ch - 'A'].size() > 0)
+				// TODO there must be a better way to get just the right speed...
+				while (elapsed < 0.03)
 				{
-					spent = false;
-					break;
-				}
-			if (spent)
-			{
-				string mess;
-				if (grid.is_valid(&mess))
-				{
-					if (bunch.size() > 0)
+					if (std::getline(words, line))
 					{
-						Tile* tile = bunch.back();
-						// TODO it sucks that these don't sync automatically
-						tiles[tile->ch() - 'A'].push_back(tile);
-						display.add_tile(tile);
-						bunch.pop_back();
+						auto pos = line.find_first_of(' ');
+						if (pos == string::npos)
+						{
+							dictionary[line] = "";
+							loading_text.setString(line);
+						}
+						else
+						{
+							dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
+							loading_text.setString(line.substr(0, pos));
+						}
+
+						elapsed = clock.getElapsedTime().asSeconds();
 					}
 					else
-						messages.add("You win!", MessageQueue::LOW);
+					{
+						loading_words = false;
+						stringstream foo;
+						foo << dictionary.size();
+						loading_text.setString(foo.str() + " words loaded.");
+						loading_text.move(loading_text.getGlobalBounds().width / -2, -60);
+						break;
+					}
 				}
-				else
-					messages.add(mess, MessageQueue::HIGH);
+
+				clock.restart();
+
+				window.draw(loading_text);
 			}
 			else
-				messages.add("You have not used all of your letters.", MessageQueue::HIGH);
-			peel = false;
-		}
+			{
+				window.draw(loading_text);
 
-		if (backspace)
-		{
-			backspace = false;
+				// TODO some kind of depth would help for stack appearance
+				// TODO antialiase these
+				// TODO error check
+				// TODO memory leak here?
+				tile_texture[load_char - 'A'].create(PPB, PPB);
 
-			// TODO DRY off autoadvancing
-			// if the cursor is ahead of the last added character, autoadvance
-			if (pos[0] == last[0] + next[0] && pos[1] == last[1] + next[1])
-			{
-				pos[0] = last[0];
-				pos[1] = last[1];
-				last[0] -= next[0];
-				last[1] -= next[1];
-			}
-			// else if you are not near the last character and the space is empty, try to autoadvance
-			else if (grid.get(pos[0], pos[1]) == nullptr)
-			{
-				if (grid.get(pos[0] - 1, pos[1]) != nullptr)
-				{
-					next[0] = 1;
-					next[1] = 0;
-					pos[0] -= next[0];
-					last[0] = pos[0] - next[0];
-					last[1] = pos[1];
-				}
-				else if (grid.get(pos[0], pos[1] - 1) != nullptr)
-				{
-					next[0] = 0;
-					next[1] = 1;
-					pos[1] -= next[1];
-					last[0] = pos[0];
-					last[1] = pos[1] - next[1];
-				}
-			}
-			else // not near last character, position not empty, try to set autoadvance for next time
-			{
-				if (grid.get(pos[0] - 1, pos[1]) != nullptr)
-				{
-					next[0] = 1;
-					next[1] = 0;
-					last[0] = pos[0] - next[0];
-					last[1] = pos[1];
-				}
-				else if (grid.get(pos[0], pos[1] - 1) != nullptr)
-				{
-					next[0] = 0;
-					next[1] = 1;
-					last[0] = pos[0];
-					last[1] = pos[1] - next[1];
-				}
-			}
+				// draw character for centering
+				stringstream string;
+				string << load_char;
+				sf::Text letter(string.str(), font, (PPB * 2) / 3.0);
+				letter.setColor(sf::Color::Black);
 
-			auto tile = grid.remove(pos[0], pos[1]);
-			if (tile != nullptr)
-			{
-				tiles[tile->ch() - 'A'].push_back(tile);
-				display.add_tile(tile);
-			}
-		}
-		else if (ch >= 'A' && ch <= 'Z')
-		{
-			bool placed = false;
-
-			// if space is empty or has a different letter
-			if (grid.get(pos[0], pos[1]) == nullptr || grid.get(pos[0], pos[1])->ch() != ch)
-			{
-				if (tiles[ch - 'A'].size() > 0)
+				auto bounds = letter.getGlobalBounds();
+				float minx = bounds.left;
+				float width = bounds.width;
+				if (!done_y)
 				{
-					Tile* tile = grid.swap(pos[0], pos[1], tiles[ch - 'A'].back());
-					display.remove_tile(tiles[ch - 'A'].back());
-					tiles[ch - 'A'].pop_back();
-					if (tile != nullptr)
+					miny = bounds.top;
+					height = bounds.height;
+				}
+				done_y = true;
+				letter.setPosition((PPB - width) / 2.0 - minx, (PPB - height) / 2.0 - miny);
+
+				float diam = PPB / 4.0;
+				float rad = PPB / 8.0;
+				// draw final tile
+				tile_texture[load_char - 'A'].clear(sf::Color(0, 0, 0, 0));
+
+				sf::RectangleShape rect;
+				rect.setFillColor(sf::Color(255, 255, 175));
+
+				rect.setSize(sf::Vector2f(PPB - diam, PPB));
+				rect.setPosition(rad, 0);
+				tile_texture[load_char - 'A'].draw(rect);
+				rect.setSize(sf::Vector2f(PPB, PPB - diam));
+				rect.setPosition(0, rad);
+				tile_texture[load_char - 'A'].draw(rect);
+
+				sf::CircleShape circle(rad);
+				circle.setFillColor(sf::Color(255, 255, 175));
+
+				circle.setPosition(0, 0);
+				tile_texture[load_char - 'A'].draw(circle);
+				circle.setPosition(PPB - diam, 0);
+				tile_texture[load_char - 'A'].draw(circle);
+				circle.setPosition(0, PPB - diam);
+				tile_texture[load_char - 'A'].draw(circle);
+				circle.setPosition(PPB - diam, PPB - diam);
+				tile_texture[load_char - 'A'].draw(circle);
+
+				tile_texture[load_char - 'A'].draw(letter);
+				tile_texture[load_char - 'A'].display();
+
+				// create tiles
+				for (unsigned int i = 0; i < letter_count[load_char - 'A']; i++)
+				{
+					auto it = bunch.begin();
+					auto pos = std::rand() % (bunch.size() + 1);
+					for (unsigned int i = 0; i != pos && it != bunch.end(); it++, i++);
+					bunch.insert(it, new Tile(load_char));
+				}
+
+				window.draw(sf::Sprite(tile_texture[load_char - 'A'].getTexture()));
+
+				load_char++;
+				if(load_char > 'Z')
+				{
+					for (unsigned int i = 0; i < 21; i++)
 					{
+						Tile* tile = bunch.back();
+						bunch.pop_back();
 						tiles[tile->ch() - 'A'].push_back(tile);
 						display.add_tile(tile);
 					}
-					placed = true;
+
+					loading = false;
 				}
 			}
-			else // space already has the letter to be placed
-				placed = true;
-
-			// if we placed a letter, try to autoadvance
-			if (placed)
-			{
-				next[0] = 0;
-				next[1] = 0;
-				if (pos[0] == last[0] + 1 && pos[1] == last[1])
-					next[0] = 1;
-				else if (pos[0] == last[0] && pos[1] == last[1] + 1)
-					next[1] = 1;
-				else if (grid.get(pos[0] - 1, pos[1]) != nullptr)
-					next[0] = 1;
-				else if (grid.get(pos[0], pos[1] - 1) != nullptr)
-					next[1] = 1;
-				last[0] = pos[0];
-				last[1] = pos[1];
-				pos[0] += next[0];
-				pos[1] += next[1];
-			}
-
-			// clear character to place
-			ch = 'A' - 1;
 		}
-
-		float time = clock.getElapsedTime().asSeconds();
-		clock.restart();
-
-		messages.age(time);
-
-		if (zoom_key)
-			view.zoom(1 + delta[1] * (sprint_key ? 2 : 1) * time);
 		else
 		{
-			for (unsigned int i = 0; i < 2; i++)
+			sf::Event event;
+			while (window.pollEvent(event))
 			{
-				if (delta[i] == 0)
-					held[i] = 0;
-				else
+				for (auto r = input_readers.begin(); r != input_readers.end();)
 				{
-					if (held[i] == 0)
-						pos[i] += delta[i] * (sprint_key ? 2 : 1);
+					bool cont = (*r)->process_event(event);
+					if ((*r)->is_finished())
+						r = input_readers.erase(r);
 					else
-						while (held[i] > repeat_delay)
-						{
-							pos[i] += delta[i] * (sprint_key ? 2 : 1);
-							held[i] -= repeat_speed;
-						}
-					held[i] += time;
+						r++;
+					if (!cont)
+						break;
 				}
 			}
+
+			if (peel)
+			{
+				bool spent = true;
+				for (char ch = 'A'; ch <= 'Z'; ch++)
+					if (tiles[ch - 'A'].size() > 0)
+					{
+						spent = false;
+						break;
+					}
+				if (spent)
+				{
+					string mess;
+					if (grid.is_valid(&mess))
+					{
+						if (bunch.size() > 0)
+						{
+							Tile* tile = bunch.back();
+							// TODO it sucks that these don't sync automatically
+							tiles[tile->ch() - 'A'].push_back(tile);
+							display.add_tile(tile);
+							bunch.pop_back();
+						}
+						else
+							messages.add("You win!", MessageQueue::LOW);
+					}
+					else
+						messages.add(mess, MessageQueue::HIGH);
+				}
+				else
+					messages.add("You have not used all of your letters.", MessageQueue::HIGH);
+				peel = false;
+			}
+
+			if (backspace)
+			{
+				backspace = false;
+
+				// TODO DRY off autoadvancing
+				// if the cursor is ahead of the last added character, autoadvance
+				if (pos[0] == last[0] + next[0] && pos[1] == last[1] + next[1])
+				{
+					pos[0] = last[0];
+					pos[1] = last[1];
+					last[0] -= next[0];
+					last[1] -= next[1];
+				}
+				// else if you are not near the last character and the space is empty, try to autoadvance
+				else if (grid.get(pos[0], pos[1]) == nullptr)
+				{
+					if (grid.get(pos[0] - 1, pos[1]) != nullptr)
+					{
+						next[0] = 1;
+						next[1] = 0;
+						pos[0] -= next[0];
+						last[0] = pos[0] - next[0];
+						last[1] = pos[1];
+					}
+					else if (grid.get(pos[0], pos[1] - 1) != nullptr)
+					{
+						next[0] = 0;
+						next[1] = 1;
+						pos[1] -= next[1];
+						last[0] = pos[0];
+						last[1] = pos[1] - next[1];
+					}
+				}
+				else // not near last character, position not empty, try to set autoadvance for next time
+				{
+					if (grid.get(pos[0] - 1, pos[1]) != nullptr)
+					{
+						next[0] = 1;
+						next[1] = 0;
+						last[0] = pos[0] - next[0];
+						last[1] = pos[1];
+					}
+					else if (grid.get(pos[0], pos[1] - 1) != nullptr)
+					{
+						next[0] = 0;
+						next[1] = 1;
+						last[0] = pos[0];
+						last[1] = pos[1] - next[1];
+					}
+				}
+
+				auto tile = grid.remove(pos[0], pos[1]);
+				if (tile != nullptr)
+				{
+					tiles[tile->ch() - 'A'].push_back(tile);
+					display.add_tile(tile);
+				}
+			}
+			else if (ch >= 'A' && ch <= 'Z')
+			{
+				bool placed = false;
+
+				// if space is empty or has a different letter
+				if (grid.get(pos[0], pos[1]) == nullptr || grid.get(pos[0], pos[1])->ch() != ch)
+				{
+					if (tiles[ch - 'A'].size() > 0)
+					{
+						Tile* tile = grid.swap(pos[0], pos[1], tiles[ch - 'A'].back());
+						display.remove_tile(tiles[ch - 'A'].back());
+						tiles[ch - 'A'].pop_back();
+						if (tile != nullptr)
+						{
+							tiles[tile->ch() - 'A'].push_back(tile);
+							display.add_tile(tile);
+						}
+						placed = true;
+					}
+				}
+				else // space already has the letter to be placed
+					placed = true;
+
+				// if we placed a letter, try to autoadvance
+				if (placed)
+				{
+					next[0] = 0;
+					next[1] = 0;
+					if (pos[0] == last[0] + 1 && pos[1] == last[1])
+						next[0] = 1;
+					else if (pos[0] == last[0] && pos[1] == last[1] + 1)
+						next[1] = 1;
+					else if (grid.get(pos[0] - 1, pos[1]) != nullptr)
+						next[0] = 1;
+					else if (grid.get(pos[0], pos[1] - 1) != nullptr)
+						next[1] = 1;
+					last[0] = pos[0];
+					last[1] = pos[1];
+					pos[0] += next[0];
+					pos[1] += next[1];
+				}
+
+				// clear character to place
+				ch = 'A' - 1;
+			}
+
+			float time = clock.getElapsedTime().asSeconds();
+			clock.restart();
+
+			messages.age(time);
+
+			if (zoom_key)
+				view.zoom(1 + delta[1] * (sprint_key ? 2 : 1) * time);
+			else
+			{
+				for (unsigned int i = 0; i < 2; i++)
+				{
+					if (delta[i] == 0)
+						held[i] = 0;
+					else
+					{
+						if (held[i] == 0)
+							pos[i] += delta[i] * (sprint_key ? 2 : 1);
+						else
+							while (held[i] > repeat_delay)
+							{
+								pos[i] += delta[i] * (sprint_key ? 2 : 1);
+								held[i] -= repeat_speed;
+							}
+						held[i] += time;
+					}
+				}
+			}
+
+			auto center = view.getCenter();
+			// TODO view moves too slowly. Perhaps scale speed by how far cursor is from center?
+			float max = time * 500.0 * (sprint_key ? 2 : 1);
+			sf::Vector2f diff(pos[0] * PPB + PPB / 2.0 - center.x, pos[1] * PPB + PPB / 2.0 - center.y);
+			float length = std::sqrt(diff.x * diff.x + diff.y * diff.y);
+			if (length > max)
+			{
+				diff.x = (diff.x * max) / length;
+				diff.y = (diff.y * max) / length;
+			}
+			view.move(diff.x, diff.y);
+			// don't allow zooming past default
+			auto size = view.getSize();
+			if (size.x < res[0] || size.y < res[1])
+				view.setSize(res[0], res[1]);
+			window.setView(view);
+
+			cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
+
+			grid.draw_on(window);
+			window.draw(cursor);
+
+			display.draw();
+			messages.draw_on(window);
 		}
-
-		auto center = view.getCenter();
-		// TODO view moves too slowly. Perhaps scale speed by how far cursor is from center?
-		float max = time * 500.0 * (sprint_key ? 2 : 1);
-		sf::Vector2f diff(pos[0] * PPB + PPB / 2.0 - center.x, pos[1] * PPB + PPB / 2.0 - center.y);
-		float length = std::sqrt(diff.x * diff.x + diff.y * diff.y);
-		if (length > max)
-		{
-			diff.x = (diff.x * max) / length;
-			diff.y = (diff.y * max) / length;
-		}
-		view.move(diff.x, diff.y);
-		// don't allow zooming past default
-		auto size = view.getSize();
-		if (size.x < res[0] || size.y < res[1])
-			view.setSize(res[0], res[1]);
-		window.setView(view);
-
-		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
-
-		window.clear(background);
-		grid.draw_on(window);
-		window.draw(cursor);
-
-		display.draw();
-		messages.draw_on(window);
 
 		window.display();
 	}
