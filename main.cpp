@@ -860,9 +860,8 @@ int main()
 
 	sf::Font font;
 	font.loadFromFile("C:\\Windows\\Fonts\\Vera.ttf");
-	Grid grid;
 
-	MessageQueue messages(font);
+	Grid grid;
 
 	unsigned int letter_count[26] =
 	{
@@ -894,18 +893,7 @@ int main()
 		2
 	};
 
-	sf::Clock clock;
-
-	// load word list
-	// TODO validate somehow
-	std::ifstream words("dictionary.txt");
-
-	std::list<Tile*> bunch;
-
-	sf::Color background(22, 22, 22);
-
 	unsigned int res[2] = {1920, 1080};
-
 
 	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Titlebar);
 	window.setVerticalSyncEnabled(true);
@@ -913,39 +901,24 @@ int main()
 	view.setCenter(PPB / 2.0, PPB / 2.0);
 	window.setView(view);
 
-	int pos[2] = {0, 0};
-	int delta[2] = {0, 0};
-	float held[2] = {0, 0};
-
-	float repeat_delay = 0.5;
-	float repeat_speed = 0.1;
-
-	float cursor_thickness = PPB / 16.0;
-	sf::RectangleShape cursor(sf::Vector2f(PPB - cursor_thickness * 2, PPB - cursor_thickness * 2));
-	cursor.setFillColor(sf::Color(0, 0, 0, 0));
-	cursor.setOutlineThickness(cursor_thickness);
-	cursor.setOutlineColor(sf::Color(0, 200, 0));
+	sf::Color background(22, 22, 22);
 
 	vector<InputReader*> input_readers;
 
 	Game game(&window);
 	input_readers.push_back(&game);
 
-	vector<Tile*> tiles[26];
-	TileDisplay display(&window, tiles, font);
-
-	char ch = 'A' - 1;
-	bool zoom_key = false;
-	bool sprint_key = false;
-	bool backspace = false;
-	bool peel = false;
-	int next[2];
-	int last[2] = {0, 0};
-	VimControls controls(delta, &ch, &zoom_key, &backspace, &grid, &peel);
-
-	clock.restart();
+	sf::Clock clock;
 
 	// for loading words
+	// TODO validate somehow
+	std::ifstream words("dictionary.txt");
+	if (!words.is_open())
+	{
+		cerr << "Couldn't find dictionary.txt!\n";
+		return 1;
+	}
+
 	bool loading = true;
 	string loading_str;
 	sf::Text loading_text("", font, 30);
@@ -1017,6 +990,9 @@ int main()
 	float miny;
 	float height;
 	bool done_y = false;
+	std::list<Tile*> bunch;
+	vector<Tile*> tiles[26];
+	TileDisplay display(&window, tiles, font);
 
 	// generate tile textures
 	while (window.isOpen())
@@ -1100,6 +1076,7 @@ int main()
 		}
 
 		// display generated texture
+		// TODO this is very flickery
 		sf::Sprite sprite(tile_texture[load_char - 'A'].getTexture());
 		float padding = PPB / 2.0;
 		sprite.setPosition(((load_char - 'A') * (res[0] - 2 * padding - PPB)) / 25.0 + padding - res[0] / 2, PPB / -2.0);
@@ -1123,8 +1100,34 @@ int main()
 		}
 	}
 
+	// stuff for game loop
+	MessageQueue messages(font);
+
 	input_readers.push_back(&display);
+
+	float cursor_thickness = PPB / 16.0;
+	sf::RectangleShape cursor(sf::Vector2f(PPB - cursor_thickness * 2, PPB - cursor_thickness * 2));
+	cursor.setFillColor(sf::Color(0, 0, 0, 0));
+	cursor.setOutlineThickness(cursor_thickness);
+	cursor.setOutlineColor(sf::Color(0, 200, 0));
+
+	int last[2] = {-1, 0};
+	int pos[2] = {0, 0};
+	int delta[2] = {0, 0};
+	float held[2] = {0, 0};
+
+	char ch = 'A' - 1;
+	bool zoom_key = false;
+	bool sprint_key = false;
+	bool backspace = false;
+	bool peel = false;
+	int next[2];
+
+	VimControls controls(delta, &ch, &zoom_key, &backspace, &grid, &peel);
 	input_readers.push_back(&controls);
+
+	float repeat_delay = 0.5;
+	float repeat_speed = 0.1;
 
 	// game loop
 	while (window.isOpen())
@@ -1290,6 +1293,7 @@ int main()
 			view.zoom(1 + delta[1] * (sprint_key ? 2 : 1) * time);
 		else
 		{
+			// TODO is this useless?
 			for (unsigned int i = 0; i < 2; i++)
 			{
 				if (delta[i] == 0)
