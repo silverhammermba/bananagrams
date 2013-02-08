@@ -747,7 +747,7 @@ class Error
 	sf::Text message;
 	float lifetime = 0;
 public:
-	Error(const string& mes, const sf::Font& font, unsigned int size = 20, const sf::Color& color) : message(mes, font, size)
+	Error(const string& mes, const sf::Font& font, unsigned int size = 20, const sf::Color& color = sf::Color::Black) : message(mes, font, size)
 	{
 		message.setColor(color);
 	}
@@ -773,14 +773,14 @@ class ErrorDisplay
 	list<Error*> errors;
 public:
 	// TODO
-}
+};
 
 int main()
 {
 	std::srand((unsigned int)std::time(nullptr));
 
 	sf::Font font;
-	font.loadFromFile("/usr/share/fonts/TTF/FreeSans.ttf");
+	font.loadFromFile("C:\\Windows\\Fonts\\Vera.ttf");
 	Grid grid;
 
 	unsigned int letter_count[26] =
