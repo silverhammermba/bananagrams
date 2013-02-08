@@ -40,3 +40,4 @@ TODO
  * cut-and-paste
  * multiplayer
  * animate grid errors
+ * sounds
