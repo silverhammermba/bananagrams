@@ -84,6 +84,7 @@ public:
 		}
 		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F5)
 			*switch_controls = true;
+		// TODO need way better resize handling
 		else if (event.type == sf::Event::Resized)
 		{
 			res[0] = event.size.width;
@@ -981,7 +982,7 @@ int main()
 	std::srand((unsigned int)std::time(nullptr));
 
 	sf::Font font;
-	font.loadFromFile("Vera.ttf");
+	font.loadFromFile("/usr/share/fonts/TTF/FreeSans.ttf");
 
 	Grid grid;
 

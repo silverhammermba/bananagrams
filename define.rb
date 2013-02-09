@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # get definitions and add to word list
+# TODO write uppercase, so you don't need to switch case in main.cpp
 
 unless File.exist? 'dictionary.txt'
 	STDOUT.puts "Creating dictionary..."
