@@ -36,6 +36,16 @@ struct State
 	bool dump;
 };
 
+struct MouseState
+{
+	int pos[2];
+	bool update;
+	bool move;
+	bool place;
+	bool remove;
+	int wheel_delta;
+};
+
 class InputReader
 {
 protected:
@@ -344,6 +354,47 @@ public:
 		for (auto tile: grid)
 			if (tile != nullptr)
 				tile->draw_on(window);
+	}
+};
+
+class MouseControls : public InputReader
+{
+	State* state;
+	MouseState* mouse_state;
+public:
+	MouseControls(State* s, MouseState* m)
+	{
+		state = s;
+		mouse_state = m;
+	}
+
+	virtual bool process_event(const sf::Event& event)
+	{
+		switch(event.type)
+		{
+			case sf::Event::MouseButtonReleased:
+				mouse_state->update = true;
+				mouse_state->move = true;
+				if (event.mouseButton.button == sf::Mouse::Left)
+					mouse_state->place = true;
+				else if (event.mouseButton.button == sf::Mouse::Right)
+					mouse_state->remove = true;
+				break;
+			case sf::Event::MouseMoved:
+				{
+					mouse_state->update = true;
+					mouse_state->pos[0] = event.mouseMove.x;
+					mouse_state->pos[1] = event.mouseMove.y;
+				}
+				break;
+			case sf::Event::MouseWheelMoved:
+				mouse_state->wheel_delta = event.mouseWheel.delta;
+				break;
+			default:
+				break;
+		}
+
+		return true;
 	}
 };
 
@@ -818,16 +869,21 @@ public:
 
 	void add(const string& message, severity_t severity)
 	{
-		sf::Color color = sf::Color::Black;
-		unsigned int size = 12;
+		sf::Color color;
+		unsigned int size;
 		switch (severity)
 		{
 			case LOW:
 				color = sf::Color::White;
+				size = 12;
 				break;
 			case HIGH:
 				color = sf::Color::Red;
 				size = 18;
+				break;
+			default:
+				color = sf::Color::Black;
+				size = 12;
 		}
 		messages.push_back(new Message(message, font, size, color));
 		// TODO bleh hardcoded
@@ -942,7 +998,7 @@ int main()
 		else
 			loading_text.setColor(sf::Color::White);
 
-		if (elapsed > 4)
+		if (elapsed > 1) // TODO change back to 4
 			break;
 
 		window.clear(background);
@@ -1153,6 +1209,7 @@ int main()
 
 	int last[2] = {-1, 0};
 	int pos[2] = {0, 0};
+	int mpos[2] = {0, 0};
 	float held[2] = {0, 0};
 	int next[2];
 
@@ -1165,6 +1222,18 @@ int main()
 	state.remove = false;
 	state.peel = false;
 	state.dump = false;
+
+	MouseState mstate;
+	mstate.pos[0] = 0;
+	mstate.pos[1] = 0;
+	mstate.update = false;
+	mstate.move = false;
+	mstate.place = false;
+	mstate.remove = false;
+	mstate.wheel_delta = 0;
+
+	MouseControls mouse(&state, &mstate);
+	input_readers.push_back(&mouse);
 
 	VimControls controls(&state);
 	input_readers.push_back(&controls);
@@ -1188,6 +1257,77 @@ int main()
 				if (!cont)
 					break;
 			}
+		}
+
+		if (mstate.update)
+		{
+			// update mouse cursor position
+			auto size = view.getSize();
+			auto center = view.getCenter();
+			mpos[0] = std::floor(((mstate.pos[0] * size.x) / res[0] + center.x - (size.x / 2)) / PPB);
+			mpos[1] = std::floor(((mstate.pos[1] * size.y) / res[1] + center.y - (size.y / 2)) / PPB);
+			mstate.update = false;
+		}
+
+		if (mstate.move)
+		{
+			// move cursor to mouse cursor
+			pos[0] = mpos[0];
+			pos[1] = mpos[1];
+			mstate.move = false;
+		}
+
+		if (mstate.place)
+		{
+			// if holding Ctrl
+			if (state.zoom)
+			{
+				// look for remaining tiles
+				char last = 'A' - 1;
+				for (char ch = 'A'; ch <= 'Z'; ch++)
+				{
+					if (tiles[ch - 'A'].size() > 0)
+					{
+						if (last < 'A')
+							last = ch;
+						else
+						{
+							last = 'Z' + 1;
+							break;
+						}
+					}
+				}
+
+				if (last < 'A')
+					messages.add("You do not have any tiles.", MessageQueue::LOW);
+				else if (last > 'Z')
+					messages.add("You have too many letters to place using the mouse.", MessageQueue::HIGH);
+				else
+				{
+					// place tile
+					Tile* tile = grid.swap(pos[0], pos[1], tiles[last - 'A'].back());
+					display.remove_tile(tiles[last - 'A'].back());
+					tiles[last - 'A'].pop_back();
+					if (tile != nullptr)
+					{
+						tiles[tile->ch() - 'A'].push_back(tile);
+						display.add_tile(tile);
+					}
+				}
+			}
+			mstate.place = false;
+		}
+
+		if (mstate.remove)
+		{
+			// remove tile
+			auto tile = grid.remove(pos[0], pos[1]);
+			if (tile != nullptr)
+			{
+				tiles[tile->ch() - 'A'].push_back(tile);
+				display.add_tile(tile);
+			}
+			mstate.remove = false;
 		}
 
 		if (state.dump)
