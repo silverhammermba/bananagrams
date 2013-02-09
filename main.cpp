@@ -506,24 +506,44 @@ public:
 			switch (event.key.code)
 			{
 				// directions
+				case sf::Keyboard::Y:
+					if (shift)
+						state->sprint = true;
+					else
+						break;
 				case sf::Keyboard::H:
 					if (!shift)
 						break;
 				case sf::Keyboard::Left:
 					state->delta[0] = -1;
 					return true;
+				case sf::Keyboard::O:
+					if (shift)
+						state->sprint = true;
+					else
+						break;
 				case sf::Keyboard::L:
 					if (!shift)
 						break;
 				case sf::Keyboard::Right:
 					state->delta[0] = 1;
 					return true;
+				case sf::Keyboard::I:
+					if (shift)
+						state->sprint = true;
+					else
+						break;
 				case sf::Keyboard::K:
 					if (!(shift || state->zoom))
 						break;
 				case sf::Keyboard::Up:
 					state->delta[1] = -1;
 					return true;
+				case sf::Keyboard::U:
+					if (shift)
+						state->sprint = true;
+					else
+						break;
 				case sf::Keyboard::J:
 					if (!(shift || state->zoom))
 						break;
@@ -563,12 +583,20 @@ public:
 		{
 			switch (event.key.code)
 			{
+				//YUIO
+				//HJKL
+				case sf::Keyboard::Y:
+				case sf::Keyboard::O:
+					state->sprint = false;
 				case sf::Keyboard::H:
 				case sf::Keyboard::L:
 				case sf::Keyboard::Left:
 				case sf::Keyboard::Right:
 					state->delta[0] = 0;
 					break;
+				case sf::Keyboard::U:
+				case sf::Keyboard::I:
+					state->sprint = false;
 				case sf::Keyboard::J:
 				case sf::Keyboard::K:
 				case sf::Keyboard::Up:
@@ -584,6 +612,7 @@ public:
 				case sf::Keyboard::LShift:
 				case sf::Keyboard::RShift:
 					shift = false;
+					state->sprint = false;
 					state->delta[0] = 0;
 					state->delta[1] = 0;
 					break;
