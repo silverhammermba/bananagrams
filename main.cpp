@@ -1,3 +1,4 @@
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -114,6 +115,16 @@ public:
 	void set_pos(float x, float y)
 	{
 		sprite.setPosition(x, y);
+	}
+
+	const sf::Color& get_color() const
+	{
+		return sprite.getColor();
+	}
+
+	void set_color(const sf::Color& color)
+	{
+		sprite.setColor(color);
 	}
 
 	const sf::Vector2f& get_pos() const
@@ -276,6 +287,18 @@ public:
 		traverse(x, y + 1);
 	}
 
+	void step(float time)
+	{
+		for (auto tile: grid)
+		{
+			if (tile != nullptr)
+			{
+				auto color = tile->get_color();
+				tile->set_color(color + sf::Color(time * 255, time * 255, time * 255));
+			}
+		}
+	}
+
 	bool is_valid(vector<string>& messages)
 	{
 		// need at least one word to be valid
@@ -304,12 +327,15 @@ public:
 
 		if (!valid)
 		{
+			for (auto tile: grid)
+				if (tile != nullptr && !tile->marked)
+					tile->set_color(sf::Color(255, 50, 50));
 			messages.push_back("Your tiles are not all connected.");
 			return false;
 		}
 
 		stringstream temp;
-		vector<string> words;
+		std::map<string, vector<std::array<int, 3>>> words;
 		vector<string> defns;
 		Tile* tile;
 
@@ -319,20 +345,24 @@ public:
 			temp.str("");
 			for (unsigned int x = pair.first.x; (tile = get(x, pair.first.y)) != nullptr; x++)
 				temp << tile->ch();
-			words.push_back(temp.str());
+			if (!words.count(temp.str()))
+					words[temp.str()] = vector<std::array<int, 3>>();
+			words[temp.str()].push_back(std::array<int, 3>{{pair.first.x, pair.first.y, 0}});
 		}
 		for (auto& pair: vwords)
 		{
 			temp.str("");
 			for (unsigned int y = pair.first.y; (tile = get(pair.first.x, y)) != nullptr; y++)
 				temp << tile->ch();
-			words.push_back(temp.str());
+			if (!words.count(temp.str()))
+					words[temp.str()] = vector<std::array<int, 3>>();
+			words[temp.str()].push_back(std::array<int, 3>{{pair.first.x, pair.first.y, 1}});
 		}
 
 		// check words
 		for (auto& word : words)
 		{
-			auto it = dictionary.find(word);
+			auto it = dictionary.find(word.first);
 
 			// if invalid
 			if (it == dictionary.end())
@@ -340,8 +370,13 @@ public:
 				// if this is first error, clear definitions
 				if (valid)
 					messages.clear();
-				messages.push_back(word + " is not a word.");
 				valid = false;
+				messages.push_back(word.first + " is not a word.");
+				int coord[2];
+				// color incorrect tiles
+				for (auto& pos: word.second)
+					for (coord[0] = pos[0], coord[1] = pos[1]; (tile = get(coord[0], coord[1])) != nullptr; coord[pos[2]]++)
+						tile->set_color(sf::Color(255, 50, 50));
 			}
 			// if valid and defined
 			else if (valid && std::rand() % 100 == 0 && it->second.length() > 0)
@@ -349,14 +384,14 @@ public:
 				// check if we have already displayed the definition
 				bool defd = false;
 				for (string& wd : defined)
-					if (word == wd)
+					if (word.first == wd)
 					{
 						defd = true;
 						break;
 					}
 				if (!defd)
 					for (string& wd : defns)
-						if (word == wd)
+						if (word.first == wd)
 						{
 							defd = true;
 							break;
@@ -364,8 +399,8 @@ public:
 
 				if (!defd)
 				{
-					defns.push_back(word);
-					messages.push_back(word + ": " + it->second);
+					defns.push_back(word.first);
+					messages.push_back(word.first + ": " + it->second);
 				}
 			}
 		}
@@ -1622,6 +1657,8 @@ int main()
 
 		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
 		mcursor.setPosition(mpos[0] * PPB + cursor_thickness, mpos[1] * PPB + cursor_thickness);
+
+		grid.step(time);
 
 		window.clear(background);
 
