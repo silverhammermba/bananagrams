@@ -62,11 +62,13 @@ public:
 class Game : public InputReader
 {
 	sf::RenderWindow* window;
+	bool* switch_controls;
 public:
 
-	Game(sf::RenderWindow* win)
+	Game(sf::RenderWindow* win, bool* sc)
 	{
 		window = win;
+		switch_controls = sc;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -78,6 +80,8 @@ public:
 			finished = true;
 			return false;
 		}
+		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F5)
+			*switch_controls = true;
 		return true;
 	}
 };
@@ -372,13 +376,17 @@ public:
 	{
 		switch(event.type)
 		{
+			case sf::Event::MouseButtonPressed:
+				mouse_state->update = true;
+				mouse_state->move = true;
+				if (event.mouseButton.button == sf::Mouse::Right)
+					mouse_state->remove = true;
+				break;
 			case sf::Event::MouseButtonReleased:
 				mouse_state->update = true;
 				mouse_state->move = true;
 				if (event.mouseButton.button == sf::Mouse::Left)
 					mouse_state->place = true;
-				else if (event.mouseButton.button == sf::Mouse::Right)
-					mouse_state->remove = true;
 				break;
 			case sf::Event::MouseMoved:
 				{
@@ -435,7 +443,10 @@ public:
 					break;
 				case sf::Keyboard::D:
 					if (state->zoom)
+					{
 						state->dump = true;
+						return true;
+					}
 					break;
 				case sf::Keyboard::BackSpace:
 					state->remove = true;
@@ -967,7 +978,7 @@ int main()
 
 	unsigned int res[2] = {1920, 1080};
 
-	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Titlebar);
+	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Close);
 	window.setVerticalSyncEnabled(true);
 	sf::View view = window.getDefaultView();
 	view.setCenter(PPB / 2.0, PPB / 2.0);
@@ -977,7 +988,8 @@ int main()
 
 	vector<InputReader*> input_readers;
 
-	Game game(&window);
+	bool switch_controls = false;
+	Game game(&window, &switch_controls);
 	input_readers.push_back(&game);
 
 	sf::Clock clock;
@@ -1240,8 +1252,9 @@ int main()
 	MouseControls mouse(&state, &mstate);
 	input_readers.push_back(&mouse);
 
-	VimControls controls(&state);
-	input_readers.push_back(&controls);
+	SimpleControls scontrols(&state);
+	VimControls vcontrols(&state);
+	input_readers.push_back(&scontrols);
 
 	float repeat_delay = 0.5;
 	float repeat_speed = 0.1;
@@ -1262,6 +1275,28 @@ int main()
 				if (!cont)
 					break;
 			}
+		}
+
+		if (switch_controls)
+		{
+			InputReader* controls = input_readers.back();
+			input_readers.pop_back();
+			if (controls == &scontrols)
+			{
+				input_readers.push_back(&vcontrols);
+				messages.add("Switched to Vim controls.", MessageQueue::LOW);
+			}
+			else if (controls == &vcontrols)
+			{
+				input_readers.push_back(&scontrols);
+				messages.add("Switched to simple controls.", MessageQueue::LOW);
+			}
+			else
+			{
+				cerr << "Failed to switch controls!\n";
+				return 1;
+			}
+			switch_controls = false;
 		}
 
 		if (mstate.update)
@@ -1328,13 +1363,14 @@ int main()
 		if (mstate.remove)
 		{
 			// remove tile
-			auto tile = grid.remove(pos[0], pos[1]);
+			auto tile = grid.remove(mpos[0], mpos[1]);
 			if (tile != nullptr)
 			{
 				tiles[tile->ch() - 'A'].push_back(tile);
 				display.add_tile(tile);
 			}
-			mstate.remove = false;
+			if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
+				mstate.remove = false;
 		}
 
 		if (state.dump)
@@ -1516,6 +1552,12 @@ int main()
 		clock.restart();
 
 		messages.age(time);
+
+		if (mstate.wheel_delta != 0)
+		{
+			view.zoom(1 - mstate.wheel_delta * time * 2);
+			mstate.wheel_delta = 0;
+		}
 
 		if (state.zoom)
 			view.zoom(1 + state.delta[1] * (state.sprint ? 2 : 1) * time);
