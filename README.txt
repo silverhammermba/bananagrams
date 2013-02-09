@@ -52,6 +52,10 @@ Credits
  * Enable2k North American word list
  * WordNet 3.1
 
+License
+-------
+This program is licensed under the MIT License. See LICENSE.txt
+
 TODO
 ----
  * menu
