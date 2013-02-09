@@ -4,10 +4,10 @@ This is a computer version of the Bananagrams boardgame. You can only play
 solitaire at the moment (see TODOs).
 
 The goal is to use up all 144 tiles by constructing a crossword grid. You start
-with 21 tiles. Once you have used all of your letters, you can "peel". If your
-grid is valid (connected and has valid words), you get one more letter. If you
-have a letter that you don't think you can use, you can "dump" it to get three
-letters in exchange. Good luck!
+with 21 tiles. Once you have used all of your letters, you can "peel" (see the
+controls below). If your grid is valid (connected and has valid words), you get
+one more letter. If you have a letter that you don't think you can use, you can
+"dump" it to get three letters in exchange. Good luck!
 
 Starting
 --------
