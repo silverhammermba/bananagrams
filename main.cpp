@@ -978,10 +978,22 @@ public:
 
 int main()
 {
-	std::srand((unsigned int)std::time(nullptr));
-
+	// load resources
 	sf::Font font;
-	font.loadFromFile("Vera.ttf");
+	if (!font.loadFromFile("Vera.ttf"))
+	{
+		cerr << "Couldn't find font Vera.ttf!\n";
+		return 1;
+	}
+	// TODO validate somehow
+	std::ifstream words("dictionary.txt");
+	if (!words.is_open())
+	{
+		cerr << "Couldn't find dictionary.txt!\n";
+		return 1;
+	}
+
+	std::srand((unsigned int)std::time(nullptr));
 
 	Grid grid;
 
@@ -1059,192 +1071,146 @@ int main()
 	}
 
 	loading_text.setColor(sf::Color::White);
+	loading_text.setString("Loading dictionary...");
+	loading_text.setPosition(loading_text.getGlobalBounds().width / -2, -90);
+	window.clear(background);
+	window.draw(loading_text);
+	window.display();
 
-	// for loading words
-	// TODO validate somehow
-	std::ifstream words("dictionary.txt");
-	if (!words.is_open())
+	string line;
+	while (std::getline(words, line))
 	{
-		cerr << "Couldn't find dictionary.txt!\n";
-		return 1;
+		auto pos = line.find_first_of(' ');
+		if (pos == string::npos)
+			dictionary[line] = "";
+		else
+			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
 	}
+	stringstream foo;
+	foo << dictionary.size();
+	loading_text.setString(foo.str() + " words loaded.");
+	loading_text.setPosition(loading_text.getGlobalBounds().width / -2, -90);
 
-	bool loading = true;
-
-	// load words
-	while (window.isOpen())
-	{
-		sf::Event event;
-		while (window.pollEvent(event))
-		{
-			for (auto r = input_readers.begin(); r != input_readers.end();)
-			{
-				bool cont = (*r)->process_event(event);
-				if ((*r)->is_finished())
-					r = input_readers.erase(r);
-				else
-					r++;
-				if (!cont)
-					break;
-			}
-		}
-
-		string line;
-		float elapsed = 0;
-
-		// TODO there must be a better way to get just the right speed...
-		while (elapsed < 0.02)
-		{
-			if (std::getline(words, line))
-			{
-				auto pos = line.find_first_of(' ');
-				if (pos == string::npos)
-				{
-					dictionary[line] = "";
-					loading_text.setString(line);
-				}
-				else
-				{
-					dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
-					loading_text.setString(line.substr(0, pos));
-				}
-				loading_text.setPosition(loading_text.getGlobalBounds().width / -2, 0);
-
-				elapsed = clock.getElapsedTime().asSeconds();
-			}
-			else
-			{
-				loading = false;
-				stringstream foo;
-				foo << dictionary.size();
-				loading_text.setString(foo.str() + " words loaded.");
-				loading_text.move(loading_text.getGlobalBounds().width / -2, -90);
-				break;
-			}
-		}
-
-		clock.restart();
-
-		window.clear(background);
-		window.draw(loading_text);
-		window.display();
-
-		if (!loading)
-			break;
-	}
-
-	// for generating tiles
-	char load_char = 'A';
-	float miny = 0;
-	float height = 0;
-	bool done_y = false;
 	std::list<Tile*> bunch;
 	vector<Tile*> tiles[26];
 	TileDisplay display(&window, tiles, font);
 
-	// generate tile textures
-	while (window.isOpen())
 	{
-		sf::Event event;
-		while (window.pollEvent(event))
+		// for generating tiles
+		char load_char = 'A';
+		float miny = 0;
+		float height = 0;
+		bool done_y = false;
+		vector<sf::Sprite> loaded;
+
+		// generate tile textures
+		while (window.isOpen())
 		{
-			for (auto r = input_readers.begin(); r != input_readers.end();)
+			sf::Event event;
+			while (window.pollEvent(event))
 			{
-				bool cont = (*r)->process_event(event);
-				if ((*r)->is_finished())
-					r = input_readers.erase(r);
-				else
-					r++;
-				if (!cont)
-					break;
-			}
-		}
-
-		// TODO some kind of depth would help for stack appearance
-		// TODO antialiase these
-		// TODO error check
-		// TODO memory leak here?
-		tile_texture[load_char - 'A'].create(PPB, PPB);
-
-		// create text
-		stringstream string;
-		string << load_char;
-		sf::Text letter(string.str(), font, (PPB * 2) / 3.0);
-		letter.setColor(sf::Color::Black);
-
-		// center
-		auto bounds = letter.getGlobalBounds();
-		float minx = bounds.left;
-		float width = bounds.width;
-		if (!done_y)
-		{
-			miny = bounds.top;
-			height = bounds.height;
-		}
-		done_y = true;
-		letter.setPosition((PPB - width) / 2.0 - minx, (PPB - height) / 2.0 - miny);
-
-		float diam = PPB / 4.0;
-		float rad = PPB / 8.0;
-		// draw tile
-		tile_texture[load_char - 'A'].clear(sf::Color(0, 0, 0, 0));
-
-		sf::RectangleShape rect;
-		rect.setFillColor(sf::Color(255, 255, 175));
-
-		rect.setSize(sf::Vector2f(PPB - diam, PPB));
-		rect.setPosition(rad, 0);
-		tile_texture[load_char - 'A'].draw(rect);
-		rect.setSize(sf::Vector2f(PPB, PPB - diam));
-		rect.setPosition(0, rad);
-		tile_texture[load_char - 'A'].draw(rect);
-
-		sf::CircleShape circle(rad);
-		circle.setFillColor(sf::Color(255, 255, 175));
-
-		circle.setPosition(0, 0);
-		tile_texture[load_char - 'A'].draw(circle);
-		circle.setPosition(PPB - diam, 0);
-		tile_texture[load_char - 'A'].draw(circle);
-		circle.setPosition(0, PPB - diam);
-		tile_texture[load_char - 'A'].draw(circle);
-		circle.setPosition(PPB - diam, PPB - diam);
-		tile_texture[load_char - 'A'].draw(circle);
-
-		tile_texture[load_char - 'A'].draw(letter);
-		tile_texture[load_char - 'A'].display();
-
-		// create tiles for the bunch
-		for (unsigned int i = 0; i < letter_count[load_char - 'A']; i++)
-		{
-			auto it = bunch.begin();
-			auto pos = std::rand() % (bunch.size() + 1);
-			for (unsigned int i = 0; i != pos && it != bunch.end(); it++, i++);
-			bunch.insert(it, new Tile(load_char));
-		}
-
-		// display generated texture
-		// TODO this is very flickery
-		sf::Sprite sprite(tile_texture[load_char - 'A'].getTexture());
-		float padding = PPB / 2.0;
-		sprite.setPosition(((load_char - 'A') * (res[0] - 2 * padding - PPB)) / 25.0 + padding - res[0] / 2, PPB / -2.0);
-		window.draw(sprite);
-		window.display();
-
-		load_char++;
-		// if we're done
-		if(load_char > 'Z')
-		{
-			// take tiles from the bunch for player
-			for (unsigned int i = 0; i < 21; i++)
-			{
-				Tile* tile = bunch.back();
-				bunch.pop_back();
-				tiles[tile->ch() - 'A'].push_back(tile);
-				display.add_tile(tile);
+				for (auto r = input_readers.begin(); r != input_readers.end();)
+				{
+					bool cont = (*r)->process_event(event);
+					if ((*r)->is_finished())
+						r = input_readers.erase(r);
+					else
+						r++;
+					if (!cont)
+						break;
+				}
 			}
 
-			break;
+			// TODO some kind of depth would help for stack appearance
+			// TODO antialiase these
+			// TODO error check
+			// TODO memory leak here?
+			tile_texture[load_char - 'A'].create(PPB, PPB);
+
+			// create text
+			stringstream string;
+			string << load_char;
+			sf::Text letter(string.str(), font, (PPB * 2) / 3.0);
+			letter.setColor(sf::Color::Black);
+
+			// center
+			auto bounds = letter.getGlobalBounds();
+			float minx = bounds.left;
+			float width = bounds.width;
+			if (!done_y)
+			{
+				miny = bounds.top;
+				height = bounds.height;
+			}
+			done_y = true;
+			letter.setPosition((PPB - width) / 2.0 - minx, (PPB - height) / 2.0 - miny);
+
+			float diam = PPB / 4.0;
+			float rad = PPB / 8.0;
+			// draw tile
+			tile_texture[load_char - 'A'].clear(sf::Color(0, 0, 0, 0));
+
+			sf::RectangleShape rect;
+			rect.setFillColor(sf::Color(255, 255, 175));
+
+			rect.setSize(sf::Vector2f(PPB - diam, PPB));
+			rect.setPosition(rad, 0);
+			tile_texture[load_char - 'A'].draw(rect);
+			rect.setSize(sf::Vector2f(PPB, PPB - diam));
+			rect.setPosition(0, rad);
+			tile_texture[load_char - 'A'].draw(rect);
+
+			sf::CircleShape circle(rad);
+			circle.setFillColor(sf::Color(255, 255, 175));
+
+			circle.setPosition(0, 0);
+			tile_texture[load_char - 'A'].draw(circle);
+			circle.setPosition(PPB - diam, 0);
+			tile_texture[load_char - 'A'].draw(circle);
+			circle.setPosition(0, PPB - diam);
+			tile_texture[load_char - 'A'].draw(circle);
+			circle.setPosition(PPB - diam, PPB - diam);
+			tile_texture[load_char - 'A'].draw(circle);
+
+			tile_texture[load_char - 'A'].draw(letter);
+			tile_texture[load_char - 'A'].display();
+
+			// create tiles for the bunch
+			for (unsigned int i = 0; i < letter_count[load_char - 'A']; i++)
+			{
+				auto it = bunch.begin();
+				auto pos = std::rand() % (bunch.size() + 1);
+				for (unsigned int i = 0; i != pos && it != bunch.end(); it++, i++);
+				bunch.insert(it, new Tile(load_char));
+			}
+
+			// display generated texture
+			// TODO this is very flickery
+			loaded.push_back(sf::Sprite(tile_texture[load_char - 'A'].getTexture()));
+			float padding = PPB / 2.0;
+			loaded.back().setPosition(((load_char - 'A') * (res[0] - 2 * padding - PPB)) / 25.0 + padding - res[0] / 2, PPB / -2.0);
+
+			window.clear(background);
+			window.draw(loading_text);
+			for (auto& sprite : loaded)
+				window.draw(sprite);
+			window.display();
+
+			load_char++;
+			// if we're done
+			if(load_char > 'Z')
+			{
+				// take tiles from the bunch for player
+				for (unsigned int i = 0; i < 21; i++)
+				{
+					Tile* tile = bunch.back();
+					bunch.pop_back();
+					tiles[tile->ch() - 'A'].push_back(tile);
+					display.add_tile(tile);
+				}
+
+				break;
+			}
 		}
 	}
 
