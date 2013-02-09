@@ -442,6 +442,7 @@ public:
 					mouse_state->update = true;
 					mouse_state->move = true;
 				}
+				// TODO move mouse only on right click release
 				if (event.mouseButton.button == sf::Mouse::Right)
 					mouse_state->remove = true;
 				break;
@@ -1152,6 +1153,7 @@ int main()
 
 	{
 		// for generating tiles
+		float padding = PPB / 2.0;
 		char load_char = 'A';
 		float miny = 0;
 		float height = 0;
@@ -1242,13 +1244,18 @@ int main()
 			// display generated texture
 			// TODO this is very flickery
 			loaded.push_back(sf::Sprite(tile_texture[load_char - 'A'].getTexture()));
-			float padding = PPB / 2.0;
-			loaded.back().setPosition(((load_char - 'A') * (res[0] - 2 * padding - PPB)) / 25.0 + padding - res[0] / 2, PPB / -2.0);
 
 			window.clear(background);
 			window.draw(loading_text);
+			unsigned int i = 0;
+			float vwidth = view.getSize().x;
+			float vcenter = view.getCenter().x;
 			for (auto& sprite : loaded)
+			{
+				sprite.setPosition((i * (vwidth - 2 * padding - PPB)) / 25.0 + vcenter - vwidth / 2 + padding, PPB / -2.0);
 				window.draw(sprite);
+				++i;
+			}
 			window.display();
 
 			load_char++;
@@ -1323,6 +1330,8 @@ int main()
 	// game loop
 	while (window.isOpen())
 	{
+		auto wsize = window.getSize();
+
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -1365,7 +1374,6 @@ int main()
 			// update mouse cursor position
 			auto size = view.getSize();
 			auto center = view.getCenter();
-			auto wsize = window.getSize();
 			mpos[0] = std::floor(((mstate.pos[0] * size.x) / wsize.x + center.x - (size.x / 2)) / PPB);
 			mpos[1] = std::floor(((mstate.pos[1] * size.y) / wsize.y + center.y - (size.y / 2)) / PPB);
 			// TODO bit of a hack...
@@ -1654,8 +1662,8 @@ int main()
 		view.move(diff.x / (1.0 + time * 400), diff.y / (1.0 + time * 400));
 		// don't allow zooming past default
 		auto size = view.getSize();
-		if (size.x < res[0] || size.y < res[1])
-			view.setSize(res[0], res[1]);
+		if (size.x < wsize.x || size.y < wsize.y)
+			view.setSize(wsize.x, wsize.y);
 		window.setView(view);
 
 		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
