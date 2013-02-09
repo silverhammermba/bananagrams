@@ -22,11 +22,14 @@ You can switch between them with F5.
 
 Both schemes share some controls:
 COMMON
+ * arrow keys move cursor
+ * hold Ctrl and press up/down to zoom
  * typing places tiles
  * Spacebar peels
  * Backspace removes tiles
  * F1-F4 change the tile display between scrambled, sorted, tile counts, and
    tile stacks
+ * F5 switches control schemes
 COMMON (Mouse)
  * left click moves the cursor
  * right click (and drag) removes tiles
@@ -34,9 +37,7 @@ COMMON (Mouse)
  * Ctrl-left click to place a tile (only if you have one letter left)
 
 SIMPLE
- * arrow keys move cursor
  * hold Shift to move cursor quickly
- * hold Ctrl and press up/down to zoom
  * Ctrl-D dumps the tile under the cursor
 
 VIM
@@ -45,6 +46,7 @@ VIM
  * YUIO move the cursor quickly
  * D dumps the tile under the cursor
  * X removes tiles
+ * hold Ctrl and use the vertical cursor movement keys to zoom
 
 Credits
 -------
@@ -59,7 +61,6 @@ This program is licensed under the MIT License. See LICENSE.txt
 TODO
 ----
  * menu
- * definitions
  * cut-and-paste
  * multiplayer
  * animate grid errors
