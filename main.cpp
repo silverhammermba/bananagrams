@@ -141,9 +141,9 @@ namespace std
 class Grid
 {
 	vector<Tile*> grid;
+	vector<string> defined;
 	std::map<sf::Vector2i, bool> hwords;
 	std::map<sf::Vector2i, bool> vwords;
-
 	inline unsigned int bijection(unsigned x, unsigned int y) const
 	{
 		return ((x + y) * (x + y + 1)) / 2 + x;
@@ -309,6 +309,7 @@ public:
 		}
 
 		stringstream word;
+		vector<string> words;
 		Tile* tile;
 		for (auto& pair: hwords)
 		{
@@ -326,7 +327,28 @@ public:
 				valid = false;
 			}
 			else if (valid && std::rand() % 100 == 0 && it->second.length() > 0)
-				messages.push_back(word.str() + ": " + it->second);
+			{
+				bool defd = false;
+				for (string& wd : defined)
+					if (word.str() == wd)
+					{
+						defd = true;
+						break;
+					}
+				if (!defd)
+					for (string& wd : words)
+						if (word.str() == wd)
+						{
+							defd = true;
+							break;
+						}
+
+				if (!defd)
+				{
+					words.push_back(word.str());
+					messages.push_back(word.str() + ": " + it->second);
+				}
+			}
 		}
 
 		for (auto& pair: vwords)
@@ -347,8 +369,33 @@ public:
 				valid = false;
 			}
 			else if (valid && std::rand() % 100 == 0 && it->second.length() > 0)
-				messages.push_back(word.str() + ": " + it->second);
+			{
+				bool defd = false;
+				for (string& wd : defined)
+					if (word.str() == wd)
+					{
+						defd = true;
+						break;
+					}
+				if (!defd)
+					for (string& wd : words)
+						if (word.str() == wd)
+						{
+							defd = true;
+							break;
+						}
+
+				if (!defd)
+				{
+					words.push_back(word.str());
+					messages.push_back(word.str() + ": " + it->second);
+				}
+			}
 		}
+
+		if (valid)
+			for (string& wd : words)
+				defined.push_back(wd);
 
 		return valid;
 	}
