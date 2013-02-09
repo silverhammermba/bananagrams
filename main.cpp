@@ -1207,6 +1207,11 @@ int main()
 	cursor.setOutlineThickness(cursor_thickness);
 	cursor.setOutlineColor(sf::Color(0, 200, 0));
 
+	sf::RectangleShape mcursor(sf::Vector2f(PPB - cursor_thickness * 2, PPB - cursor_thickness * 2));
+	mcursor.setFillColor(sf::Color(0, 0, 0, 0));
+	mcursor.setOutlineThickness(cursor_thickness);
+	mcursor.setOutlineColor(sf::Color(0, 0, 0, 0));
+
 	int last[2] = {-1, 0};
 	int pos[2] = {0, 0};
 	int mpos[2] = {0, 0};
@@ -1266,6 +1271,8 @@ int main()
 			auto center = view.getCenter();
 			mpos[0] = std::floor(((mstate.pos[0] * size.x) / res[0] + center.x - (size.x / 2)) / PPB);
 			mpos[1] = std::floor(((mstate.pos[1] * size.y) / res[1] + center.y - (size.y / 2)) / PPB);
+			// TODO bit of a hack...
+			mcursor.setOutlineColor(sf::Color(0, 200, 0, 80));
 			mstate.update = false;
 		}
 
@@ -1552,11 +1559,13 @@ int main()
 		window.setView(view);
 
 		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
+		mcursor.setPosition(mpos[0] * PPB + cursor_thickness, mpos[1] * PPB + cursor_thickness);
 
 		window.clear(background);
 
 		grid.draw_on(window);
 		window.draw(cursor);
+		window.draw(mcursor);
 
 		display.draw();
 		messages.draw_on(window);
