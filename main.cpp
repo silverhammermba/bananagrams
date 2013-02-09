@@ -308,78 +308,55 @@ public:
 			return false;
 		}
 
-		stringstream word;
+		stringstream temp;
 		vector<string> words;
+		vector<string> defns;
 		Tile* tile;
+
+		// get words
 		for (auto& pair: hwords)
 		{
-			word.str("");
+			temp.str("");
 			for (unsigned int x = pair.first.x; (tile = get(x, pair.first.y)) != nullptr; x++)
-				word << tile->ch();
-
-			auto it = dictionary.find(word.str());
-
-			if (it == dictionary.end())
-			{
-				if (valid)
-					messages.clear();
-				messages.push_back(word.str() + " is not a word.");
-				valid = false;
-			}
-			else if (valid && std::rand() % 100 == 0 && it->second.length() > 0)
-			{
-				bool defd = false;
-				for (string& wd : defined)
-					if (word.str() == wd)
-					{
-						defd = true;
-						break;
-					}
-				if (!defd)
-					for (string& wd : words)
-						if (word.str() == wd)
-						{
-							defd = true;
-							break;
-						}
-
-				if (!defd)
-				{
-					words.push_back(word.str());
-					messages.push_back(word.str() + ": " + it->second);
-				}
-			}
+				temp << tile->ch();
+			words.push_back(temp.str());
 		}
-
 		for (auto& pair: vwords)
 		{
-			word.str("");
+			temp.str("");
 			for (unsigned int y = pair.first.y; (tile = get(pair.first.x, y)) != nullptr; y++)
-				word << tile->ch();
+				temp << tile->ch();
+			words.push_back(temp.str());
+		}
 
-			auto it = dictionary.find(word.str());
+		// check words
+		for (auto& word : words)
+		{
+			auto it = dictionary.find(word);
 
+			// if invalid
 			if (it == dictionary.end())
 			{
+				// if this is first error, clear definitions
 				if (valid)
 					messages.clear();
-				if (valid)
-					messages.clear();
-				messages.push_back(word.str() + " is not a word.");
+				messages.push_back(word + " is not a word.");
 				valid = false;
 			}
+			// if valid and defined
 			else if (valid && std::rand() % 100 == 0 && it->second.length() > 0)
 			{
+				// check if we have already displayed the definition
 				bool defd = false;
 				for (string& wd : defined)
-					if (word.str() == wd)
+					if (word == wd)
 					{
 						defd = true;
 						break;
 					}
 				if (!defd)
-					for (string& wd : words)
-						if (word.str() == wd)
+					for (string& wd : defns)
+						if (word == wd)
 						{
 							defd = true;
 							break;
@@ -387,14 +364,15 @@ public:
 
 				if (!defd)
 				{
-					words.push_back(word.str());
-					messages.push_back(word.str() + ": " + it->second);
+					defns.push_back(word);
+					messages.push_back(word + ": " + it->second);
 				}
 			}
 		}
 
+		// if error-free, keep track of displayed definitions
 		if (valid)
-			for (string& wd : words)
+			for (string& wd : defns)
 				defined.push_back(wd);
 
 		return valid;
