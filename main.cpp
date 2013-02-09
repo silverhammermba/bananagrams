@@ -971,7 +971,7 @@ int main()
 	std::srand((unsigned int)std::time(nullptr));
 
 	sf::Font font;
-	font.loadFromFile("C:\\Windows\\Fonts\\Vera.ttf");
+	font.loadFromFile("Vera.ttf");
 
 	Grid grid;
 
@@ -1034,12 +1034,12 @@ int main()
 
 		if (elapsed < 1)
 			loading_text.setColor(sf::Color(255, 255, 255, 255 * elapsed));
-		else if (elapsed > 3)
-			loading_text.setColor(sf::Color(255, 255, 255, 255 - 255 * (elapsed - 3)));
+		else if (elapsed > 2)
+			loading_text.setColor(sf::Color(255, 255, 255, 255 - 255 * (elapsed - 2)));
 		else
 			loading_text.setColor(sf::Color::White);
 
-		if (elapsed > 1) // TODO change back to 4
+		if (elapsed > 3)
 			break;
 
 		window.clear(background);
@@ -1124,8 +1124,8 @@ int main()
 
 	// for generating tiles
 	char load_char = 'A';
-	float miny;
-	float height;
+	float miny = 0;
+	float height = 0;
 	bool done_y = false;
 	std::list<Tile*> bunch;
 	vector<Tile*> tiles[26];
@@ -1257,7 +1257,7 @@ int main()
 	int pos[2] = {0, 0};
 	int mpos[2] = {0, 0};
 	float held[2] = {0, 0};
-	int next[2];
+	int next[2] = {0, 0};
 
 	State state;
 	state.delta[0] = 0;
