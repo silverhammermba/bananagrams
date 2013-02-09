@@ -384,8 +384,11 @@ public:
 		switch(event.type)
 		{
 			case sf::Event::MouseButtonPressed:
-				mouse_state->update = true;
-				mouse_state->move = true;
+				if (event.mouseButton.button != sf::Mouse::Left)
+				{
+					mouse_state->update = true;
+					mouse_state->move = true;
+				}
 				if (event.mouseButton.button == sf::Mouse::Right)
 					mouse_state->remove = true;
 				break;
