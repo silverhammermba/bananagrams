@@ -1542,16 +1542,9 @@ int main()
 		}
 
 		auto center = view.getCenter();
-		// TODO view moves too slowly. Perhaps scale speed by how far cursor is from center?
-		float max = time * 500.0 * (state.sprint ? 2 : 1);
 		sf::Vector2f diff(pos[0] * PPB + PPB / 2.0 - center.x, pos[1] * PPB + PPB / 2.0 - center.y);
-		float length = std::sqrt(diff.x * diff.x + diff.y * diff.y);
-		if (length > max)
-		{
-			diff.x = (diff.x * max) / length;
-			diff.y = (diff.y * max) / length;
-		}
-		view.move(diff.x, diff.y);
+		// TODO totally random movement function
+		view.move(diff.x / (1.0 + time * 400), diff.y / (1.0 + time * 400));
 		// don't allow zooming past default
 		auto size = view.getSize();
 		if (size.x < res[0] || size.y < res[1])
