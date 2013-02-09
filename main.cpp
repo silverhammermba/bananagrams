@@ -64,14 +64,14 @@ class Game : public InputReader
 {
 	sf::RenderWindow* window;
 	bool* switch_controls;
-	unsigned int* res;
+	sf::View* view;
 public:
 
-	Game(sf::RenderWindow* win, bool* sc, unsigned int* r)
+	Game(sf::RenderWindow* win, bool* sc, sf::View* v)
 	{
 		window = win;
 		switch_controls = sc;
-		res = r;
+		view = v;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -87,8 +87,8 @@ public:
 			*switch_controls = true;
 		else if (event.type == sf::Event::Resized)
 		{
-			res[0] = event.size.width;
-			res[1] = event.size.height;
+			view->setSize(event.size.width, event.size.height);
+			window->setView(*view);
 		}
 		return true;
 	}
@@ -1096,7 +1096,7 @@ int main()
 	vector<InputReader*> input_readers;
 
 	bool switch_controls = false;
-	Game game(&window, &switch_controls, res);
+	Game game(&window, &switch_controls, &view);
 	input_readers.push_back(&game);
 
 	sf::Clock clock;
@@ -1365,8 +1365,9 @@ int main()
 			// update mouse cursor position
 			auto size = view.getSize();
 			auto center = view.getCenter();
-			mpos[0] = std::floor(((mstate.pos[0] * size.x) / res[0] + center.x - (size.x / 2)) / PPB);
-			mpos[1] = std::floor(((mstate.pos[1] * size.y) / res[1] + center.y - (size.y / 2)) / PPB);
+			auto wsize = window.getSize();
+			mpos[0] = std::floor(((mstate.pos[0] * size.x) / wsize.x + center.x - (size.x / 2)) / PPB);
+			mpos[1] = std::floor(((mstate.pos[1] * size.y) / wsize.y + center.y - (size.y / 2)) / PPB);
 			// TODO bit of a hack...
 			mcursor.setOutlineColor(sf::Color(0, 200, 0, 80));
 			mstate.update = false;
