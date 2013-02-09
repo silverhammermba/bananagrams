@@ -276,7 +276,7 @@ public:
 		traverse(x, y + 1);
 	}
 
-	bool is_valid(string* message)
+	bool is_valid(vector<string>& messages)
 	{
 		// need at least one word to be valid
 		if (hwords.size() == 0 && vwords.size() == 0)
@@ -304,7 +304,7 @@ public:
 
 		if (!valid)
 		{
-			*message = "Your tiles are not all connected.";
+			messages.push_back("Your tiles are not all connected.");
 			return false;
 		}
 
@@ -314,47 +314,40 @@ public:
 		{
 			word.str("");
 			for (unsigned int x = pair.first.x; (tile = get(x, pair.first.y)) != nullptr; x++)
-				word << (char)(tile->ch() - 'A' + 'a');
+				word << tile->ch();
 
 			auto it = dictionary.find(word.str());
 
 			if (it == dictionary.end())
 			{
-				// TODO this seems real fucking dirty
-				char* str = new char[word.str().length() + 1];
-				std::strcpy(str, word.str().c_str());
-				for (unsigned int i = 0; i < word.str().length(); i++)
-					str[i] = str[i] - 'a' + 'A';
-				*message = string(str) + " is not a word.";
-				delete[] str;
+				if (valid)
+					messages.clear();
+				messages.push_back(word.str() + " is not a word.");
 				valid = false;
-				break;
 			}
+			else if (valid && std::rand() % 100 == 0 && it->second.length() > 0)
+				messages.push_back(word.str() + ": " + it->second);
 		}
-
-		if (!valid)
-			return false;
 
 		for (auto& pair: vwords)
 		{
 			word.str("");
 			for (unsigned int y = pair.first.y; (tile = get(pair.first.x, y)) != nullptr; y++)
-				word << (char)(tile->ch() - 'A' + 'a');
+				word << tile->ch();
 
 			auto it = dictionary.find(word.str());
 
 			if (it == dictionary.end())
 			{
-				// TODO same here. not DRY
-				char* str = new char[word.str().length() + 1];
-				std::strcpy(str, word.str().c_str());
-				for (unsigned int i = 0; i < word.str().length(); i++)
-					str[i] = str[i] - 'a' + 'A';
-				*message = string(str) + " is not a word.";
-				delete[] str;
+				if (valid)
+					messages.clear();
+				if (valid)
+					messages.clear();
+				messages.push_back(word.str() + " is not a word.");
 				valid = false;
-				break;
 			}
+			else if (valid && std::rand() % 100 == 0 && it->second.length() > 0)
+				messages.push_back(word.str() + ": " + it->second);
 		}
 
 		return valid;
@@ -1422,8 +1415,8 @@ int main()
 				}
 			if (spent)
 			{
-				string mess;
-				if (grid.is_valid(&mess))
+				vector<string> mess;
+				if (grid.is_valid(mess))
 				{
 					if (bunch.size() > 0)
 					{
@@ -1432,12 +1425,15 @@ int main()
 						tiles[tile->ch() - 'A'].push_back(tile);
 						display.add_tile(tile);
 						bunch.pop_back();
+						for (auto message : mess)
+							messages.add(message, MessageQueue::LOW);
 					}
 					else
 						messages.add("You win!", MessageQueue::LOW);
 				}
 				else
-					messages.add(mess, MessageQueue::HIGH);
+					for (auto message : mess)
+						messages.add(message, MessageQueue::HIGH);
 			}
 			else
 				messages.add("You have not used all of your letters.", MessageQueue::HIGH);
