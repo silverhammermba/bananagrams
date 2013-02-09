@@ -19,7 +19,7 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-#define PPB 64
+static const int PPB = 48;
 
 sf::RenderTexture tile_texture[26];
 std::map<string, string> dictionary;
@@ -1005,9 +1005,9 @@ int main()
 		2
 	};
 
-	unsigned int res[2] = {1920, 1080};
+	unsigned int res[2] = {1280, 720};
 
-	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Close);
+	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Resize);
 	window.setVerticalSyncEnabled(true);
 	sf::View view = window.getDefaultView();
 	view.setCenter(PPB / 2.0, PPB / 2.0);
