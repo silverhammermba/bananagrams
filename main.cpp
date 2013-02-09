@@ -63,12 +63,14 @@ class Game : public InputReader
 {
 	sf::RenderWindow* window;
 	bool* switch_controls;
+	unsigned int* res;
 public:
 
-	Game(sf::RenderWindow* win, bool* sc)
+	Game(sf::RenderWindow* win, bool* sc, unsigned int* r)
 	{
 		window = win;
 		switch_controls = sc;
+		res = r;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -82,6 +84,11 @@ public:
 		}
 		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F5)
 			*switch_controls = true;
+		else if (event.type == sf::Event::Resized)
+		{
+			res[0] = event.size.width;
+			res[1] = event.size.height;
+		}
 		return true;
 	}
 };
@@ -1005,6 +1012,7 @@ int main()
 		2
 	};
 
+	// TODO add proper resolutions/resizing
 	unsigned int res[2] = {1280, 720};
 
 	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Resize);
@@ -1018,7 +1026,7 @@ int main()
 	vector<InputReader*> input_readers;
 
 	bool switch_controls = false;
-	Game game(&window, &switch_controls);
+	Game game(&window, &switch_controls, res);
 	input_readers.push_back(&game);
 
 	sf::Clock clock;
