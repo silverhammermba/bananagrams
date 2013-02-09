@@ -329,7 +329,7 @@ public:
 				std::strcpy(str, word.str().c_str());
 				for (unsigned int i = 0; i < word.str().length(); i++)
 					str[i] = str[i] - 'a' + 'A';
-				*message = string(str) + " is not a valid word.";
+				*message = string(str) + " is not a word.";
 				delete[] str;
 				valid = false;
 				break;
@@ -926,6 +926,32 @@ int main()
 
 	sf::Clock clock;
 
+	sf::Text loading_text("for Monica", font, 30);
+	loading_text.setColor(sf::Color(255, 255, 255, 0));
+	auto bounds = loading_text.getGlobalBounds();
+	loading_text.setPosition(bounds.width / -2, bounds.height / -2);
+
+	while (window.isOpen())
+	{
+		float elapsed = clock.getElapsedTime().asSeconds();
+
+		if (elapsed < 1)
+			loading_text.setColor(sf::Color(255, 255, 255, 255 * elapsed));
+		else if (elapsed > 3)
+			loading_text.setColor(sf::Color(255, 255, 255, 255 - 255 * (elapsed - 3)));
+		else
+			loading_text.setColor(sf::Color::White);
+
+		if (elapsed > 4)
+			break;
+
+		window.clear(background);
+		window.draw(loading_text);
+		window.display();
+	}
+
+	loading_text.setColor(sf::Color::White);
+
 	// for loading words
 	// TODO validate somehow
 	std::ifstream words("dictionary.txt");
@@ -936,7 +962,6 @@ int main()
 	}
 
 	bool loading = true;
-	sf::Text loading_text("", font, 30);
 
 	// load words
 	while (window.isOpen())
