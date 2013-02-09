@@ -294,7 +294,7 @@ public:
 			if (tile != nullptr)
 			{
 				auto color = tile->get_color();
-				tile->set_color(color + sf::Color(time * 255, time * 255, time * 255));
+				tile->set_color(color + sf::Color(time * 300, time * 300, time * 300));
 			}
 		}
 	}
@@ -1000,7 +1000,7 @@ public:
 		for (auto mess = messages.begin(); mess != messages.end();)
 		{
 			(*mess)->age(time);
-			if ((*mess)->age() > 10)
+			if ((*mess)->age() > 5)
 			{
 				mess = messages.erase(mess);
 				change = true;
@@ -1083,6 +1083,7 @@ int main()
 	// TODO add proper resolutions/resizing
 	unsigned int res[2] = {1280, 720};
 
+	// TODO make nicely resizable
 	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Resize);
 	window.setVerticalSyncEnabled(true);
 	sf::View view = window.getDefaultView();
