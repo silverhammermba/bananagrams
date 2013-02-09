@@ -839,6 +839,7 @@ public:
 
 	void add_tile(Tile* tile)
 	{
+		tile->set_color(sf::Color::White);
 		reposition = true;
 		// update persistent structures
 		scram.push_back(tile);
@@ -1084,7 +1085,7 @@ int main()
 	unsigned int res[2] = {1280, 720};
 
 	// TODO make nicely resizable
-	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams", sf::Style::Resize);
+	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams");
 	window.setVerticalSyncEnabled(true);
 	sf::View view = window.getDefaultView();
 	view.setCenter(PPB / 2.0, PPB / 2.0);
