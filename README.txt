@@ -9,6 +9,11 @@ grid is valid (connected and has valid words), you get one more letter. If you
 have a letter that you don't think you can use, you can "dump" it to get three
 letters in exchange. Good luck!
 
+Starting
+--------
+If you run the game from a shorcut, make sure that "Start in" in the shortcut
+properties is set to the folder of the executable.
+
 Controls
 --------
 
@@ -50,6 +55,7 @@ Credits
 TODO
 ----
  * menu
+ * definitions
  * cut-and-paste
  * multiplayer
  * animate grid errors
