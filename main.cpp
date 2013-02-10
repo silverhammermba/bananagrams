@@ -92,10 +92,8 @@ public:
 			state->switch_controls = true;
 		else if (event.type == sf::Event::Resized)
 		{
-			// TODO sometimes doesn't work???
 			state->gui_view->setSize(event.size.width, event.size.height);
 			state->gui_view->setCenter(event.size.width / 2.0, event.size.height / 2.0);
-			// TODO how to handle zoom?
 			state->grid_view->setSize(event.size.width, event.size.height);
 			state->grid_view->zoom(state->zoom);
 			cerr << " Got zoom " << state->zoom << endl;
@@ -248,7 +246,6 @@ public:
 			throw std::runtime_error("attempt to place NULL tile");
 		unsigned int n = convert(x, y);
 		if (n >= grid.size())
-			// TODO catch failure?
 			grid.resize(n + 1, nullptr);
 		Tile* swp = grid[n];
 		tile->set_pos(x * PPB, y * PPB);
@@ -1634,10 +1631,9 @@ int main()
 
 		auto center = grid_view.getCenter();
 		sf::Vector2f diff(pos[0] * PPB + PPB / 2.0 - center.x, pos[1] * PPB + PPB / 2.0 - center.y);
-		// TODO totally random movement function
+		// TODO is there a better movement function?
 		grid_view.move(diff.x / (1.0 + time * 400), diff.y / (1.0 + time * 400));
 		// don't allow zooming in past 1x
-		// TODO doesn't work with resizing
 		auto size = grid_view.getSize();
 		if (size.x < wsize.x || size.y < wsize.y)
 			grid_view.setSize(wsize.x, wsize.y);
