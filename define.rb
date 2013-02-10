@@ -26,29 +26,32 @@ dictionary.each.with_index do |pair, i|
 	if not pair[1]
 		defs = []
 		`wn #{pair[0]} -over`.each_line do |line|
-			if line =~ /\d+\. (.*) -- \(([^;]+).*\)/
-				unless $1.split(?,).any? { |w| w != w.downcase }
-					defs << $2.strip
+			# parse words and definitions
+			if line =~ /^\d+\. (\(\d+\) )?([^-]+) -- \(([^;]+).*\)/
+				# if no proper Nouns
+				if $2.downcase == $2
+					defs << $3.strip
 				end
 			end
 		end
 		unless defs.empty?
-			dictionary[pair[0]] = defs.min_by(&:length)
+			norep = defs.reject { |defn| defn.downcase =~ /\b#{pair[0]}\b/ }
+			dictionary[pair[0]] = (norep.empty? ? defs : norep).first
 		end
 	end
 	if rand < 0.01
 		STDERR.print "\r#{i}/#{total}"
 	end
 end
-STDERR.puts
+STDERR.puts "\r#{total}/#{total}"
 
 STDOUT.puts "Writing words..."
 File.open("dictionary.txt", "w") do |list|
 	dictionary.each do |word, defn|
 		if defn
-			list.puts "#{word} #{defn}"
+			list.puts "#{word.upcase} #{defn}"
 		else
-			list.puts word
+			list.puts word.upcase
 		end
 	end
 end
