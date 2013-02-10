@@ -1301,14 +1301,17 @@ int main()
 	VimControls vcontrols(&state);
 	input_readers.push_back(&scontrols);
 
-	float repeat_delay = 0.5;
-	float repeat_speed = 0.1;
+	float repeat_delay = 0.3;
+	float repeat_speed = 0.07;
 
 	// game loop
 	while (window.isOpen())
 	{
 		// needed for mouse cursor position and zoom control
 		auto wsize = window.getSize();
+		// needed for cursor positions
+		auto gsize = grid_view.getSize();
+		auto center = grid_view.getCenter();
 
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -1350,10 +1353,8 @@ int main()
 		if (mstate.update)
 		{
 			// update mouse cursor position
-			auto size = grid_view.getSize();
-			auto center = grid_view.getCenter();
-			mpos[0] = std::floor(((mstate.pos[0] * size.x) / wsize.x + center.x - (size.x / 2)) / PPB);
-			mpos[1] = std::floor(((mstate.pos[1] * size.y) / wsize.y + center.y - (size.y / 2)) / PPB);
+			mpos[0] = std::floor(((mstate.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB);
+			mpos[1] = std::floor(((mstate.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB);
 			mstate.update = false;
 		}
 
@@ -1604,7 +1605,13 @@ int main()
 
 		if (mstate.wheel_delta != 0)
 		{
+			sf::Vector2f before((mstate.pos[0] * gsize.x) / wsize.x + center.x - gsize.x / 2, (mstate.pos[1] * gsize.y) / wsize.y + center.y - gsize.y / 2);
 			grid_view.zoom(1 - mstate.wheel_delta * time * 2);
+			gsize = grid_view.getSize();
+			sf::Vector2f after((mstate.pos[0] * gsize.x) / wsize.x + center.x - gsize.x / 2, (mstate.pos[1] * gsize.y) / wsize.y + center.y - gsize.y / 2);
+			grid_view.move(before - after);
+			// TODO perhaps move cursor if zooming in moves it off screen?
+
 			mstate.wheel_delta = 0;
 		}
 
@@ -1612,7 +1619,7 @@ int main()
 			grid_view.zoom(1 + state.delta[1] * (state.sprint ? 2 : 1) * time);
 		else
 		{
-			// TODO is this useless?
+			// control key repeat speed
 			for (unsigned int i = 0; i < 2; i++)
 			{
 				if (state.delta[i] == 0)
@@ -1632,13 +1639,17 @@ int main()
 			}
 		}
 
-		auto center = grid_view.getCenter();
-		sf::Vector2f diff(pos[0] * PPB + PPB / 2.0 - center.x, pos[1] * PPB + PPB / 2.0 - center.y);
+		// these might have changed due to zooming
+		center = grid_view.getCenter();
+		gsize = grid_view.getSize();
+		sf::Vector2f spos(pos[0] * PPB + PPB / 2.0, pos[1] * PPB + PPB / 2.0);
+		// measure difference from a box in the center of the screen
+		sf::Vector2f diff((std::abs(spos.x - center.x) > gsize.x / 4 ? spos.x - center.x - (spos.x >= center.x ? gsize.x / 4 : gsize.x / -4) : 0), (std::abs(spos.y - center.y) > gsize.y / 4 ? spos.y  - center.y - (spos.y >= center.y ? gsize.y / 4 : gsize.y / -4) : 0));
 		// TODO is there a better movement function?
 		grid_view.move(diff.x / (1.0 + time * 400), diff.y / (1.0 + time * 400));
+
 		// don't allow zooming in past 1x
-		auto size = grid_view.getSize();
-		if (size.x < wsize.x || size.y < wsize.y)
+		if (gsize.x < wsize.x || gsize.y < wsize.y)
 			grid_view.setSize(wsize.x, wsize.y);
 		gstate.zoom = grid_view.getSize().x / wsize.x;
 
