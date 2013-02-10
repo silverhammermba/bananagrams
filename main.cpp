@@ -442,12 +442,6 @@ public:
 		switch(event.type)
 		{
 			case sf::Event::MouseButtonPressed:
-				if (event.mouseButton.button != sf::Mouse::Left)
-				{
-					mouse_state->update = true;
-					mouse_state->move = true;
-				}
-				// TODO move mouse only on right click release
 				if (event.mouseButton.button == sf::Mouse::Right)
 					mouse_state->remove = true;
 				break;
