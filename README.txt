@@ -48,11 +48,17 @@ VIM
  * X removes tiles
  * hold Ctrl and use the vertical cursor movement keys to zoom
 
+Bugs
+----
+Sometimes when resizing the window, the graphics will become distorted. Slightly
+resizing the window again should fix the problem.
+
 Credits
 -------
  * SFML 2.0
  * Enable2k North American word list
  * WordNet 3.1
+ * Bitstream Vera 1.10
 
 License
 -------
@@ -63,5 +69,5 @@ TODO
  * menu
  * cut-and-paste
  * multiplayer
- * animate grid errors
  * sounds
+ * icon
