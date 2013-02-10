@@ -63,15 +63,17 @@ public:
 class Game : public InputReader
 {
 	sf::RenderWindow* window;
+	sf::View* gui_view;
+	sf::View* grid_view;
 	bool* switch_controls;
-	sf::View* view;
 public:
 
-	Game(sf::RenderWindow* win, bool* sc, sf::View* v)
+	Game(sf::RenderWindow* win, sf::View* u, sf::View* r, bool* sc)
 	{
 		window = win;
+		gui_view = u;
+		grid_view = r;
 		switch_controls = sc;
-		view = v;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -87,8 +89,11 @@ public:
 			*switch_controls = true;
 		else if (event.type == sf::Event::Resized)
 		{
-			view->setSize(event.size.width, event.size.height);
-			window->setView(*view);
+			// TODO sometimes doesn't work???
+			gui_view->setSize(event.size.width, event.size.height);
+			gui_view->setCenter(event.size.width / 2.0, event.size.height / 2.0);
+			// TODO how to handle zoom?
+			grid_view->setSize(event.size.width, event.size.height);
 		}
 		return true;
 	}
@@ -692,11 +697,10 @@ class TileDisplay : public InputReader
 {
 	bool reposition = true;
 	vector<Tile*>* tiles;
-	sf::RenderWindow* window;
+	sf::View* gui_view;
 	list<Tile*> scram; // for shuffle
 	list<Tile*> sort; // for ordered
 	list<Tile*> single; // for counts
-	sf::Vector2u size;
 	sf::Text number[26];
 
 	// position tiles in list in nice rows
@@ -704,17 +708,18 @@ class TileDisplay : public InputReader
 	{
 		if (l.size() == 0)
 			return;
+		auto size = gui_view->getSize();
 		float padding = PPB / 8.f;
 		float min_width = PPB + padding;
 		// leave PPB/2 space on either side of tiles, one tile gets full PPB width
-		unsigned int max_per_row = (size.x - PPB - padding * 2) / (int)min_width + 1;
+		unsigned int max_per_row = ((int)size.x - PPB - padding * 2) / (int)min_width + 1;
 		unsigned int rows = l.size() / max_per_row + (l.size() > (l.size() / max_per_row) * max_per_row ? 1 : 0);
 		auto tile = l.begin();
 		for (unsigned int i = 0; tile != l.end(); i++, tile++)
 		{
 			// number of tiles in this row
 			unsigned int row_size = i >= (l.size() / max_per_row) * max_per_row ? l.size() % max_per_row : max_per_row;
-			float room_per_tile = row_size == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(row_size - 1);
+			float room_per_tile = row_size == 1 ? 0 : (size.x - PPB - padding * 2) / (row_size - 1);
 			// maximum PPB/4 spacing between tiles
 			if (room_per_tile > (PPB * 5) / 4.0)
 				room_per_tile = (PPB * 5) / 4.0;
@@ -724,7 +729,7 @@ class TileDisplay : public InputReader
 		}
 	}
 
-	void counts()
+	void counts(sf::RenderWindow& window)
 	{
 		if (reposition)
 		{
@@ -734,16 +739,17 @@ class TileDisplay : public InputReader
 
 		for (auto tile: single)
 		{
-			tile->draw_on(*window);
+			tile->draw_on(window);
 			number[tile->ch() - 'A'].setPosition(tile->get_pos() + sf::Vector2f(PPB / 32.0, 0));
-			window->draw(number[tile->ch() - 'A']);
+			window.draw(number[tile->ch() - 'A']);
 		}
 	}
 
-	void stacks()
+	void stacks(sf::RenderWindow& window)
 	{
 		if (reposition)
 		{
+			auto size = gui_view->getSize();
 			unsigned int nonempty = 0;
 			for (char ch = 'A'; ch <= 'Z'; ch++)
 				if (tiles[ch - 'A'].size() > 0)
@@ -771,10 +777,10 @@ class TileDisplay : public InputReader
 
 		for (char ch = 'Z'; ch >= 'A'; --ch)
 			for (auto tile: tiles[ch - 'A'])
-				tile->draw_on(*window);
+				tile->draw_on(window);
 	}
 
-	void ordered()
+	void ordered(sf::RenderWindow& window)
 	{
 		if (reposition)
 		{
@@ -782,10 +788,10 @@ class TileDisplay : public InputReader
 			reposition = false;
 		}
 		for (auto tile: sort)
-			tile->draw_on(*window);
+			tile->draw_on(window);
 	}
 
-	void scrambled()
+	void scrambled(sf::RenderWindow& window)
 	{
 		if (reposition)
 		{
@@ -793,10 +799,10 @@ class TileDisplay : public InputReader
 			reposition = false;
 		}
 		for (auto tile: scram)
-			tile->draw_on(*window);
+			tile->draw_on(window);
 	}
 
-	void (TileDisplay::*draw_func)(void) = &TileDisplay::scrambled;
+	void (TileDisplay::*draw_func)(sf::RenderWindow&) = &TileDisplay::scrambled;
 
 	void reshuffle()
 	{
@@ -815,9 +821,9 @@ class TileDisplay : public InputReader
 	}
 
 public:
-	TileDisplay(sf::RenderWindow* win, vector<Tile*>* t, const sf::Font& font) : size(win->getSize())
+	TileDisplay(sf::View* v, vector<Tile*>* t, const sf::Font& font)
 	{
-		window = win;
+		gui_view = v;
 		tiles = t;
 		// prepare persistent structures
 		reshuffle();
@@ -913,12 +919,9 @@ public:
 		return true;
 	}
 
-	void draw()
+	void draw_on(sf::RenderWindow& window)
 	{
-		auto view = window->getView();
-		window->setView(window->getDefaultView());
-		(this->*draw_func)();
-		window->setView(view);
+		(this->*draw_func)(window);
 	}
 };
 
@@ -1023,11 +1026,8 @@ public:
 
 	void draw_on(sf::RenderWindow& window) const
 	{
-		auto view = window.getView();
-		window.setView(window.getDefaultView());
 		for (auto message : messages)
 			message->draw_on(window);
-		window.setView(view);
 	}
 };
 
@@ -1082,22 +1082,19 @@ int main()
 		2
 	};
 
-	// TODO add proper resolutions/resizing
-	unsigned int res[2] = {1280, 720};
-
-	// TODO make nicely resizable
-	sf::RenderWindow window(sf::VideoMode(res[0], res[1]), "Bananagrams");
+	sf::RenderWindow window(sf::VideoMode(1280, 720), "Bananagrams");
 	window.setVerticalSyncEnabled(true);
-	sf::View view = window.getDefaultView();
-	view.setCenter(PPB / 2.0, PPB / 2.0);
-	window.setView(view);
+	sf::View gui_view = window.getDefaultView();
+	window.setView(gui_view);
+	sf::View grid_view = window.getDefaultView();
+	grid_view.setCenter(PPB / 2.0, PPB / 2.0);
 
 	sf::Color background(22, 22, 22);
 
 	vector<InputReader*> input_readers;
 
 	bool switch_controls = false;
-	Game game(&window, &switch_controls, &view);
+	Game game(&window, &gui_view, &grid_view, &switch_controls);
 	input_readers.push_back(&game);
 
 	sf::Clock clock;
@@ -1105,7 +1102,8 @@ int main()
 	sf::Text loading_text("for Monica", font, 30);
 	loading_text.setColor(sf::Color(255, 255, 255, 0));
 	auto bounds = loading_text.getGlobalBounds();
-	loading_text.setPosition(bounds.width / -2, bounds.height / -2);
+	auto center = gui_view.getCenter();
+	loading_text.setPosition(center.x + bounds.width / -2, center.y + bounds.height / -2);
 
 	while (window.isOpen())
 	{
@@ -1128,7 +1126,7 @@ int main()
 
 	loading_text.setColor(sf::Color::White);
 	loading_text.setString("Loading dictionary...");
-	loading_text.setPosition(loading_text.getGlobalBounds().width / -2, -90);
+	loading_text.setPosition(center.x + loading_text.getGlobalBounds().width / -2, center.y - 90);
 	window.clear(background);
 	window.draw(loading_text);
 	window.display();
@@ -1145,11 +1143,11 @@ int main()
 	stringstream foo;
 	foo << dictionary.size();
 	loading_text.setString(foo.str() + " words loaded.");
-	loading_text.setPosition(loading_text.getGlobalBounds().width / -2, -90);
+	loading_text.setPosition(center.x + loading_text.getGlobalBounds().width / -2, center.y - 90);
 
 	std::list<Tile*> bunch;
 	vector<Tile*> tiles[26];
-	TileDisplay display(&window, tiles, font);
+	TileDisplay display(&gui_view, tiles, font);
 
 	{
 		// for generating tiles
@@ -1248,8 +1246,8 @@ int main()
 			window.clear(background);
 			window.draw(loading_text);
 			unsigned int i = 0;
-			float vwidth = view.getSize().x;
-			float vcenter = view.getCenter().x;
+			float vwidth = gui_view.getSize().x;
+			float vcenter = gui_view.getCenter().x;
 			for (auto& sprite : loaded)
 			{
 				sprite.setPosition((i * (vwidth - 2 * padding - PPB)) / 25.0 + vcenter - vwidth / 2 + padding, PPB / -2.0);
@@ -1372,8 +1370,8 @@ int main()
 		if (mstate.update)
 		{
 			// update mouse cursor position
-			auto size = view.getSize();
-			auto center = view.getCenter();
+			auto size = grid_view.getSize();
+			auto center = grid_view.getCenter();
 			mpos[0] = std::floor(((mstate.pos[0] * size.x) / wsize.x + center.x - (size.x / 2)) / PPB);
 			mpos[1] = std::floor(((mstate.pos[1] * size.y) / wsize.y + center.y - (size.y / 2)) / PPB);
 			// TODO bit of a hack...
@@ -1628,12 +1626,12 @@ int main()
 
 		if (mstate.wheel_delta != 0)
 		{
-			view.zoom(1 - mstate.wheel_delta * time * 2);
+			grid_view.zoom(1 - mstate.wheel_delta * time * 2);
 			mstate.wheel_delta = 0;
 		}
 
 		if (state.zoom)
-			view.zoom(1 + state.delta[1] * (state.sprint ? 2 : 1) * time);
+			grid_view.zoom(1 + state.delta[1] * (state.sprint ? 2 : 1) * time);
 		else
 		{
 			// TODO is this useless?
@@ -1656,15 +1654,14 @@ int main()
 			}
 		}
 
-		auto center = view.getCenter();
+		auto center = grid_view.getCenter();
 		sf::Vector2f diff(pos[0] * PPB + PPB / 2.0 - center.x, pos[1] * PPB + PPB / 2.0 - center.y);
 		// TODO totally random movement function
-		view.move(diff.x / (1.0 + time * 400), diff.y / (1.0 + time * 400));
-		// don't allow zooming past default
-		auto size = view.getSize();
+		grid_view.move(diff.x / (1.0 + time * 400), diff.y / (1.0 + time * 400));
+		// don't allow zooming in past 1x
+		auto size = grid_view.getSize();
 		if (size.x < wsize.x || size.y < wsize.y)
-			view.setSize(wsize.x, wsize.y);
-		window.setView(view);
+			grid_view.setSize(wsize.x, wsize.y);
 
 		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
 		mcursor.setPosition(mpos[0] * PPB + cursor_thickness, mpos[1] * PPB + cursor_thickness);
@@ -1673,12 +1670,14 @@ int main()
 
 		window.clear(background);
 
+		window.setView(grid_view);
 		grid.draw_on(window);
 		window.draw(cursor);
 		window.draw(mcursor);
 
-		display.draw();
+		window.setView(gui_view);
 		messages.draw_on(window);
+		display.draw_on(window);
 
 		window.display();
 	}
