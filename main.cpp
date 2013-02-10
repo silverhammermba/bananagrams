@@ -25,26 +25,35 @@ static const int PPB = 48;
 sf::RenderTexture tile_texture[26];
 std::map<string, string> dictionary;
 
-// for passing around game state
-struct State
+// structs for passing around state
+struct GameState
 {
-	int delta[2];
-	char ch;
-	bool zoom;
-	bool sprint;
-	bool remove;
+	sf::RenderWindow* window;
+	sf::View* gui_view;
+	sf::View* grid_view;
+	float zoom; // zoom factor for grid view
+	bool switch_controls; // signal to switch control schemes
+};
+
+struct ControlState
+{
+	int delta[2]; // cursor movement signal
+	char ch; // tile to place
+	bool zoom; // if vertical movement should zoom
+	bool sprint; // if cursor movement should be fast
+	bool remove; // signal to remove a tile
 	bool peel;
 	bool dump;
 };
 
 struct MouseState
 {
-	int pos[2];
-	bool update;
-	bool move;
-	bool place;
-	bool remove;
-	int wheel_delta;
+	int pos[2]; // mouse position
+	bool update; // signal to update mouse cursor position
+	bool move; // signal to move cursor to mouse cursor
+	bool place; // signal to place last tile
+	bool remove; // signal to remove tiles
+	int wheel_delta; // amount to zoom
 };
 
 class InputReader
@@ -62,38 +71,34 @@ public:
 // class for handling game-related events
 class Game : public InputReader
 {
-	sf::RenderWindow* window;
-	sf::View* gui_view;
-	sf::View* grid_view;
-	bool* switch_controls;
+	GameState* state;
 public:
 
-	Game(sf::RenderWindow* win, sf::View* u, sf::View* r, bool* sc)
+	Game(GameState* s)
 	{
-		window = win;
-		gui_view = u;
-		grid_view = r;
-		switch_controls = sc;
+		state = s;
 	}
 
 	virtual bool process_event(const sf::Event& event)
 	{
 		if (event.type == sf::Event::Closed || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape))
 		{
-			window->close();
+			state->window->close();
 
 			finished = true;
 			return false;
 		}
 		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F5)
-			*switch_controls = true;
+			state->switch_controls = true;
 		else if (event.type == sf::Event::Resized)
 		{
 			// TODO sometimes doesn't work???
-			gui_view->setSize(event.size.width, event.size.height);
-			gui_view->setCenter(event.size.width / 2.0, event.size.height / 2.0);
+			state->gui_view->setSize(event.size.width, event.size.height);
+			state->gui_view->setCenter(event.size.width / 2.0, event.size.height / 2.0);
 			// TODO how to handle zoom?
-			grid_view->setSize(event.size.width, event.size.height);
+			state->grid_view->setSize(event.size.width, event.size.height);
+			state->grid_view->zoom(state->zoom);
+			cerr << " Got zoom " << state->zoom << endl;
 		}
 		return true;
 	}
@@ -428,13 +433,11 @@ public:
 
 class MouseControls : public InputReader
 {
-	State* state;
-	MouseState* mouse_state;
+	MouseState* state;
 public:
-	MouseControls(State* s, MouseState* m)
+	MouseControls(MouseState* m)
 	{
-		state = s;
-		mouse_state = m;
+		state = m;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -443,23 +446,23 @@ public:
 		{
 			case sf::Event::MouseButtonPressed:
 				if (event.mouseButton.button == sf::Mouse::Right)
-					mouse_state->remove = true;
+					state->remove = true;
 				break;
 			case sf::Event::MouseButtonReleased:
-				mouse_state->update = true;
-				mouse_state->move = true;
+				state->update = true;
+				state->move = true;
 				if (event.mouseButton.button == sf::Mouse::Left)
-					mouse_state->place = true;
+					state->place = true;
 				break;
 			case sf::Event::MouseMoved:
 				{
-					mouse_state->update = true;
-					mouse_state->pos[0] = event.mouseMove.x;
-					mouse_state->pos[1] = event.mouseMove.y;
+					state->update = true;
+					state->pos[0] = event.mouseMove.x;
+					state->pos[1] = event.mouseMove.y;
 				}
 				break;
 			case sf::Event::MouseWheelMoved:
-				mouse_state->wheel_delta = event.mouseWheel.delta;
+				state->wheel_delta = event.mouseWheel.delta;
 				break;
 			default:
 				break;
@@ -471,9 +474,9 @@ public:
 
 class SimpleControls : public InputReader
 {
-	State* state;
+	ControlState* state;
 public:
-	SimpleControls(State* s)
+	SimpleControls(ControlState* s)
 	{
 		state = s;
 	}
@@ -554,9 +557,9 @@ public:
 class VimControls : public InputReader
 {
 	bool shift = false;
-	State* state;
+	ControlState* state;
 public:
-	VimControls(State* s)
+	VimControls(ControlState* s)
 	{
 		state = s;
 	}
@@ -1053,20 +1056,24 @@ int main()
 		2
 	};
 
+	vector<InputReader*> input_readers;
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "Bananagrams");
 	window.setVerticalSyncEnabled(true);
 	sf::View gui_view = window.getDefaultView();
-	window.setView(gui_view);
 	sf::View grid_view = window.getDefaultView();
 	grid_view.setCenter(PPB / 2.0, PPB / 2.0);
 
-	sf::Color background(22, 22, 22);
+	GameState gstate;
+	gstate.window = &window;
+	gstate.gui_view = &gui_view;
+	gstate.grid_view = &grid_view;
+	gstate.zoom = 1;
+	gstate.switch_controls = false;
 
-	vector<InputReader*> input_readers;
-
-	bool switch_controls = false;
-	Game game(&window, &gui_view, &grid_view, &switch_controls);
+	Game game(&gstate);
 	input_readers.push_back(&game);
+
+	sf::Color background(22, 22, 22);
 
 	sf::Clock clock;
 
@@ -1268,7 +1275,7 @@ int main()
 	float held[2] = {0, 0};
 	int next[2] = {0, 0};
 
-	State state;
+	ControlState state;
 	state.delta[0] = 0;
 	state.delta[1] = 0;
 	state.ch = 'A' - 1;
@@ -1287,7 +1294,7 @@ int main()
 	mstate.remove = false;
 	mstate.wheel_delta = 0;
 
-	MouseControls mouse(&state, &mstate);
+	MouseControls mouse(&mstate);
 	input_readers.push_back(&mouse);
 
 	SimpleControls scontrols(&state);
@@ -1300,6 +1307,7 @@ int main()
 	// game loop
 	while (window.isOpen())
 	{
+		// needed for mouse cursor position and zoom control
 		auto wsize = window.getSize();
 
 		sf::Event event;
@@ -1317,7 +1325,7 @@ int main()
 			}
 		}
 
-		if (switch_controls)
+		if (gstate.switch_controls)
 		{
 			InputReader* controls = input_readers.back();
 			input_readers.pop_back();
@@ -1336,7 +1344,7 @@ int main()
 				cerr << "Failed to switch controls!\n";
 				return 1;
 			}
-			switch_controls = false;
+			gstate.switch_controls = false;
 		}
 
 		if (mstate.update)
@@ -1633,6 +1641,7 @@ int main()
 		auto size = grid_view.getSize();
 		if (size.x < wsize.x || size.y < wsize.y)
 			grid_view.setSize(wsize.x, wsize.y);
+		gstate.zoom = grid_view.getSize().x / wsize.x;
 
 		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
 		mcursor.setPosition(mpos[0] * PPB + cursor_thickness, mpos[1] * PPB + cursor_thickness);
