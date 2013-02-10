@@ -13,9 +13,11 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 
+using std::array;
 using std::cerr;
 using std::endl;
 using std::list;
+using std::map;
 using std::string;
 using std::stringstream;
 using std::vector;
@@ -23,7 +25,7 @@ using std::vector;
 static const int PPB = 48;
 
 sf::RenderTexture tile_texture[26];
-std::map<string, string> dictionary;
+map<string, string> dictionary;
 
 // structs for passing around state
 struct GameState
@@ -96,7 +98,6 @@ public:
 			state->gui_view->setCenter(event.size.width / 2.0, event.size.height / 2.0);
 			state->grid_view->setSize(event.size.width, event.size.height);
 			state->grid_view->zoom(state->zoom);
-			cerr << " Got zoom " << state->zoom << endl;
 		}
 		return true;
 	}
@@ -161,8 +162,8 @@ class Grid
 {
 	vector<Tile*> grid;
 	vector<string> defined;
-	std::map<sf::Vector2i, bool> hwords;
-	std::map<sf::Vector2i, bool> vwords;
+	map<sf::Vector2i, bool> hwords;
+	map<sf::Vector2i, bool> vwords;
 	inline unsigned int bijection(unsigned x, unsigned int y) const
 	{
 		return ((x + y) * (x + y + 1)) / 2 + x;
@@ -342,7 +343,7 @@ public:
 		}
 
 		stringstream temp;
-		std::map<string, vector<std::array<int, 3>>> words;
+		map<string, vector<array<int, 3>>> words;
 		vector<string> defns;
 		Tile* tile;
 
@@ -353,8 +354,8 @@ public:
 			for (unsigned int x = pair.first.x; (tile = get(x, pair.first.y)) != nullptr; x++)
 				temp << tile->ch();
 			if (!words.count(temp.str()))
-					words[temp.str()] = vector<std::array<int, 3>>();
-			words[temp.str()].push_back(std::array<int, 3>{{pair.first.x, pair.first.y, 0}});
+					words[temp.str()] = vector<array<int, 3>>();
+			words[temp.str()].push_back(array<int, 3>{{pair.first.x, pair.first.y, 0}});
 		}
 		for (auto& pair: vwords)
 		{
@@ -362,8 +363,8 @@ public:
 			for (unsigned int y = pair.first.y; (tile = get(pair.first.x, y)) != nullptr; y++)
 				temp << tile->ch();
 			if (!words.count(temp.str()))
-					words[temp.str()] = vector<std::array<int, 3>>();
-			words[temp.str()].push_back(std::array<int, 3>{{pair.first.x, pair.first.y, 1}});
+					words[temp.str()] = vector<array<int, 3>>();
+			words[temp.str()].push_back(array<int, 3>{{pair.first.x, pair.first.y, 1}});
 		}
 
 		// check words
@@ -1115,6 +1116,8 @@ int main()
 		else
 			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
 	}
+	words.close();
+
 	stringstream foo;
 	foo << dictionary.size();
 	loading_text.setString(foo.str() + " words loaded.");
