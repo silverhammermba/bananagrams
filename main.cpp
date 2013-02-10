@@ -966,7 +966,6 @@ public:
 				size = 12;
 		}
 		messages.push_back(new Message(message, font, size, color));
-		// TODO bleh hardcoded
 		messages.back()->set_pos(padding, bottom + padding);
 		bottom += padding + messages.back()->get_height();
 	}
@@ -1150,9 +1149,11 @@ int main()
 
 			// TODO some kind of depth would help for stack appearance
 			// TODO antialiase these
-			// TODO error check
-			// TODO memory leak here?
-			tile_texture[load_char - 'A'].create(PPB, PPB);
+			if (!tile_texture[load_char - 'A'].create(PPB, PPB))
+			{
+				cerr << "Failed to allocate tile texture!\n";
+				return 1;
+			}
 
 			// create text
 			stringstream string;
@@ -1259,7 +1260,7 @@ int main()
 	sf::RectangleShape mcursor(sf::Vector2f(PPB - cursor_thickness * 2, PPB - cursor_thickness * 2));
 	mcursor.setFillColor(sf::Color(0, 0, 0, 0));
 	mcursor.setOutlineThickness(cursor_thickness);
-	mcursor.setOutlineColor(sf::Color(0, 0, 0, 0));
+	mcursor.setOutlineColor(sf::Color(0, 200, 0, 80));
 
 	int last[2] = {-1, 0};
 	int pos[2] = {0, 0};
@@ -1345,8 +1346,6 @@ int main()
 			auto center = grid_view.getCenter();
 			mpos[0] = std::floor(((mstate.pos[0] * size.x) / wsize.x + center.x - (size.x / 2)) / PPB);
 			mpos[1] = std::floor(((mstate.pos[1] * size.y) / wsize.y + center.y - (size.y / 2)) / PPB);
-			// TODO bit of a hack...
-			mcursor.setOutlineColor(sf::Color(0, 200, 0, 80));
 			mstate.update = false;
 		}
 
