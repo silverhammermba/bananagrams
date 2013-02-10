@@ -19,6 +19,8 @@ end
 
 total = dictionary.size
 
+# TODO uppercase
+# TODO don't use definitions that include the word
 STDOUT.puts "Looking up words..."
 dictionary.each.with_index do |pair, i|
 	if not pair[1]
