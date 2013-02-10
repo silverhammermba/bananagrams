@@ -695,7 +695,6 @@ public:
 
 class TileDisplay : public InputReader
 {
-	bool reposition = true;
 	vector<Tile*>* tiles;
 	sf::View* gui_view;
 	list<Tile*> scram; // for shuffle
@@ -731,11 +730,7 @@ class TileDisplay : public InputReader
 
 	void counts(sf::RenderWindow& window)
 	{
-		if (reposition)
-		{
-			position_list(single);
-			reposition = false;
-		}
+		position_list(single);
 
 		for (auto tile: single)
 		{
@@ -747,32 +742,28 @@ class TileDisplay : public InputReader
 
 	void stacks(sf::RenderWindow& window)
 	{
-		if (reposition)
+		auto size = gui_view->getSize();
+		unsigned int nonempty = 0;
+		for (char ch = 'A'; ch <= 'Z'; ch++)
+			if (tiles[ch - 'A'].size() > 0)
+				nonempty++;
+		if (nonempty == 0)
+			return;
+		float padding = PPB / 8.f;
+		float room_per_tile = nonempty == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(nonempty - 1);
+		float x = padding;
+		for (char ch = 'A'; ch <= 'Z'; ch++)
 		{
-			auto size = gui_view->getSize();
-			unsigned int nonempty = 0;
-			for (char ch = 'A'; ch <= 'Z'; ch++)
-				if (tiles[ch - 'A'].size() > 0)
-					nonempty++;
-			if (nonempty == 0)
-				return;
-			float padding = PPB / 8.f;
-			float room_per_tile = nonempty == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(nonempty - 1);
-			float x = padding;
-			for (char ch = 'A'; ch <= 'Z'; ch++)
+			if (tiles[ch - 'A'].size() > 0)
 			{
-				if (tiles[ch - 'A'].size() > 0)
+				unsigned int i = 0;
+				for (auto tile: tiles[ch - 'A'])
 				{
-					unsigned int i = 0;
-					for (auto tile: tiles[ch - 'A'])
-					{
-						tile->set_pos(x + (i * PPB) / 16.f, size.y - PPB - padding - (i * PPB) / 16.f);
-						i++;
-					}
-					x += room_per_tile;
+					tile->set_pos(x + (i * PPB) / 16.f, size.y - PPB - padding - (i * PPB) / 16.f);
+					i++;
 				}
+				x += room_per_tile;
 			}
-			reposition = false;
 		}
 
 		for (char ch = 'Z'; ch >= 'A'; --ch)
@@ -782,22 +773,16 @@ class TileDisplay : public InputReader
 
 	void ordered(sf::RenderWindow& window)
 	{
-		if (reposition)
-		{
-			position_list(sort);
-			reposition = false;
-		}
+		position_list(sort);
+
 		for (auto tile: sort)
 			tile->draw_on(window);
 	}
 
 	void scrambled(sf::RenderWindow& window)
 	{
-		if (reposition)
-		{
-			position_list(scram);
-			reposition = false;
-		}
+		position_list(scram);
+
 		for (auto tile: scram)
 			tile->draw_on(window);
 	}
@@ -806,7 +791,6 @@ class TileDisplay : public InputReader
 
 	void reshuffle()
 	{
-		reposition = true;
 		scram.clear();
 		for (char ch = 'A'; ch <= 'Z'; ch++)
 		{
@@ -847,7 +831,6 @@ public:
 	void add_tile(Tile* tile)
 	{
 		tile->set_color(sf::Color::White);
-		reposition = true;
 		// update persistent structures
 		scram.push_back(tile);
 		if (tiles[tile->ch() - 'A'].size() == 1)
@@ -872,7 +855,6 @@ public:
 
 	void remove_tile(Tile* tile)
 	{
-		reposition = true;
 		// update persistent structures
 		scram.remove(tile);
 		// Note: check for size 1 since the tile is removed *after* this function call
@@ -889,7 +871,6 @@ public:
 
 	virtual bool process_event(const sf::Event& event)
 	{
-		auto prev = draw_func;
 		if (event.type == sf::Event::KeyPressed)
 		{
 			switch (event.key.code)
@@ -913,9 +894,6 @@ public:
 					break;
 			}
 		}
-		// reposition tiles if drawing function changed
-		if (prev != draw_func)
-			reposition = true;
 		return true;
 	}
 
@@ -1240,17 +1218,16 @@ int main()
 			}
 
 			// display generated texture
-			// TODO this is very flickery
 			loaded.push_back(sf::Sprite(tile_texture[load_char - 'A'].getTexture()));
 
 			window.clear(background);
 			window.draw(loading_text);
 			unsigned int i = 0;
 			float vwidth = gui_view.getSize().x;
-			float vcenter = gui_view.getCenter().x;
+			auto vcenter = gui_view.getCenter();
 			for (auto& sprite : loaded)
 			{
-				sprite.setPosition((i * (vwidth - 2 * padding - PPB)) / 25.0 + vcenter - vwidth / 2 + padding, PPB / -2.0);
+				sprite.setPosition((i * (vwidth - 2 * padding - PPB)) / 25.0 + vcenter.x - vwidth / 2 + padding, vcenter.y + PPB / -2.0);
 				window.draw(sprite);
 				++i;
 			}
@@ -1659,6 +1636,7 @@ int main()
 		// TODO totally random movement function
 		grid_view.move(diff.x / (1.0 + time * 400), diff.y / (1.0 + time * 400));
 		// don't allow zooming in past 1x
+		// TODO doesn't work with resizing
 		auto size = grid_view.getSize();
 		if (size.x < wsize.x || size.y < wsize.y)
 			grid_view.setSize(wsize.x, wsize.y);
