@@ -1054,12 +1054,21 @@ int main()
 		2
 	};
 
-	vector<InputReader*> input_readers;
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "Bananagrams");
+	sf::Image icon;
+	if (!icon.loadFromFile("icon.png"))
+	{
+		cerr << "Couldn't load icon.png!\n";
+		return 1;
+	}
+	window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
 	window.setVerticalSyncEnabled(true);
+
 	sf::View gui_view = window.getDefaultView();
 	sf::View grid_view = window.getDefaultView();
 	grid_view.setCenter(PPB / 2.0, PPB / 2.0);
+
+	vector<InputReader*> input_readers;
 
 	GameState gstate;
 	gstate.window = &window;
