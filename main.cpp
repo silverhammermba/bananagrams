@@ -41,21 +41,23 @@ struct ControlState
 {
 	int delta[2]; // cursor movement signal
 	char ch; // tile to place
-	bool zoom; // if vertical movement should zoom
+	bool ctrl; // if control is being held
 	bool sprint; // if cursor movement should be fast
 	bool remove; // signal to remove a tile
 	bool peel;
 	bool dump;
+	bool cut;
+	bool paste;
 };
 
 struct MouseState
 {
-	int pos[2]; // mouse position
+	int pos[2]; // last mouse position
 	bool update; // signal to update mouse cursor position
-	bool move; // signal to move cursor to mouse cursor
-	bool place; // signal to place last tile
 	bool remove; // signal to remove tiles
 	int wheel_delta; // amount to zoom
+	bool start_selection;
+	bool end_selection;
 };
 
 class InputReader
@@ -147,6 +149,7 @@ public:
 	}
 };
 
+// for hwords and vwords vectors
 namespace std
 {
 	template<> struct less<sf::Vector2i>
@@ -429,6 +432,83 @@ public:
 	}
 };
 
+class CutBuffer
+{
+	unsigned int size[2];
+	vector<Tile*> tiles;
+public:
+	CutBuffer(Grid& grid, int left, int top, unsigned int width, unsigned int height) : tiles(width * height, nullptr)
+	{
+		size[0] = width;
+		size[1] = height;
+		Tile* tile;
+		for (unsigned int i = 0; i < width; i++)
+			for (unsigned int j = 0; j < height; j++)
+			{
+				if ((tile = grid.remove(left + i, top + j)) != nullptr)
+					tile->set_color(sf::Color(255, 255, 255, 200));
+				tiles.push_back(tile);
+			}
+	}
+
+	~CutBuffer()
+	{
+		for (auto tile : tiles)
+			if (tile != nullptr)
+				delete tile;
+	}
+
+	// put tiles back in grid, returning displaced tiles to hand
+	void paste(Grid& grid, int x, int y, vector<Tile*>* hand)
+	{
+		auto t = tiles.begin();
+		for (unsigned int i = 0; i < size[0]; i++)
+			for (unsigned int j = 0; j < size[1]; j++)
+			{
+				if (*t != nullptr)
+					(*t)->set_color(sf::Color::White);
+				Tile* r = grid.swap(i + x - size[0] / 2, j + y - size[1] / 2, *t);
+				if (r != nullptr)
+					hand[r->ch() - 'A'].push_back(r);
+				++t;
+			}
+		// TODO what is this shit? sloppy
+		tiles.clear();
+		size[0] = 0;
+		size[1] = 0;
+	}
+
+	// return tiles to hand
+	void clear(vector<Tile*>* hand)
+	{
+		for (auto tile : tiles)
+			if (tile != nullptr)
+				hand[tile->ch() - 'A'].push_back(tile);
+		// TODO what is this shit? sloppy
+		tiles.clear();
+		size[0] = 0;
+		size[1] = 0;
+	}
+
+	void set_pos(int x, int y)
+	{
+		auto t = tiles.begin();
+		for (unsigned int i = 0; i < size[0]; i++)
+			for (unsigned int j = 0; j < size[1]; j++)
+			{
+				if (*t != nullptr)
+					(*t)->set_pos(i + x - size[0] / 2, j + y - size[1] / 2);
+				++t;
+			}
+	}
+
+	void draw_on(sf::RenderWindow & window) const
+	{
+		for (auto tile: tiles)
+			tile->draw_on(window);
+	}
+};
+
 class MouseControls : public InputReader
 {
 	MouseState* state;
@@ -443,14 +523,17 @@ public:
 		switch(event.type)
 		{
 			case sf::Event::MouseButtonPressed:
-				if (event.mouseButton.button == sf::Mouse::Right)
+				if (event.mouseButton.button == sf::Mouse::Left)
+					state->start_selection = true;
+				else if (event.mouseButton.button == sf::Mouse::Right)
 					state->remove = true;
 				break;
 			case sf::Event::MouseButtonReleased:
 				state->update = true;
-				state->move = true;
 				if (event.mouseButton.button == sf::Mouse::Left)
-					state->place = true;
+					state->end_selection = true;
+				else if (event.mouseButton.button == sf::Mouse::Right)
+					state->remove = false;
 				break;
 			case sf::Event::MouseMoved:
 				{
@@ -499,24 +582,38 @@ public:
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
-					state->zoom = true;
+					state->ctrl = true;
 					break;
 				case sf::Keyboard::LShift:
 				case sf::Keyboard::RShift:
 					state->sprint = true;
-					break;
-				case sf::Keyboard::D:
-					if (state->zoom)
-					{
-						state->dump = true;
-						return true;
-					}
 					break;
 				case sf::Keyboard::BackSpace:
 					state->remove = true;
 					break;
 				case sf::Keyboard::Space:
 					state->peel = true;
+					break;
+				case sf::Keyboard::D:
+					if (state->ctrl)
+					{
+						state->dump = true;
+						return true;
+					}
+					break;
+				case sf::Keyboard::X:
+					if (state->ctrl)
+					{
+						state->cut = true;
+						return true;
+					}
+					break;
+				case sf::Keyboard::V:
+					if (state->ctrl)
+					{
+						state->paste = true;
+						return true;
+					}
 					break;
 				default:
 					break;
@@ -538,7 +635,7 @@ public:
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
-					state->zoom = false;
+					state->ctrl = false;
 					break;
 				case sf::Keyboard::LShift:
 				case sf::Keyboard::RShift:
@@ -571,6 +668,11 @@ public:
 			{
 				// directions
 				case sf::Keyboard::Y:
+					if (state->ctrl)
+					{
+						state->cut = true;
+						return true;
+					}
 					if (shift)
 						state->sprint = true;
 					else
@@ -598,7 +700,7 @@ public:
 					else
 						break;
 				case sf::Keyboard::K:
-					if (!(shift || state->zoom))
+					if (!(shift || state->ctrl))
 						break;
 				case sf::Keyboard::Up:
 					state->delta[1] = -1;
@@ -609,15 +711,22 @@ public:
 					else
 						break;
 				case sf::Keyboard::J:
-					if (!(shift || state->zoom))
+					if (!(shift || state->ctrl))
 						break;
 				case sf::Keyboard::Down:
 					state->delta[1] = 1;
 					return true;
+				case sf::Keyboard::P:
+					if (state->ctrl)
+					{
+						state->paste = true;
+						return true;
+					}
+					break;
 				// modifier keys
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
-					state->zoom = true;
+					state->ctrl = true;
 					break;
 				case sf::Keyboard::LShift:
 				case sf::Keyboard::RShift:
@@ -669,7 +778,7 @@ public:
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
-					state->zoom = false;
+					state->ctrl = false;
 					if (!shift)
 						state->delta[1] = 0;
 					break;
@@ -688,6 +797,7 @@ public:
 	}
 };
 
+// TODO possibly integrate with tiles, make it Hand
 class TileDisplay : public InputReader
 {
 	vector<Tile*>* tiles;
@@ -1055,6 +1165,7 @@ int main()
 	};
 
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "Bananagrams");
+	// TODO embed
 	sf::Image icon;
 	if (!icon.loadFromFile("icon.png"))
 	{
@@ -1110,6 +1221,7 @@ int main()
 	}
 
 	loading_text.setColor(sf::Color::White);
+	// TODO embed
 	loading_text.setString("Loading dictionary...");
 	loading_text.setPosition(center.x + loading_text.getGlobalBounds().width / -2, center.y - 90);
 	window.clear(background);
@@ -1284,24 +1396,39 @@ int main()
 	float held[2] = {0, 0};
 	int next[2] = {0, 0};
 
+	CutBuffer* buffer = nullptr;
+	bool selected = false;
+	bool selecting = false;
+	// mouse press and release positions
+	int sel1[2];
+	int sel2[2];
+	unsigned int sel_size[2];
+	float selection_thickness = 1;
+	sf::RectangleShape selection;
+	selection.setFillColor(sf::Color(255, 255, 255, 25));
+	selection.setOutlineThickness(selection_thickness);
+	selection.setOutlineColor(sf::Color::White);
+
 	ControlState state;
 	state.delta[0] = 0;
 	state.delta[1] = 0;
 	state.ch = 'A' - 1;
-	state.zoom = false;
+	state.ctrl = false;
 	state.sprint = false;
 	state.remove = false;
 	state.peel = false;
 	state.dump = false;
+	state.cut = false;
+	state.paste = false;
 
 	MouseState mstate;
 	mstate.pos[0] = 0;
 	mstate.pos[1] = 0;
 	mstate.update = false;
-	mstate.move = false;
-	mstate.place = false;
 	mstate.remove = false;
 	mstate.wheel_delta = 0;
+	mstate.start_selection = false;
+	mstate.end_selection = false;
 
 	MouseControls mouse(&mstate);
 	input_readers.push_back(&mouse);
@@ -1359,61 +1486,91 @@ int main()
 			gstate.switch_controls = false;
 		}
 
+		// mouse moved
 		if (mstate.update)
 		{
 			// update mouse cursor position
 			mpos[0] = std::floor(((mstate.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB);
 			mpos[1] = std::floor(((mstate.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB);
+
 			mstate.update = false;
 		}
 
-		if (mstate.move)
+		// left click
+		if (mstate.start_selection)
 		{
-			// move cursor to mouse cursor
-			pos[0] = mpos[0];
-			pos[1] = mpos[1];
-			mstate.move = false;
+			selecting = true;
+			selected = false;
+			sel1[0] = mpos[0];
+			sel1[1] = mpos[1];
+			mstate.start_selection = false;
 		}
 
-		if (mstate.place)
+		// if left click held down
+		if (selecting)
 		{
-			// if holding Ctrl
-			if (state.zoom)
+			sel2[0] = mpos[0];
+			sel2[1] = mpos[1];
+			// normalize selection
+			sel_size[0] = std::abs(sel1[0] - sel2[0]) + 1;
+			sel_size[1] = std::abs(sel1[1] - sel2[1]) + 1;
+			// update selection rect
+			selection.setSize(sf::Vector2f(PPB * sel_size[0] - selection_thickness * 2, PPB * sel_size[1] - selection_thickness * 2));
+			selection.setPosition(std::min(sel1[0], sel2[0]) * PPB + selection_thickness, std::min(sel1[1], sel2[1]) * PPB + selection_thickness);
+		}
+
+		// if left click release
+		if (mstate.end_selection)
+		{
+			selecting = false;
+			selected = true;
+
+			// if the selection was only 1 square, do something else
+			if (sel_size[0] == 1 && sel_size[1] == 1)
 			{
-				// look for remaining tiles
-				char last = 'A' - 1;
-				for (char ch = 'A'; ch <= 'Z'; ch++)
+				selected = false;
+				// move cursor to mouse cursor
+				pos[0] = mpos[0];
+				pos[1] = mpos[1];
+
+				// if ctrl, try to place last tile
+				if (state.ctrl)
 				{
-					if (tiles[ch - 'A'].size() > 0)
+					// look for remaining tiles
+					char last = 'A' - 1;
+					for (char ch = 'A'; ch <= 'Z'; ch++)
 					{
-						if (last < 'A')
-							last = ch;
-						else
+						if (tiles[ch - 'A'].size() > 0)
 						{
-							last = 'Z' + 1;
-							break;
+							if (last < 'A')
+								last = ch;
+							else
+							{
+								last = 'Z' + 1;
+								break;
+							}
+						}
+					}
+
+					if (last < 'A')
+						messages.add("You do not have any tiles.", MessageQueue::LOW);
+					else if (last > 'Z')
+						messages.add("You have too many letters to place using the mouse.", MessageQueue::HIGH);
+					else
+					{
+						// place tile
+						Tile* tile = grid.swap(pos[0], pos[1], tiles[last - 'A'].back());
+						display.remove_tile(tiles[last - 'A'].back());
+						tiles[last - 'A'].pop_back();
+						if (tile != nullptr)
+						{
+							tiles[tile->ch() - 'A'].push_back(tile);
+							display.add_tile(tile);
 						}
 					}
 				}
-
-				if (last < 'A')
-					messages.add("You do not have any tiles.", MessageQueue::LOW);
-				else if (last > 'Z')
-					messages.add("You have too many letters to place using the mouse.", MessageQueue::HIGH);
-				else
-				{
-					// place tile
-					Tile* tile = grid.swap(pos[0], pos[1], tiles[last - 'A'].back());
-					display.remove_tile(tiles[last - 'A'].back());
-					tiles[last - 'A'].pop_back();
-					if (tile != nullptr)
-					{
-						tiles[tile->ch() - 'A'].push_back(tile);
-						display.add_tile(tile);
-					}
-				}
 			}
-			mstate.place = false;
+			mstate.end_selection = false;
 		}
 
 		if (mstate.remove)
@@ -1425,9 +1582,28 @@ int main()
 				tiles[tile->ch() - 'A'].push_back(tile);
 				display.add_tile(tile);
 			}
-			if (!sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
-				mstate.remove = false;
 		}
+
+		/*
+		if (state.copy)
+		{
+			if (buffer == nullptr)
+			{
+				if (selection)
+				{
+					buffer = new CutBuffer(grid, );
+				}
+			}
+			else
+			{
+				buffer->clear(tiles);
+				delete buffer;
+				buffer = nullptr;
+			}
+
+			state.copy = false;
+		}
+		*/
 
 		if (state.dump)
 		{
@@ -1497,6 +1673,7 @@ int main()
 			state.peel = false;
 		}
 
+		// if backspace
 		if (state.remove)
 		{
 			state.remove = false;
@@ -1555,7 +1732,9 @@ int main()
 				display.add_tile(tile);
 			}
 		}
-		else if (state.ch >= 'A' && state.ch <= 'Z')
+
+		// if letter key
+		if (state.ch >= 'A' && state.ch <= 'Z')
 		{
 			bool placed = false;
 
@@ -1607,11 +1786,13 @@ int main()
 			state.ch = 'A' - 1;
 		}
 
+		// frame-time-dependent stuff
 		float time = clock.getElapsedTime().asSeconds();
 		clock.restart();
 
 		messages.age(time);
 
+		// zoom with mouse wheel
 		if (mstate.wheel_delta != 0)
 		{
 			sf::Vector2f before((mstate.pos[0] * gsize.x) / wsize.x + center.x - gsize.x / 2, (mstate.pos[1] * gsize.y) / wsize.y + center.y - gsize.y / 2);
@@ -1624,8 +1805,10 @@ int main()
 			mstate.wheel_delta = 0;
 		}
 
-		if (state.zoom)
+		// zoom with keyboard
+		if (state.ctrl)
 			grid_view.zoom(1 + state.delta[1] * (state.sprint ? 2 : 1) * time);
+		// move cursor
 		else
 		{
 			// control key repeat speed
@@ -1662,15 +1845,20 @@ int main()
 			grid_view.setSize(wsize.x, wsize.y);
 		gstate.zoom = grid_view.getSize().x / wsize.x;
 
+		// update cursors
 		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
 		mcursor.setPosition(mpos[0] * PPB + cursor_thickness, mpos[1] * PPB + cursor_thickness);
 
+		// animate tiles
 		grid.step(time);
 
+		// draw
 		window.clear(background);
 
 		window.setView(grid_view);
 		grid.draw_on(window);
+		if (selecting || selected)
+			window.draw(selection);
 		window.draw(cursor);
 		window.draw(mcursor);
 
