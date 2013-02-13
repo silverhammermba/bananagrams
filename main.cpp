@@ -1223,7 +1223,7 @@ int main()
 	}
 
 	loading_text.setColor(sf::Color::White);
-	// TODO embed
+
 	loading_text.setString("Loading dictionary...");
 	loading_text.setPosition(center.x + loading_text.getGlobalBounds().width / -2, center.y - 90);
 	window.clear(background);
