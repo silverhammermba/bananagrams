@@ -458,6 +458,8 @@ public:
 				delete tile;
 	}
 
+	// TODO transpose
+
 	// put tiles back in grid, returning displaced tiles to hand
 	void paste(Grid& grid, int x, int y, vector<Tile*>* hand)
 	{
@@ -798,6 +800,7 @@ public:
 };
 
 // TODO possibly integrate with tiles, make it Hand
+// TODO inefficient
 class TileDisplay : public InputReader
 {
 	vector<Tile*>* tiles;
@@ -845,6 +848,7 @@ class TileDisplay : public InputReader
 		}
 	}
 
+	// TODO add maximum spacing
 	void stacks(sf::RenderWindow& window)
 	{
 		auto size = gui_view->getSize();
@@ -1081,6 +1085,7 @@ public:
 		bottom += padding + messages.back()->get_height();
 	}
 
+	// TODO inefficient?
 	void age(float time)
 	{
 		bool change = false;
@@ -1113,6 +1118,7 @@ public:
 	}
 };
 
+// TODO high CPU usage?
 int main()
 {
 	// load resources
@@ -1792,6 +1798,7 @@ int main()
 
 		messages.age(time);
 
+		// TODO scale cursor outline thickness with zoom?
 		// zoom with mouse wheel
 		if (mstate.wheel_delta != 0)
 		{
