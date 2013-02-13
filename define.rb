@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # get definitions and add to word list
-# TODO write uppercase, so you don't need to switch case in main.cpp
 
 unless File.exist? 'dictionary.txt'
 	STDOUT.puts "Creating dictionary..."
@@ -19,15 +18,13 @@ end
 
 total = dictionary.size
 
-# TODO uppercase
-# TODO don't use definitions that include the word
 STDOUT.puts "Looking up words..."
 dictionary.each.with_index do |pair, i|
 	if not pair[1]
 		defs = []
 		`wn #{pair[0]} -over`.each_line do |line|
 			# parse words and definitions
-			if line =~ /^\d+\. (\(\d+\) )?([^-]+) -- \(([^;]+).*\)/
+			if line =~ /^\d+\. (\(\d+\) )?([^-]+) -- \(([^;:]+).*\)/
 				# if no proper Nouns
 				if $2.downcase == $2
 					defs << $3.strip
