@@ -13,6 +13,9 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 
+// embedded resources
+#include "icon.hpp"
+
 using std::array;
 using std::cerr;
 using std::endl;
@@ -1171,14 +1174,7 @@ int main()
 	};
 
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "Bananagrams");
-	// TODO embed
-	sf::Image icon;
-	if (!icon.loadFromFile("icon.png"))
-	{
-		cerr << "Couldn't load icon.png!\n";
-		return 1;
-	}
-	window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
+	window.setIcon(32, 32, icon);
 	window.setVerticalSyncEnabled(true);
 
 	sf::View gui_view = window.getDefaultView();
