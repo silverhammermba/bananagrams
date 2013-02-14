@@ -804,9 +804,9 @@ public:
 
 // TODO possibly integrate with tiles, make it Hand
 // TODO inefficient
-class TileDisplay : public InputReader
+class Hand : public InputReader
 {
-	vector<Tile*>* tiles;
+	vector<Tile*> tiles[26];
 	sf::View* gui_view;
 	list<Tile*> scram; // for shuffle
 	list<Tile*> sort; // for ordered
@@ -899,7 +899,7 @@ class TileDisplay : public InputReader
 			tile->draw_on(window);
 	}
 
-	void (TileDisplay::*draw_func)(sf::RenderWindow&) = &TileDisplay::scrambled;
+	void (Hand::*draw_func)(sf::RenderWindow&) = &Hand::scrambled;
 
 	void reshuffle()
 	{
@@ -917,32 +917,32 @@ class TileDisplay : public InputReader
 	}
 
 public:
-	TileDisplay(sf::View* v, vector<Tile*>* t, const sf::Font& font)
+	Hand(sf::View* v, const sf::Font& font)
 	{
 		gui_view = v;
-		tiles = t;
-		// prepare persistent structures
-		reshuffle();
+
+		// prepare counts numbers
 		for (char ch = 'A'; ch <= 'Z'; ch++)
 		{
 			number[ch - 'A'].setFont(font);
 			number[ch - 'A'].setCharacterSize(PPB / 4.0);
-			if (tiles[ch - 'A'].size() > 0)
-			{
-				single.push_back(tiles[ch - 'A'][0]);
-				stringstream str;
-				str << tiles[ch - 'A'].size();
-				number[ch - 'A'].setString(str.str());
-			}
 			number[ch - 'A'].setColor(sf::Color::Black);
-			for (auto tile: tiles[ch - 'A'])
-				sort.push_back(tile);
 		}
+	}
+
+	~Hand()
+	{
+		for (char ch = 'A'; ch <= 'Z'; ch++)
+			for (auto tile : tiles[ch - 'A'])
+				delete tile;
 	}
 
 	void add_tile(Tile* tile)
 	{
+		tiles[tile->ch() - 'A'].push_back(tile);
+
 		tile->set_color(sf::Color::White);
+
 		// update persistent structures
 		scram.push_back(tile);
 		if (tiles[tile->ch() - 'A'].size() == 1)
@@ -965,20 +965,34 @@ public:
 			}
 	}
 
-	void remove_tile(Tile* tile)
+	bool has_any(char ch) const
 	{
-		// update persistent structures
-		scram.remove(tile);
-		// Note: check for size 1 since the tile is removed *after* this function call
-		if (tiles[tile->ch() - 'A'].size() == 1)
-			single.remove(tile);
-		else
+		return tiles[ch - 'A'].size() > 0;
+	}
+
+	Tile* get_tile(char ch)
+	{
+		Tile* tile = nullptr;
+
+		if (tiles[ch - 'A'].size() > 0)
 		{
-			stringstream str;
-			str << (tiles[tile->ch() - 'A'].size() - 1);
-			number[tile->ch() - 'A'].setString(str.str());
+			tile = tiles[ch - 'A'].back();
+			tiles[ch - 'A'].pop_back();
+
+			// update persistent structures
+			scram.remove(tile);
+			sort.remove(tile);
+			if (tiles[tile->ch() - 'A'].size() == 0)
+				single.remove(tile);
+			else
+			{
+				stringstream str;
+				str << tiles[tile->ch() - 'A'].size();
+				number[tile->ch() - 'A'].setString(str.str());
+			}
 		}
-		sort.remove(tile);
+
+		return tile;
 	}
 
 	virtual bool process_event(const sf::Event& event)
@@ -988,19 +1002,19 @@ public:
 			switch (event.key.code)
 			{
 				case sf::Keyboard::F1:
-					if (draw_func == &TileDisplay::scrambled)
+					if (draw_func == &Hand::scrambled)
 						reshuffle();
 					else
-						draw_func = &TileDisplay::scrambled;
+						draw_func = &Hand::scrambled;
 					break;
 				case sf::Keyboard::F2:
-					draw_func = &TileDisplay::ordered;
+					draw_func = &Hand::ordered;
 					break;
 				case sf::Keyboard::F3:
-					draw_func = &TileDisplay::counts;
+					draw_func = &Hand::counts;
 					break;
 				case sf::Keyboard::F4:
-					draw_func = &TileDisplay::stacks;
+					draw_func = &Hand::stacks;
 					break;
 				default:
 					break;
@@ -1247,8 +1261,7 @@ int main()
 	loading_text.setPosition(center.x + loading_text.getGlobalBounds().width / -2, center.y - 90);
 
 	std::list<Tile*> bunch;
-	vector<Tile*> tiles[26];
-	TileDisplay display(&gui_view, tiles, font);
+	Hand hand(&gui_view, font);
 
 	{
 		// for generating tiles
@@ -1367,8 +1380,7 @@ int main()
 				{
 					Tile* tile = bunch.back();
 					bunch.pop_back();
-					tiles[tile->ch() - 'A'].push_back(tile);
-					display.add_tile(tile);
+					hand.add_tile(tile);
 				}
 
 				break;
@@ -1379,7 +1391,7 @@ int main()
 	// stuff for game loop
 	MessageQueue messages(font);
 
-	input_readers.push_back(&display);
+	input_readers.push_back(&hand);
 
 	float cursor_thickness = PPB / 16.0;
 	sf::RectangleShape cursor(sf::Vector2f(PPB - cursor_thickness * 2, PPB - cursor_thickness * 2));
@@ -1542,7 +1554,7 @@ int main()
 					char last = 'A' - 1;
 					for (char ch = 'A'; ch <= 'Z'; ch++)
 					{
-						if (tiles[ch - 'A'].size() > 0)
+						if (hand.has_any(ch))
 						{
 							if (last < 'A')
 								last = ch;
@@ -1560,15 +1572,10 @@ int main()
 						messages.add("You have too many letters to place using the mouse.", MessageQueue::HIGH);
 					else
 					{
-						// place tile
-						Tile* tile = grid.swap(pos[0], pos[1], tiles[last - 'A'].back());
-						display.remove_tile(tiles[last - 'A'].back());
-						tiles[last - 'A'].pop_back();
+						Tile* tile = grid.swap(pos[0], pos[1], hand.get_tile(last));
+
 						if (tile != nullptr)
-						{
-							tiles[tile->ch() - 'A'].push_back(tile);
-							display.add_tile(tile);
-						}
+							hand.add_tile(tile);
 					}
 				}
 			}
@@ -1578,12 +1585,9 @@ int main()
 		if (mstate.remove)
 		{
 			// remove tile
-			auto tile = grid.remove(mpos[0], mpos[1]);
+			Tile* tile = grid.remove(mpos[0], mpos[1]);
 			if (tile != nullptr)
-			{
-				tiles[tile->ch() - 'A'].push_back(tile);
-				display.add_tile(tile);
-			}
+				hand.add_tile(tile);
 		}
 
 		/*
@@ -1620,10 +1624,8 @@ int main()
 					for (unsigned int i = 0; i < 3; i++)
 					{
 						Tile* tile = bunch.back();
-						// TODO it sucks that these don't sync automatically
-						tiles[tile->ch() - 'A'].push_back(tile);
-						display.add_tile(tile);
 						bunch.pop_back();
+						hand.add_tile(tile);
 					}
 
 					// add tile to bunch
@@ -1643,7 +1645,7 @@ int main()
 		{
 			bool spent = true;
 			for (char ch = 'A'; ch <= 'Z'; ch++)
-				if (tiles[ch - 'A'].size() > 0)
+				if (hand.has_any(ch))
 				{
 					spent = false;
 					break;
@@ -1656,10 +1658,8 @@ int main()
 					if (bunch.size() > 0)
 					{
 						Tile* tile = bunch.back();
-						// TODO it sucks that these don't sync automatically
-						tiles[tile->ch() - 'A'].push_back(tile);
-						display.add_tile(tile);
 						bunch.pop_back();
+						hand.add_tile(tile);
 						for (auto message : mess)
 							messages.add(message, MessageQueue::LOW);
 					}
@@ -1730,8 +1730,7 @@ int main()
 			auto tile = grid.remove(pos[0], pos[1]);
 			if (tile != nullptr)
 			{
-				tiles[tile->ch() - 'A'].push_back(tile);
-				display.add_tile(tile);
+				hand.add_tile(tile);
 			}
 		}
 
@@ -1743,16 +1742,12 @@ int main()
 			// if space is empty or has a different letter
 			if (grid.get(pos[0], pos[1]) == nullptr || grid.get(pos[0], pos[1])->ch() != state.ch)
 			{
-				if (tiles[state.ch - 'A'].size() > 0)
+				if (hand.has_any(state.ch))
 				{
-					Tile* tile = grid.swap(pos[0], pos[1], tiles[state.ch - 'A'].back());
-					display.remove_tile(tiles[state.ch - 'A'].back());
-					tiles[state.ch - 'A'].pop_back();
+					Tile* tile = grid.swap(pos[0], pos[1], hand.get_tile(state.ch));
+
 					if (tile != nullptr)
-					{
-						tiles[tile->ch() - 'A'].push_back(tile);
-						display.add_tile(tile);
-					}
+						hand.add_tile(tile);
 					placed = true;
 				}
 			}
@@ -1867,7 +1862,7 @@ int main()
 
 		window.setView(gui_view);
 		messages.draw_on(window);
-		display.draw_on(window);
+		hand.draw_on(window);
 
 		window.display();
 	}
@@ -1875,10 +1870,6 @@ int main()
 	// delete unused tiles
 	for (auto tile: bunch)
 		delete tile;
-
-	for (char ch = 'A'; ch <= 'Z'; ch++)
-		for (auto tile: tiles[ch - 'A'])
-			delete tile;
 
 	return 0;
 }

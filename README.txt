@@ -70,4 +70,3 @@ TODO
  * cut-and-paste
  * multiplayer
  * sounds
- * icon
