@@ -956,6 +956,14 @@ class CutBuffer
 	int pos[2];
 	unsigned int size[2];
 	vector<Tile*> tiles;
+
+	// for when CutBuffer is done being used
+	void finish()
+	{
+		tiles.clear();
+		size[0] = 0;
+		size[1] = 0;
+	}
 public:
 	CutBuffer(Grid& grid, int left, int top, unsigned int width, unsigned int height) : tiles(width * height, nullptr)
 	{
@@ -968,7 +976,7 @@ public:
 			for (unsigned int j = 0; j < height; j++)
 			{
 				if ((tile = grid.remove(left + i, top + j)) != nullptr)
-					tile->set_color(sf::Color(255, 255, 255, 200));
+					tile->set_color(sf::Color(255, 255, 255, 100));
 				tiles.push_back(tile);
 			}
 	}
@@ -1001,16 +1009,17 @@ public:
 				++t;
 			}
 		// TODO how to make sure object is not used afterwards?
+		finish();
 	}
 
 	// return tiles to hand
-	// TODO fix segfault
 	void clear(Hand& hand)
 	{
 		for (auto tile : tiles)
 			if (tile != nullptr)
 				hand.add_tile(tile);
 		// TODO how to make sure object is not used afterwards?
+		finish();
 	}
 
 	void set_pos(int x, int y)
@@ -1400,6 +1409,7 @@ int main()
 
 	input_readers.push_back(&hand);
 
+	// TODO make Cursor class
 	float cursor_thickness = PPB / 16.0;
 	sf::RectangleShape cursor(sf::Vector2f(PPB - cursor_thickness * 2, PPB - cursor_thickness * 2));
 	cursor.setFillColor(sf::Color(0, 0, 0, 0));
@@ -1783,6 +1793,7 @@ int main()
 				buffer->clear(hand);
 				delete buffer;
 				buffer = nullptr;
+				messages.add("Added cut tiles back to your hand.", MessageQueue::LOW);
 			}
 
 			state.cut = false;
@@ -1796,6 +1807,8 @@ int main()
 				delete buffer;
 				buffer = nullptr;
 			}
+			else
+				messages.add("Cannot paste: no tiles were cut.", MessageQueue::LOW);
 
 			state.paste = false;
 		}
