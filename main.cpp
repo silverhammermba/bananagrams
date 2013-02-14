@@ -435,85 +435,6 @@ public:
 	}
 };
 
-class CutBuffer
-{
-	unsigned int size[2];
-	vector<Tile*> tiles;
-public:
-	CutBuffer(Grid& grid, int left, int top, unsigned int width, unsigned int height) : tiles(width * height, nullptr)
-	{
-		size[0] = width;
-		size[1] = height;
-		Tile* tile;
-		for (unsigned int i = 0; i < width; i++)
-			for (unsigned int j = 0; j < height; j++)
-			{
-				if ((tile = grid.remove(left + i, top + j)) != nullptr)
-					tile->set_color(sf::Color(255, 255, 255, 200));
-				tiles.push_back(tile);
-			}
-	}
-
-	~CutBuffer()
-	{
-		for (auto tile : tiles)
-			if (tile != nullptr)
-				delete tile;
-	}
-
-	// TODO transpose
-
-	// put tiles back in grid, returning displaced tiles to hand
-	void paste(Grid& grid, int x, int y, vector<Tile*>* hand)
-	{
-		auto t = tiles.begin();
-		for (unsigned int i = 0; i < size[0]; i++)
-			for (unsigned int j = 0; j < size[1]; j++)
-			{
-				if (*t != nullptr)
-					(*t)->set_color(sf::Color::White);
-				Tile* r = grid.swap(i + x - size[0] / 2, j + y - size[1] / 2, *t);
-				if (r != nullptr)
-					hand[r->ch() - 'A'].push_back(r);
-				++t;
-			}
-		// TODO what is this shit? sloppy
-		tiles.clear();
-		size[0] = 0;
-		size[1] = 0;
-	}
-
-	// return tiles to hand
-	void clear(vector<Tile*>* hand)
-	{
-		for (auto tile : tiles)
-			if (tile != nullptr)
-				hand[tile->ch() - 'A'].push_back(tile);
-		// TODO what is this shit? sloppy
-		tiles.clear();
-		size[0] = 0;
-		size[1] = 0;
-	}
-
-	void set_pos(int x, int y)
-	{
-		auto t = tiles.begin();
-		for (unsigned int i = 0; i < size[0]; i++)
-			for (unsigned int j = 0; j < size[1]; j++)
-			{
-				if (*t != nullptr)
-					(*t)->set_pos(i + x - size[0] / 2, j + y - size[1] / 2);
-				++t;
-			}
-	}
-
-	void draw_on(sf::RenderWindow & window) const
-	{
-		for (auto tile: tiles)
-			tile->draw_on(window);
-	}
-};
-
 class MouseControls : public InputReader
 {
 	MouseState* state;
@@ -802,7 +723,6 @@ public:
 	}
 };
 
-// TODO possibly integrate with tiles, make it Hand
 // TODO inefficient
 class Hand : public InputReader
 {
@@ -851,7 +771,6 @@ class Hand : public InputReader
 		}
 	}
 
-	// TODO add maximum spacing
 	void stacks(sf::RenderWindow& window)
 	{
 		auto size = gui_view->getSize();
@@ -1029,6 +948,90 @@ public:
 	void draw_on(sf::RenderWindow& window)
 	{
 		(this->*draw_func)(window);
+	}
+};
+
+class CutBuffer
+{
+	int pos[2];
+	unsigned int size[2];
+	vector<Tile*> tiles;
+public:
+	CutBuffer(Grid& grid, int left, int top, unsigned int width, unsigned int height) : tiles(width * height, nullptr)
+	{
+		size[0] = width;
+		size[1] = height;
+		pos[0] = width / 2 + left;
+		pos[1] = height / 2 + top;
+		Tile* tile;
+		for (unsigned int i = 0; i < width; i++)
+			for (unsigned int j = 0; j < height; j++)
+			{
+				if ((tile = grid.remove(left + i, top + j)) != nullptr)
+					tile->set_color(sf::Color(255, 255, 255, 200));
+				tiles.push_back(tile);
+			}
+	}
+
+	~CutBuffer()
+	{
+		for (auto tile : tiles)
+			if (tile != nullptr)
+				delete tile;
+	}
+
+	// TODO transpose
+
+	// put tiles back in grid, returning displaced tiles to hand
+	// TODO doesn't work
+	void paste(Grid& grid, Hand& hand)
+	{
+		auto t = tiles.begin();
+		for (unsigned int i = 0; i < size[0]; i++)
+			for (unsigned int j = 0; j < size[1]; j++)
+			{
+				if (*t != nullptr)
+				{
+					(*t)->set_color(sf::Color::White);
+
+					Tile* r = grid.swap(i + pos[0] - size[0] / 2, j + pos[1] - size[1] / 2, *t);
+					if (r != nullptr)
+						hand.add_tile(r);
+				}
+				++t;
+			}
+		// TODO how to make sure object is not used afterwards?
+	}
+
+	// return tiles to hand
+	// TODO fix segfault
+	void clear(Hand& hand)
+	{
+		for (auto tile : tiles)
+			if (tile != nullptr)
+				hand.add_tile(tile);
+		// TODO how to make sure object is not used afterwards?
+	}
+
+	void set_pos(int x, int y)
+	{
+		pos[0] = x;
+		pos[1] = y;
+		auto t = tiles.begin();
+		for (unsigned int i = 0; i < size[0]; i++)
+			for (unsigned int j = 0; j < size[1]; j++)
+			{
+				if (*t != nullptr)
+					(*t)->set_pos(i + x - size[0] / 2, j + y - size[1] / 2);
+				++t;
+			}
+	}
+
+	void draw_on(sf::RenderWindow & window) const
+	{
+		for (auto tile: tiles)
+			if (tile != nullptr)
+				tile->draw_on(window);
 	}
 };
 
@@ -1220,6 +1223,7 @@ int main()
 	auto center = gui_view.getCenter();
 	loading_text.setPosition(center.x + bounds.width / -2, center.y + bounds.height / -2);
 
+	// dedication
 	while (window.isOpen())
 	{
 		float elapsed = clock.getElapsedTime().asSeconds();
@@ -1510,6 +1514,9 @@ int main()
 			mpos[0] = std::floor(((mstate.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB);
 			mpos[1] = std::floor(((mstate.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB);
 
+			if (buffer != nullptr)
+				buffer->set_pos(mpos[0], mpos[1]);
+
 			mstate.update = false;
 		}
 
@@ -1592,27 +1599,6 @@ int main()
 			if (tile != nullptr)
 				hand.add_tile(tile);
 		}
-
-		/*
-		if (state.copy)
-		{
-			if (buffer == nullptr)
-			{
-				if (selection)
-				{
-					buffer = new CutBuffer(grid, );
-				}
-			}
-			else
-			{
-				buffer->clear(tiles);
-				delete buffer;
-				buffer = nullptr;
-			}
-
-			state.copy = false;
-		}
-		*/
 
 		if (state.dump)
 		{
@@ -1732,9 +1718,7 @@ int main()
 
 			auto tile = grid.remove(pos[0], pos[1]);
 			if (tile != nullptr)
-			{
 				hand.add_tile(tile);
-			}
 		}
 
 		// if letter key
@@ -1784,6 +1768,36 @@ int main()
 
 			// clear character to place
 			state.ch = 'A' - 1;
+		}
+
+		if (state.cut)
+		{
+			if (buffer == nullptr)
+			{
+				if (selected)
+					buffer = new CutBuffer(grid, std::min(sel1[0], sel2[0]), std::min(sel1[1], sel2[1]), sel_size[0], sel_size[1]);
+				selected = false;
+			}
+			else
+			{
+				buffer->clear(hand);
+				delete buffer;
+				buffer = nullptr;
+			}
+
+			state.cut = false;
+		}
+
+		if (state.paste)
+		{
+			if (buffer != nullptr)
+			{
+				buffer->paste(grid, hand);
+				delete buffer;
+				buffer = nullptr;
+			}
+
+			state.paste = false;
 		}
 
 		// frame-time-dependent stuff
@@ -1860,6 +1874,8 @@ int main()
 		grid.draw_on(window);
 		if (selecting || selected)
 			window.draw(selection);
+		if (buffer != nullptr)
+			buffer->draw_on(window);
 		window.draw(cursor);
 		window.draw(mcursor);
 
