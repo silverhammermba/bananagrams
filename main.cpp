@@ -131,6 +131,11 @@ public:
 		sprite.setPosition(x, y);
 	}
 
+	void set_grid_pos(int x, int y)
+	{
+		sprite.setPosition(x * PPB, y * PPB);
+	}
+
 	const sf::Color& get_color() const
 	{
 		return sprite.getColor();
@@ -255,7 +260,7 @@ public:
 		if (n >= grid.size())
 			grid.resize(n + 1, nullptr);
 		Tile* swp = grid[n];
-		tile->set_pos(x * PPB, y * PPB);
+		tile->set_grid_pos(x, y);
 		grid[n] = tile;
 
 		if (swp != nullptr)
@@ -954,31 +959,57 @@ public:
 class CutBuffer
 {
 	int pos[2];
-	unsigned int size[2];
+	int size[2];
+	// TODO somehow full of nulls when it comes time to set_pos
 	vector<Tile*> tiles;
 
 	// for when CutBuffer is done being used
 	void finish()
 	{
 		tiles.clear();
-		size[0] = 0;
-		size[1] = 0;
 	}
 public:
-	CutBuffer(Grid& grid, int left, int top, unsigned int width, unsigned int height) : tiles(width * height, nullptr)
+	CutBuffer(Grid& grid, int left, int top, int width, int height)
 	{
-		size[0] = width;
-		size[1] = height;
-		pos[0] = width / 2 + left;
-		pos[1] = height / 2 + top;
-		Tile* tile;
-		for (unsigned int i = 0; i < width; i++)
-			for (unsigned int j = 0; j < height; j++)
+		int min[2] = {left + width - 1, top + height - 1};
+		int max[2] = {left, top};
+
+		// try to shrink selection
+		for (int i = left; i < left + width; i++)
+			for (int j = top; j < top + height; j++)
 			{
-				if ((tile = grid.remove(left + i, top + j)) != nullptr)
-					tile->set_color(sf::Color(255, 255, 255, 100));
-				tiles.push_back(tile);
+				auto tile = grid.get(i, j);
+				if (tile != nullptr)
+				{
+					if (i < min[0])
+						min[0] = i;
+					if (i > max[0])
+						max[0] = i;
+					if (j < min[1])
+						min[1] = j;
+					if (j > max[1])
+						max[1] = j;
+				}
 			}
+
+		// if nonempty
+		if (min[0] <= max[0] && min[1] <= max[1])
+		{
+			size[0] = max[0] - min[0] + 1;
+			size[1] = max[1] - min[1] + 1;
+
+			pos[0] = (max[0] + min[0]) / 2;
+			pos[1] = (max[1] + min[1]) / 2;
+
+			for (int i = min[0]; i <= max[0]; i++)
+				for (int j = min[1]; j <= max[1]; j++)
+				{
+					Tile* tile = grid.remove(i, j);
+					if (tile != nullptr)
+						tile->set_color(sf::Color(255, 255, 255, 100));
+					tiles.push_back(tile);
+				}
+		}
 	}
 
 	~CutBuffer()
@@ -990,25 +1021,27 @@ public:
 
 	// TODO transpose
 
+	inline bool is_empty() const
+	{
+		return tiles.size() == 0;
+	}
+
 	// put tiles back in grid, returning displaced tiles to hand
-	// TODO doesn't work
 	void paste(Grid& grid, Hand& hand)
 	{
-		auto t = tiles.begin();
-		for (unsigned int i = 0; i < size[0]; i++)
-			for (unsigned int j = 0; j < size[1]; j++)
+		for (int i = 0; i < size[0]; i++)
+			for (int j = 0; j < size[1]; j++)
 			{
-				if (*t != nullptr)
+				auto tile = tiles[i * size[1] + j];
+				if (tile != nullptr)
 				{
-					(*t)->set_color(sf::Color::White);
+					tile->set_color(sf::Color::White);
 
-					Tile* r = grid.swap(i + pos[0] - size[0] / 2, j + pos[1] - size[1] / 2, *t);
+					Tile* r = grid.swap(i + pos[0] - size[0] / 2, j + pos[1] - size[1] / 2, tile);
 					if (r != nullptr)
 						hand.add_tile(r);
 				}
-				++t;
 			}
-		// TODO how to make sure object is not used afterwards?
 		finish();
 	}
 
@@ -1018,7 +1051,6 @@ public:
 		for (auto tile : tiles)
 			if (tile != nullptr)
 				hand.add_tile(tile);
-		// TODO how to make sure object is not used afterwards?
 		finish();
 	}
 
@@ -1026,13 +1058,14 @@ public:
 	{
 		pos[0] = x;
 		pos[1] = y;
-		auto t = tiles.begin();
-		for (unsigned int i = 0; i < size[0]; i++)
-			for (unsigned int j = 0; j < size[1]; j++)
+
+		for (int i = 0; i < size[0]; i++)
+			for (int j = 0; j < size[1]; j++)
 			{
-				if (*t != nullptr)
-					(*t)->set_pos(i + x - size[0] / 2, j + y - size[1] / 2);
-				++t;
+				auto tile = tiles[i * size[1] + j];
+
+				if (tile != nullptr)
+					tile->set_grid_pos(i + x - size[0] / 2, j + y - size[1] / 2);
 			}
 	}
 
@@ -1785,7 +1818,19 @@ int main()
 			if (buffer == nullptr)
 			{
 				if (selected)
+				{
 					buffer = new CutBuffer(grid, std::min(sel1[0], sel2[0]), std::min(sel1[1], sel2[1]), sel_size[0], sel_size[1]);
+
+					if (buffer->is_empty())
+					{
+						messages.add("Nothing selected.", MessageQueue::LOW);
+						delete buffer;
+						buffer = nullptr;
+					}
+				}
+				else
+					messages.add("Nothing selected.", MessageQueue::LOW);
+
 				selected = false;
 			}
 			else
