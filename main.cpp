@@ -857,16 +857,19 @@ class Hand : public InputReader
 		auto size = gui_view->getSize();
 		unsigned int nonempty = 0;
 		for (char ch = 'A'; ch <= 'Z'; ch++)
-			if (tiles[ch - 'A'].size() > 0)
+			if (has_any(ch))
 				nonempty++;
 		if (nonempty == 0)
 			return;
 		float padding = PPB / 8.f;
 		float room_per_tile = nonempty == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(nonempty - 1);
-		float x = padding;
+		if (room_per_tile > (PPB * 5) / 3.0)
+			room_per_tile = (PPB * 5) / 3.0;
+		// center tiles
+		float x = (size.x - room_per_tile * (nonempty - 1) - PPB) / 2.0;
 		for (char ch = 'A'; ch <= 'Z'; ch++)
 		{
-			if (tiles[ch - 'A'].size() > 0)
+			if (has_any(ch))
 			{
 				unsigned int i = 0;
 				for (auto tile: tiles[ch - 'A'])
@@ -970,11 +973,11 @@ public:
 		return tiles[ch - 'A'].size() > 0;
 	}
 
-	Tile* get_tile(char ch)
+	Tile* remove_tile(char ch)
 	{
 		Tile* tile = nullptr;
 
-		if (tiles[ch - 'A'].size() > 0)
+		if (has_any(ch))
 		{
 			tile = tiles[ch - 'A'].back();
 			tiles[ch - 'A'].pop_back();
@@ -982,14 +985,14 @@ public:
 			// update persistent structures
 			scram.remove(tile);
 			sort.remove(tile);
-			if (tiles[tile->ch() - 'A'].size() == 0)
-				single.remove(tile);
-			else
+			if (has_any(tile->ch()))
 			{
 				stringstream str;
 				str << tiles[tile->ch() - 'A'].size();
 				number[tile->ch() - 'A'].setString(str.str());
 			}
+			else
+				single.remove(tile);
 		}
 
 		return tile;
@@ -1572,7 +1575,7 @@ int main()
 						messages.add("You have too many letters to place using the mouse.", MessageQueue::HIGH);
 					else
 					{
-						Tile* tile = grid.swap(pos[0], pos[1], hand.get_tile(last));
+						Tile* tile = grid.swap(pos[0], pos[1], hand.remove_tile(last));
 
 						if (tile != nullptr)
 							hand.add_tile(tile);
@@ -1744,7 +1747,7 @@ int main()
 			{
 				if (hand.has_any(state.ch))
 				{
-					Tile* tile = grid.swap(pos[0], pos[1], hand.get_tile(state.ch));
+					Tile* tile = grid.swap(pos[0], pos[1], hand.remove_tile(state.ch));
 
 					if (tile != nullptr)
 						hand.add_tile(tile);
