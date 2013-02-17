@@ -1188,9 +1188,9 @@ int main()
 {
 	// load resources
 	sf::Font font;
-	if (!font.loadFromFile("/usr/share/fonts/TTF/FreeSans.ttf"))
+	if (!font.loadFromFile("Vera.ttf"))
 	{
-		cerr << "Couldn't find font /usr/share/fonts/TTF/FreeSans.ttf!\n";
+		cerr << "Couldn't find font Vera.ttf!\n";
 		return 1;
 	}
 	// TODO validate somehow
