@@ -169,6 +169,7 @@ namespace std
 
 class Grid
 {
+	// TODO keep track of center, add command for centering
 	vector<Tile*> grid;
 	vector<string> defined;
 	map<sf::Vector2i, bool> hwords;
@@ -1897,16 +1898,16 @@ int main()
 
 		messages.age(time);
 
-		// TODO scale cursor outline thickness with zoom?
+		// TODO scale cursor outline thickness with zoom
 		// zoom with mouse wheel
-		if (state.wheel_delta != 0)
+		if (state.wheel_delta < 0 || (state.wheel_delta > 0 && state.zoom > 1))
 		{
 			sf::Vector2f before((state.pos[0] * gsize.x) / wsize.x + center.x - gsize.x / 2, (state.pos[1] * gsize.y) / wsize.y + center.y - gsize.y / 2);
 			grid_view.zoom(1 - state.wheel_delta * time * 2);
 			gsize = grid_view.getSize();
 			sf::Vector2f after((state.pos[0] * gsize.x) / wsize.x + center.x - gsize.x / 2, (state.pos[1] * gsize.y) / wsize.y + center.y - gsize.y / 2);
 			grid_view.move(before - after);
-			// TODO perhaps move cursor if zooming in moves it off screen?
+			// TODO move cursor if zooming in moves it off screen
 
 			state.wheel_delta = 0;
 		}
