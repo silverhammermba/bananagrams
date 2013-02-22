@@ -1207,6 +1207,38 @@ public:
 	}
 };
 
+class Cursor
+{
+	int pos[2];
+	float outline_thickness;
+	sf::RectangleShape cursor;
+public:
+	Cursor(float thick, sf::Color fill, sf::Color outline)
+		: cursor(sf::Vector2f(PPB - thick * 2, PPB - thick * 2))
+	{
+		pos[0] = 0;
+		pos[1] = 0;
+
+		cursor.setOutlineThickness(outline_thickness = thick);
+
+		cursor.setFillColor(fill);
+		cursor.setOutlineColor(outline);
+	}
+
+	void set_pos(int x, int y)
+	{
+		pos[0] = x;
+		pos[1] = y;
+
+		cursor.setPosition(pos[0] * PPB + cursor.getOutlineThickness(), pos[1] * PPB + cursor.getOutlineThickness());
+	}
+
+	void draw_on(sf::RenderWindow& window) const
+	{
+		window.draw(cursor);
+	}
+};
+
 // TODO high CPU usage?
 int main()
 {
@@ -1466,17 +1498,8 @@ int main()
 
 	input_readers.push_back(&hand);
 
-	// TODO make Cursor class
-	float cursor_thickness = PPB / 16.0;
-	sf::RectangleShape cursor(sf::Vector2f(PPB - cursor_thickness * 2, PPB - cursor_thickness * 2));
-	cursor.setFillColor(sf::Color(0, 0, 0, 0));
-	cursor.setOutlineThickness(cursor_thickness);
-	cursor.setOutlineColor(sf::Color(0, 200, 0));
-
-	sf::RectangleShape mcursor(sf::Vector2f(PPB - cursor_thickness * 2, PPB - cursor_thickness * 2));
-	mcursor.setFillColor(sf::Color(0, 0, 0, 0));
-	mcursor.setOutlineThickness(cursor_thickness);
-	mcursor.setOutlineColor(sf::Color(0, 200, 0, 80));
+	Cursor cursor(PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0));
+	Cursor mcursor(PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0, 80));
 
 	int last[2] = {-1, 0};
 	int pos[2] = {0, 0};
@@ -1907,9 +1930,36 @@ int main()
 			gsize = grid_view.getSize();
 			sf::Vector2f after((state.pos[0] * gsize.x) / wsize.x + center.x - gsize.x / 2, (state.pos[1] * gsize.y) / wsize.y + center.y - gsize.y / 2);
 			grid_view.move(before - after);
-			// TODO move cursor if zooming in moves it off screen
 
 			state.wheel_delta = 0;
+
+			// move cursor if zooming in moves it off screen
+			center = grid_view.getCenter();
+			gsize = grid_view.getSize();
+			sf::Vector2f spos(pos[0] * PPB + PPB / 2.0, pos[1] * PPB + PPB / 2.0);
+			while (spos.x - center.x > gsize.x / 4)
+			{
+				--pos[0];
+				spos.x -= PPB;
+			}
+
+			while (spos.x - center.x < gsize.x / -4)
+			{
+				++pos[0];
+				spos.x += PPB;
+			}
+
+			while (spos.y - center.y > gsize.y / 4)
+			{
+				--pos[1];
+				spos.y -= PPB;
+			}
+
+			while (spos.y - center.y < gsize.y / -4)
+			{
+				++pos[1];
+				spos.y += PPB;
+			}
 		}
 
 		// zoom with keyboard
@@ -1953,8 +2003,8 @@ int main()
 		state.zoom = grid_view.getSize().x / wsize.x;
 
 		// update cursors
-		cursor.setPosition(pos[0] * PPB + cursor_thickness, pos[1] * PPB + cursor_thickness);
-		mcursor.setPosition(mpos[0] * PPB + cursor_thickness, mpos[1] * PPB + cursor_thickness);
+		cursor.set_pos(pos[0], pos[1]);
+		mcursor.set_pos(mpos[0], mpos[1]);
 
 		// animate tiles
 		grid.step(time);
@@ -1968,8 +2018,8 @@ int main()
 			window.draw(selection);
 		if (buffer != nullptr)
 			buffer->draw_on(window);
-		window.draw(cursor);
-		window.draw(mcursor);
+		cursor.draw_on(window);
+		mcursor.draw_on(window);
 
 		window.setView(gui_view);
 		messages.draw_on(window);
