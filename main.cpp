@@ -39,6 +39,7 @@ struct State
 	sf::View* grid_view;
 	float zoom; // zoom factor for grid view
 	bool switch_controls; // signal to switch control schemes
+	bool transpose; // flip selection
 
 	// keyboard
 	int delta[2]; // cursor movement signal
@@ -529,6 +530,13 @@ public:
 						return true;
 					}
 					break;
+				case sf::Keyboard::F:
+					if (state->ctrl)
+					{
+						state->transpose = true;
+						return true;
+					}
+					break;
 				case sf::Keyboard::X:
 					if (state->ctrl)
 					{
@@ -644,8 +652,15 @@ public:
 				case sf::Keyboard::Down:
 					state->delta[1] = 1;
 					return true;
+				// special functions
+				case sf::Keyboard::F:
+					if (shift)
+					{
+						state->transpose = true;
+						return true;
+					}
 				case sf::Keyboard::P:
-					if (state->ctrl)
+					if (shift || state->ctrl)
 					{
 						state->paste = true;
 						return true;
@@ -957,7 +972,6 @@ class CutBuffer
 {
 	int pos[2];
 	int size[2];
-	// TODO somehow full of nulls when it comes time to set_pos
 	vector<Tile*> tiles;
 
 	// for when CutBuffer is done being used
@@ -1023,7 +1037,14 @@ public:
 
 	void transpose()
 	{
-		// TODO
+		vector<Tile*> temp(tiles.size(), nullptr);
+		for (unsigned int i = 0; i < tiles.size(); i++)
+			temp[(i % size[1]) * size[0] + i / size[1]] = tiles[i];
+		for (unsigned int i = 0; i < tiles.size(); i++)
+			tiles[i] = temp[i];
+		unsigned int tmp = size[0];
+		size[0] = size[1];
+		size[1] = tmp;
 	}
 
 	// put tiles back in grid, returning displaced tiles to hand
@@ -1188,9 +1209,9 @@ int main()
 {
 	// load resources
 	sf::Font font;
-	if (!font.loadFromFile("/usr/share/fonts/TTF/FreeSans.ttf"))
+	if (!font.loadFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf"))
 	{
-		cerr << "Couldn't find font /usr/share/fonts/TTF/FreeSans.ttf!\n";
+		cerr << "Couldn't find font /usr/share/fonts/TTF/DejaVuSans.ttf!\n";
 		return 1;
 	}
 	// TODO validate somehow
@@ -1494,6 +1515,8 @@ int main()
 	state.start_selection = false;
 	state.end_selection = false;
 
+	state.transpose = false;
+
 	MouseControls mouse(&state);
 	input_readers.push_back(&mouse);
 
@@ -1633,6 +1656,59 @@ int main()
 				}
 			}
 			state.end_selection = false;
+		}
+
+		if (state.cut)
+		{
+			if (buffer == nullptr)
+			{
+				if (selected)
+				{
+					buffer = new CutBuffer(grid, std::min(sel1[0], sel2[0]), std::min(sel1[1], sel2[1]), sel_size[0], sel_size[1]);
+
+					if (buffer->is_empty())
+					{
+						messages.add("Nothing selected.", MessageQueue::LOW);
+						delete buffer;
+						buffer = nullptr;
+					}
+				}
+				else
+					messages.add("Nothing selected.", MessageQueue::LOW);
+
+				selected = false;
+			}
+			else
+			{
+				buffer->clear(hand);
+				delete buffer;
+				buffer = nullptr;
+				messages.add("Added cut tiles back to your hand.", MessageQueue::LOW);
+			}
+
+			state.cut = false;
+		}
+
+		if (state.transpose)
+		{
+			if (buffer != nullptr)
+				buffer->transpose();
+
+			state.transpose = false;
+		}
+
+		if (state.paste)
+		{
+			if (buffer != nullptr)
+			{
+				buffer->paste(grid, hand);
+				delete buffer;
+				buffer = nullptr;
+			}
+			else
+				messages.add("Cannot paste: no tiles were cut.", MessageQueue::LOW);
+
+			state.paste = false;
 		}
 
 		if (state.mremove)
@@ -1811,51 +1887,6 @@ int main()
 
 			// clear character to place
 			state.ch = 'A' - 1;
-		}
-
-		if (state.cut)
-		{
-			if (buffer == nullptr)
-			{
-				if (selected)
-				{
-					buffer = new CutBuffer(grid, std::min(sel1[0], sel2[0]), std::min(sel1[1], sel2[1]), sel_size[0], sel_size[1]);
-
-					if (buffer->is_empty())
-					{
-						messages.add("Nothing selected.", MessageQueue::LOW);
-						delete buffer;
-						buffer = nullptr;
-					}
-				}
-				else
-					messages.add("Nothing selected.", MessageQueue::LOW);
-
-				selected = false;
-			}
-			else
-			{
-				buffer->clear(hand);
-				delete buffer;
-				buffer = nullptr;
-				messages.add("Added cut tiles back to your hand.", MessageQueue::LOW);
-			}
-
-			state.cut = false;
-		}
-
-		if (state.paste)
-		{
-			if (buffer != nullptr)
-			{
-				buffer->paste(grid, hand);
-				delete buffer;
-				buffer = nullptr;
-			}
-			else
-				messages.add("Cannot paste: no tiles were cut.", MessageQueue::LOW);
-
-			state.paste = false;
 		}
 
 		// frame-time-dependent stuff
