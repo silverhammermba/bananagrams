@@ -1045,6 +1045,8 @@ public:
 		unsigned int tmp = size[0];
 		size[0] = size[1];
 		size[1] = tmp;
+
+		set_pos(pos[0], pos[1]);
 	}
 
 	// put tiles back in grid, returning displaced tiles to hand
