@@ -26,6 +26,8 @@ using std::stringstream;
 using std::vector;
 
 static const int PPB = 48;
+static const sf::Vector2i X(1, 0);
+static const sf::Vector2i Y(0, 1);
 
 sf::RenderTexture tile_texture[26];
 map<string, string> dictionary;
@@ -290,6 +292,21 @@ public:
 			vwords.erase(sf::Vector2i(x, y + 1));
 
 		return nullptr;
+	}
+
+	inline Tile* get(sf::Vector2i pos)
+	{
+		return get(pos.x, pos.y);
+	}
+
+	inline Tile* remove(sf::Vector2i pos)
+	{
+		return remove(pos.x, pos.y);
+	}
+
+	inline Tile* swap(sf::Vector2i pos, Tile* tile)
+	{
+		return swap(pos.x, pos.y, tile);
 	}
 
 	void traverse(int x, int y)
@@ -849,8 +866,8 @@ class Hand : public InputReader
 			for (auto tile: tiles[ch - 'A'])
 			{
 				auto it = scram.begin();
-				auto pos = std::rand() % (scram.size() + 1);
-				for (unsigned int i = 0; i != pos && it != scram.end(); it++, i++);
+				auto j = std::rand() % (scram.size() + 1);
+				for (unsigned int i = 0; i != j && it != scram.end(); it++, i++);
 				scram.insert(it, tile);
 			}
 		}
@@ -1047,7 +1064,7 @@ public:
 		size[0] = size[1];
 		size[1] = tmp;
 
-		set_pos(pos[0], pos[1]);
+		set_pos(sf::Vector2i(pos[0], pos[1]));
 	}
 
 	// put tiles back in grid, returning displaced tiles to hand
@@ -1078,10 +1095,10 @@ public:
 		finish();
 	}
 
-	void set_pos(int x, int y)
+	void set_pos(const sf::Vector2i p)
 	{
-		pos[0] = x;
-		pos[1] = y;
+		pos[0] = p.x;
+		pos[1] = p.y;
 
 		for (int i = 0; i < size[0]; i++)
 			for (int j = 0; j < size[1]; j++)
@@ -1089,7 +1106,7 @@ public:
 				auto tile = tiles[i * size[1] + j];
 
 				if (tile != nullptr)
-					tile->set_grid_pos(i + x - size[0] / 2, j + y - size[1] / 2);
+					tile->set_grid_pos(i + pos[0] - size[0] / 2, j + pos[1] - size[1] / 2);
 			}
 	}
 
@@ -1225,10 +1242,26 @@ public:
 		cursor.setOutlineColor(outline);
 	}
 
-	void set_pos(int x, int y)
+	// TODO stupid, fix
+	inline sf::Vector2i get_pos() const
 	{
-		pos[0] = x;
-		pos[1] = y;
+		return sf::Vector2i(pos[0], pos[1]);
+	}
+
+	inline sf::Vector2f get_center() const
+	{
+		return sf::Vector2f(pos[0] * PPB + PPB / 2.0, pos[1] * PPB + PPB / 2.0);
+	}
+
+	void move(const sf::Vector2i& d)
+	{
+		set_pos(sf::Vector2i(pos[0], pos[1]) + d);
+	}
+
+	void set_pos(const sf::Vector2i& p)
+	{
+		pos[0] = p.x;
+		pos[1] = p.y;
 
 		cursor.setPosition(pos[0] * PPB + cursor.getOutlineThickness(), pos[1] * PPB + cursor.getOutlineThickness());
 	}
@@ -1294,6 +1327,7 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "Bananagrams");
 	window.setIcon(32, 32, icon);
 	window.setVerticalSyncEnabled(true);
+	window.setKeyRepeatEnabled(false);
 
 	sf::View gui_view = window.getDefaultView();
 	sf::View grid_view = window.getDefaultView();
@@ -1501,18 +1535,16 @@ int main()
 	Cursor cursor(PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0));
 	Cursor mcursor(PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0, 80));
 
-	int last[2] = {-1, 0};
-	int pos[2] = {0, 0};
-	int mpos[2] = {0, 0};
+	sf::Vector2i last(-1, 0);
+	sf::Vector2i next(0, 0);
 	float held[2] = {0, 0};
-	int next[2] = {0, 0};
 
 	CutBuffer* buffer = nullptr;
 	bool selected = false;
 	bool selecting = false;
 	// mouse press and release positions
-	int sel1[2];
-	int sel2[2];
+	sf::Vector2i sel1;
+	sf::Vector2i sel2;
 	unsigned int sel_size[2];
 	float selection_thickness = 1;
 	sf::RectangleShape selection;
@@ -1603,11 +1635,10 @@ int main()
 		if (state.update)
 		{
 			// update mouse cursor position
-			mpos[0] = std::floor(((state.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB);
-			mpos[1] = std::floor(((state.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB);
+			mcursor.set_pos(sf::Vector2i(std::floor(((state.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB), std::floor(((state.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB)));
 
 			if (buffer != nullptr)
-				buffer->set_pos(mpos[0], mpos[1]);
+				buffer->set_pos(mcursor.get_pos());
 
 			state.update = false;
 		}
@@ -1617,22 +1648,20 @@ int main()
 		{
 			selecting = true;
 			selected = false;
-			sel1[0] = mpos[0];
-			sel1[1] = mpos[1];
+			sel1 = mcursor.get_pos();
 			state.start_selection = false;
 		}
 
 		// if left click held down
 		if (selecting)
 		{
-			sel2[0] = mpos[0];
-			sel2[1] = mpos[1];
+			sel2 = mcursor.get_pos();
 			// normalize selection
-			sel_size[0] = std::abs(sel1[0] - sel2[0]) + 1;
-			sel_size[1] = std::abs(sel1[1] - sel2[1]) + 1;
+			sel_size[0] = std::abs(sel1.x - sel2.x) + 1;
+			sel_size[1] = std::abs(sel1.y - sel2.y) + 1;
 			// update selection rect
 			selection.setSize(sf::Vector2f(PPB * sel_size[0] - selection_thickness * 2, PPB * sel_size[1] - selection_thickness * 2));
-			selection.setPosition(std::min(sel1[0], sel2[0]) * PPB + selection_thickness, std::min(sel1[1], sel2[1]) * PPB + selection_thickness);
+			selection.setPosition(std::min(sel1.x, sel2.x) * PPB + selection_thickness, std::min(sel1.y, sel2.y) * PPB + selection_thickness);
 		}
 
 		// if left click release
@@ -1646,8 +1675,7 @@ int main()
 			{
 				selected = false;
 				// move cursor to mouse cursor
-				pos[0] = mpos[0];
-				pos[1] = mpos[1];
+				cursor.set_pos(mcursor.get_pos());
 
 				// if ctrl, try to place last tile
 				if (state.ctrl)
@@ -1674,7 +1702,7 @@ int main()
 						messages.add("You have too many letters to place using the mouse.", MessageQueue::HIGH);
 					else
 					{
-						Tile* tile = grid.swap(pos[0], pos[1], hand.remove_tile(last));
+						Tile* tile = grid.swap(cursor.get_pos(), hand.remove_tile(last));
 
 						if (tile != nullptr)
 							hand.add_tile(tile);
@@ -1690,7 +1718,7 @@ int main()
 			{
 				if (selected)
 				{
-					buffer = new CutBuffer(grid, std::min(sel1[0], sel2[0]), std::min(sel1[1], sel2[1]), sel_size[0], sel_size[1]);
+					buffer = new CutBuffer(grid, std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y), sel_size[0], sel_size[1]);
 
 					if (buffer->is_empty())
 					{
@@ -1740,7 +1768,7 @@ int main()
 		if (state.mremove)
 		{
 			// remove tile
-			Tile* tile = grid.remove(mpos[0], mpos[1]);
+			Tile* tile = grid.remove(mcursor.get_pos());
 			if (tile != nullptr)
 				hand.add_tile(tile);
 		}
@@ -1749,7 +1777,7 @@ int main()
 		{
 			if (bunch.size() >= 3)
 			{
-				auto dumped = grid.remove(pos[0], pos[1]);
+				auto dumped = grid.remove(cursor.get_pos());
 				if (dumped == nullptr)
 					messages.add("You need to select a tile to dump.", MessageQueue::LOW);
 				else
@@ -1762,10 +1790,10 @@ int main()
 						hand.add_tile(tile);
 					}
 
-					// add tile to bunch
+					// add tile to bunch in random position
 					auto it = bunch.begin();
-					auto pos = std::rand() % (bunch.size() + 1);
-					for (unsigned int i = 0; i != pos && it != bunch.end(); it++, i++);
+					auto j = std::rand() % (bunch.size() + 1);
+					for (unsigned int i = 0; i != j && it != bunch.end(); it++, i++);
 					bunch.insert(it, dumped);
 				}
 			}
@@ -1816,52 +1844,42 @@ int main()
 
 			// TODO DRY off autoadvancing
 			// if the cursor is ahead of the last added character, autoadvance
-			if (pos[0] == last[0] + next[0] && pos[1] == last[1] + next[1])
+			if (cursor.get_pos() == last + next)
 			{
-				pos[0] = last[0];
-				pos[1] = last[1];
-				last[0] -= next[0];
-				last[1] -= next[1];
+				cursor.set_pos(last);
+				last -= next;
 			}
 			// else if you are not near the last character and the space is empty, try to autoadvance
-			else if (grid.get(pos[0], pos[1]) == nullptr)
+			else if (grid.get(cursor.get_pos()) == nullptr)
 			{
-				if (grid.get(pos[0] - 1, pos[1]) != nullptr)
+				if (grid.get(cursor.get_pos() - X) != nullptr)
 				{
-					next[0] = 1;
-					next[1] = 0;
-					pos[0] -= next[0];
-					last[0] = pos[0] - next[0];
-					last[1] = pos[1];
+					next = X;
+					cursor.move(-next);
+					last = cursor.get_pos() - next;
 				}
-				else if (grid.get(pos[0], pos[1] - 1) != nullptr)
+				else if (grid.get(cursor.get_pos() - Y) != nullptr)
 				{
-					next[0] = 0;
-					next[1] = 1;
-					pos[1] -= next[1];
-					last[0] = pos[0];
-					last[1] = pos[1] - next[1];
+					next = Y;
+					cursor.move(-next);
+					last = cursor.get_pos() - next;
 				}
 			}
 			else // not near last character, position not empty, try to set autoadvance for next time
 			{
-				if (grid.get(pos[0] - 1, pos[1]) != nullptr)
+				if (grid.get(cursor.get_pos() - X) != nullptr)
 				{
-					next[0] = 1;
-					next[1] = 0;
-					last[0] = pos[0] - next[0];
-					last[1] = pos[1];
+					next = X;
+					last = cursor.get_pos() - next;
 				}
-				else if (grid.get(pos[0], pos[1] - 1) != nullptr)
+				else if (grid.get(cursor.get_pos() - Y) != nullptr)
 				{
-					next[0] = 0;
-					next[1] = 1;
-					last[0] = pos[0];
-					last[1] = pos[1] - next[1];
+					next = Y;
+					last = cursor.get_pos() - next;
 				}
 			}
 
-			auto tile = grid.remove(pos[0], pos[1]);
+			auto tile = grid.remove(cursor.get_pos());
 			if (tile != nullptr)
 				hand.add_tile(tile);
 		}
@@ -1872,11 +1890,11 @@ int main()
 			bool placed = false;
 
 			// if space is empty or has a different letter
-			if (grid.get(pos[0], pos[1]) == nullptr || grid.get(pos[0], pos[1])->ch() != state.ch)
+			if (grid.get(cursor.get_pos()) == nullptr || grid.get(cursor.get_pos())->ch() != state.ch)
 			{
 				if (hand.has_any(state.ch))
 				{
-					Tile* tile = grid.swap(pos[0], pos[1], hand.remove_tile(state.ch));
+					Tile* tile = grid.swap(cursor.get_pos(), hand.remove_tile(state.ch));
 
 					if (tile != nullptr)
 						hand.add_tile(tile);
@@ -1889,20 +1907,17 @@ int main()
 			// if we placed a letter, try to autoadvance
 			if (placed)
 			{
-				next[0] = 0;
-				next[1] = 0;
-				if (pos[0] == last[0] + 1 && pos[1] == last[1])
-					next[0] = 1;
-				else if (pos[0] == last[0] && pos[1] == last[1] + 1)
-					next[1] = 1;
-				else if (grid.get(pos[0] - 1, pos[1]) != nullptr)
-					next[0] = 1;
-				else if (grid.get(pos[0], pos[1] - 1) != nullptr)
-					next[1] = 1;
-				last[0] = pos[0];
-				last[1] = pos[1];
-				pos[0] += next[0];
-				pos[1] += next[1];
+				next = {0, 0};
+				if (cursor.get_pos() == last + X)
+					next.x = 1;
+				else if (cursor.get_pos() == last + Y)
+					next.y = 1;
+				else if (grid.get(cursor.get_pos() - X) != nullptr)
+					next.x = 1;
+				else if (grid.get(cursor.get_pos() - Y) != nullptr)
+					next.y = 1;
+				last = cursor.get_pos();
+				cursor.move(next);
 			}
 			else
 			{
@@ -1936,62 +1951,36 @@ int main()
 			// move cursor if zooming in moves it off screen
 			center = grid_view.getCenter();
 			gsize = grid_view.getSize();
-			sf::Vector2f spos(pos[0] * PPB + PPB / 2.0, pos[1] * PPB + PPB / 2.0);
+			sf::Vector2f spos = cursor.get_center();
 			while (spos.x - center.x > gsize.x / 4)
 			{
-				--pos[0];
+				cursor.move(-X);
 				spos.x -= PPB;
 			}
 
 			while (spos.x - center.x < gsize.x / -4)
 			{
-				++pos[0];
+				cursor.move(X);
 				spos.x += PPB;
 			}
 
 			while (spos.y - center.y > gsize.y / 4)
 			{
-				--pos[1];
+				cursor.move(-Y);
 				spos.y -= PPB;
 			}
 
 			while (spos.y - center.y < gsize.y / -4)
 			{
-				++pos[1];
+				cursor.move(Y);
 				spos.y += PPB;
-			}
-		}
-
-		// zoom with keyboard
-		if (state.ctrl)
-			grid_view.zoom(1 + state.delta[1] * (state.sprint ? 2 : 1) * time);
-		// move cursor
-		else
-		{
-			// control key repeat speed
-			for (unsigned int i = 0; i < 2; i++)
-			{
-				if (state.delta[i] == 0)
-					held[i] = 0;
-				else
-				{
-					if (held[i] == 0)
-						pos[i] += state.delta[i] * (state.sprint ? 2 : 1);
-					else
-						while (held[i] > repeat_delay)
-						{
-							pos[i] += state.delta[i] * (state.sprint ? 2 : 1);
-							held[i] -= repeat_speed;
-						}
-					held[i] += time;
-				}
 			}
 		}
 
 		// these might have changed due to zooming
 		center = grid_view.getCenter();
 		gsize = grid_view.getSize();
-		sf::Vector2f spos(pos[0] * PPB + PPB / 2.0, pos[1] * PPB + PPB / 2.0);
+		sf::Vector2f spos = cursor.get_center();
 		// measure difference from a box in the center of the screen
 		sf::Vector2f diff((std::abs(spos.x - center.x) > gsize.x / 4 ? spos.x - center.x - (spos.x >= center.x ? gsize.x / 4 : gsize.x / -4) : 0), (std::abs(spos.y - center.y) > gsize.y / 4 ? spos.y  - center.y - (spos.y >= center.y ? gsize.y / 4 : gsize.y / -4) : 0));
 		// TODO is there a better movement function?
@@ -2001,10 +1990,6 @@ int main()
 		if (gsize.x < wsize.x || gsize.y < wsize.y)
 			grid_view.setSize(wsize.x, wsize.y);
 		state.zoom = grid_view.getSize().x / wsize.x;
-
-		// update cursors
-		cursor.set_pos(pos[0], pos[1]);
-		mcursor.set_pos(mpos[0], mpos[1]);
 
 		// animate tiles
 		grid.step(time);
