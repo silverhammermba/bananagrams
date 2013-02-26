@@ -28,6 +28,7 @@ using std::vector;
 static const int PPB = 48;
 static const sf::Vector2i X(1, 0);
 static const sf::Vector2i Y(0, 1);
+static const sf::Vector2i XY(1, 1);
 
 sf::RenderTexture tile_texture[26];
 map<string, string> dictionary;
@@ -63,6 +64,7 @@ struct State
 	bool end_selection;
 };
 
+// ABC for classes that handle sf::Events
 class InputReader
 {
 protected:
@@ -71,7 +73,11 @@ public:
 	InputReader() { finished = false; }
 	virtual ~InputReader() {}
 
-	bool is_finished() const { return finished; }
+	inline bool is_finished() const
+	{
+		return finished;
+	}
+
 	virtual bool process_event(const sf::Event& event) = 0;
 };
 
@@ -80,7 +86,6 @@ class Game : public InputReader
 {
 	State* state;
 public:
-
 	Game(State* s)
 	{
 		state = s;
@@ -181,6 +186,8 @@ class Grid
 	vector<string> defined;
 	map<sf::Vector2i, bool> hwords;
 	map<sf::Vector2i, bool> vwords;
+
+	// for converting between 2D coords and vector positions
 	inline unsigned int bijection(unsigned x, unsigned int y) const
 	{
 		return ((x + y) * (x + y + 1)) / 2 + x;
@@ -197,6 +204,20 @@ class Grid
 		else
 			return 4 * bijection(-x - 1, -y - 1) + 3;
 	}
+
+	// for checking connectedness of grid
+	void traverse(int x, int y)
+	{
+		Tile* tile = get(x, y);
+		if (tile == nullptr || tile->marked)
+			return;
+
+		tile->marked = true;
+		traverse(x - 1, y);
+		traverse(x + 1, y);
+		traverse(x, y - 1);
+		traverse(x, y + 1);
+	}
 public:
 	Grid() : grid()
 	{
@@ -209,6 +230,7 @@ public:
 				delete tile;
 	}
 
+	// return the tile at the coords
 	Tile* get(int x, int y) const
 	{
 		unsigned int n = convert(x, y);
@@ -217,6 +239,7 @@ public:
 		return grid[n];
 	}
 
+	// remove the tile at the coords and return it
 	Tile* remove(int x, int y)
 	{
 		unsigned int n = convert(x, y);
@@ -258,6 +281,7 @@ public:
 		return nullptr;
 	}
 
+	// exchange the tile at the coords for the given one, and return it
 	Tile* swap(int x, int y, Tile* tile)
 	{
 		if (tile == nullptr)
@@ -314,19 +338,7 @@ public:
 		return swap(pos.x, pos.y, tile);
 	}
 
-	void traverse(int x, int y)
-	{
-		Tile* tile = get(x, y);
-		if (tile == nullptr || tile->marked)
-			return;
-
-		tile->marked = true;
-		traverse(x - 1, y);
-		traverse(x + 1, y);
-		traverse(x, y - 1);
-		traverse(x, y + 1);
-	}
-
+	// animate tiles
 	void step(float time)
 	{
 		for (auto tile: grid)
@@ -339,6 +351,7 @@ public:
 		}
 	}
 
+	// check for connectedness and valid words
 	bool is_valid(vector<string>& messages)
 	{
 		// need at least one word to be valid
@@ -354,7 +367,7 @@ public:
 			if (tile != nullptr)
 				tile->marked = false;
 
-		// guaranteed to be non-null
+		// starting points guaranteed to be non-null
 		traverse(start->first.x, start->first.y);
 
 		bool valid = true;
@@ -362,14 +375,11 @@ public:
 			if (tile != nullptr && !tile->marked)
 			{
 				valid = false;
-				break;
+				tile->set_color(sf::Color(255, 50, 50));
 			}
 
 		if (!valid)
 		{
-			for (auto tile: grid)
-				if (tile != nullptr && !tile->marked)
-					tile->set_color(sf::Color(255, 50, 50));
 			messages.push_back("Your tiles are not all connected.");
 			return false;
 		}
@@ -399,6 +409,7 @@ public:
 			words[temp.str()].push_back(array<int, 3>{{pair.first.x, pair.first.y, 1}});
 		}
 
+		// TODO only define the most recently spelled words
 		// check words
 		for (auto& word : words)
 		{
@@ -453,7 +464,7 @@ public:
 		return valid;
 	}
 
-	void draw_on(sf::RenderWindow& window) const
+	inline void draw_on(sf::RenderWindow& window) const
 	{
 		for (auto tile: grid)
 			if (tile != nullptr)
@@ -927,7 +938,7 @@ public:
 			}
 	}
 
-	bool has_any(char ch) const
+	inline bool has_any(char ch) const
 	{
 		return tiles[ch - 'A'].size() > 0;
 	}
@@ -985,7 +996,7 @@ public:
 		return true;
 	}
 
-	void draw_on(sf::RenderWindow& window)
+	inline void draw_on(sf::RenderWindow& window)
 	{
 		(this->*draw_func)(window);
 	}
@@ -1029,7 +1040,7 @@ public:
 		// if nonempty
 		if (min.x <= max.x && min.y <= max.y)
 		{
-			size = max - min + X + Y;
+			size = max - min + XY;
 			pos = (max + min) / 2;
 
 			for (int i = min.x; i <= max.x; i++)
@@ -1111,7 +1122,7 @@ public:
 			}
 	}
 
-	void draw_on(sf::RenderWindow & window) const
+	inline void draw_on(sf::RenderWindow & window) const
 	{
 		for (auto tile: tiles)
 			if (tile != nullptr)
@@ -1129,27 +1140,27 @@ public:
 		message.setColor(color);
 	}
 
-	void age(float time)
+	inline void age(float time)
 	{
 		lifetime += time;
 	}
 
-	float age()
+	inline float age() const
 	{
 		return lifetime;
 	}
 
-	void set_pos(float x, float y)
+	inline void set_pos(float x, float y)
 	{
 		message.setPosition(x, y);
 	}
 
-	float get_height() const
+	inline float get_height() const
 	{
 		return message.getGlobalBounds().height;
 	}
 
-	void draw_on(sf::RenderWindow& window) const
+	inline void draw_on(sf::RenderWindow& window) const
 	{
 		window.draw(message);
 	}
@@ -1218,7 +1229,7 @@ public:
 		}
 	}
 
-	void draw_on(sf::RenderWindow& window) const
+	inline void draw_on(sf::RenderWindow& window) const
 	{
 		for (auto message : messages)
 			message->draw_on(window);
@@ -1227,47 +1238,42 @@ public:
 
 class Cursor
 {
-	int pos[2];
+	sf::Vector2i pos;
 	float outline_thickness;
 	sf::RectangleShape cursor;
 public:
 	Cursor(float thick, sf::Color fill, sf::Color outline)
-		: cursor(sf::Vector2f(PPB - thick * 2, PPB - thick * 2))
+		: pos(0, 0), cursor(sf::Vector2f(PPB - thick * 2, PPB - thick * 2))
 	{
-		pos[0] = 0;
-		pos[1] = 0;
-
 		cursor.setOutlineThickness(outline_thickness = thick);
 
 		cursor.setFillColor(fill);
 		cursor.setOutlineColor(outline);
 	}
 
-	// TODO stupid, fix
-	inline sf::Vector2i get_pos() const
+	inline const sf::Vector2i& get_pos() const
 	{
-		return sf::Vector2i(pos[0], pos[1]);
+		return pos;
 	}
 
 	inline sf::Vector2f get_center() const
 	{
-		return sf::Vector2f(pos[0] * PPB + PPB / 2.0, pos[1] * PPB + PPB / 2.0);
+		return ((sf::Vector2f)pos + sf::Vector2f(0.5, 0.5)) * (float)PPB;
 	}
 
-	void move(const sf::Vector2i& d)
+	inline void move(const sf::Vector2i& d)
 	{
-		set_pos(sf::Vector2i(pos[0], pos[1]) + d);
+		set_pos(pos + d);
 	}
 
 	void set_pos(const sf::Vector2i& p)
 	{
-		pos[0] = p.x;
-		pos[1] = p.y;
+		pos = p;
 
-		cursor.setPosition(pos[0] * PPB + cursor.getOutlineThickness(), pos[1] * PPB + cursor.getOutlineThickness());
+		cursor.setPosition((sf::Vector2f)(pos * PPB) + (sf::Vector2f)XY * cursor.getOutlineThickness());
 	}
 
-	void draw_on(sf::RenderWindow& window) const
+	inline void draw_on(sf::RenderWindow& window) const
 	{
 		window.draw(cursor);
 	}
