@@ -294,17 +294,17 @@ public:
 		return nullptr;
 	}
 
-	inline Tile* get(sf::Vector2i pos)
+	inline Tile* get(const sf::Vector2i& pos)
 	{
 		return get(pos.x, pos.y);
 	}
 
-	inline Tile* remove(sf::Vector2i pos)
+	inline Tile* remove(const sf::Vector2i& pos)
 	{
 		return remove(pos.x, pos.y);
 	}
 
-	inline Tile* swap(sf::Vector2i pos, Tile* tile)
+	inline Tile* swap(const sf::Vector2i& pos, Tile* tile)
 	{
 		return swap(pos.x, pos.y, tile);
 	}
@@ -1095,7 +1095,7 @@ public:
 		finish();
 	}
 
-	void set_pos(const sf::Vector2i p)
+	void set_pos(const sf::Vector2i& p)
 	{
 		pos[0] = p.x;
 		pos[1] = p.y;
@@ -1635,6 +1635,7 @@ int main()
 		if (state.update)
 		{
 			// TODO need to do this when window is resized
+			// TODO refactor
 			// update mouse cursor position
 			mcursor.set_pos(sf::Vector2i(std::floor(((state.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB), std::floor(((state.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB)));
 
@@ -1661,6 +1662,7 @@ int main()
 			sel_size[0] = std::abs(sel1.x - sel2.x) + 1;
 			sel_size[1] = std::abs(sel1.y - sel2.y) + 1;
 			// update selection rect
+			// TODO make selection rect a cursor
 			selection.setSize(sf::Vector2f(PPB * sel_size[0] - selection_thickness * 2, PPB * sel_size[1] - selection_thickness * 2));
 			selection.setPosition(std::min(sel1.x, sel2.x) * PPB + selection_thickness, std::min(sel1.y, sel2.y) * PPB + selection_thickness);
 		}
@@ -2020,6 +2022,7 @@ int main()
 		center = grid_view.getCenter();
 		gsize = grid_view.getSize();
 		sf::Vector2f spos = cursor.get_center();
+		// TODO refactor
 		// measure difference from a box in the center of the screen
 		sf::Vector2f diff((std::abs(spos.x - center.x) > gsize.x / 4 ? spos.x - center.x - (spos.x >= center.x ? gsize.x / 4 : gsize.x / -4) : 0), (std::abs(spos.y - center.y) > gsize.y / 4 ? spos.y  - center.y - (spos.y >= center.y ? gsize.y / 4 : gsize.y / -4) : 0));
 		// TODO is there a better movement function?
