@@ -1279,7 +1279,7 @@ public:
 	}
 };
 
-// TODO high CPU usage?
+// TODO profile
 int main()
 {
 	// load resources
