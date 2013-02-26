@@ -44,7 +44,7 @@ struct State
 	bool transpose; // flip selection
 
 	// keyboard
-	int delta[2]; // cursor movement signal
+	sf::Vector2i delta; // cursor movement signal
 	char ch; // tile to place
 	bool ctrl; // if Ctrl is being held
 	bool sprint; // if cursor movement should be fast
@@ -516,16 +516,16 @@ public:
 			switch (event.key.code)
 			{
 				case sf::Keyboard::Left:
-					state->delta[0] = -1;
+					state->delta.x = -1;
 					break;
 				case sf::Keyboard::Right:
-					state->delta[0] = 1;
+					state->delta.x = 1;
 					break;
 				case sf::Keyboard::Up:
-					state->delta[1] = -1;
+					state->delta.y = -1;
 					break;
 				case sf::Keyboard::Down:
-					state->delta[1] = 1;
+					state->delta.y = 1;
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
@@ -581,11 +581,11 @@ public:
 			{
 				case sf::Keyboard::Left:
 				case sf::Keyboard::Right:
-					state->delta[0] = 0;
+					state->delta.x = 0;
 					break;
 				case sf::Keyboard::Up:
 				case sf::Keyboard::Down:
-					state->delta[1] = 0;
+					state->delta.y = 0;
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
@@ -635,7 +635,7 @@ public:
 					if (!shift)
 						break;
 				case sf::Keyboard::Left:
-					state->delta[0] = -1;
+					state->delta.x = -1;
 					return true;
 				case sf::Keyboard::O:
 					if (shift)
@@ -646,7 +646,7 @@ public:
 					if (!shift)
 						break;
 				case sf::Keyboard::Right:
-					state->delta[0] = 1;
+					state->delta.x = 1;
 					return true;
 				case sf::Keyboard::I:
 					if (shift)
@@ -657,7 +657,7 @@ public:
 					if (!(shift || state->ctrl))
 						break;
 				case sf::Keyboard::Up:
-					state->delta[1] = -1;
+					state->delta.y = -1;
 					return true;
 				case sf::Keyboard::U:
 					if (shift)
@@ -668,7 +668,7 @@ public:
 					if (!(shift || state->ctrl))
 						break;
 				case sf::Keyboard::Down:
-					state->delta[1] = 1;
+					state->delta.y = 1;
 					return true;
 				// special functions
 				case sf::Keyboard::F:
@@ -726,7 +726,7 @@ public:
 				case sf::Keyboard::L:
 				case sf::Keyboard::Left:
 				case sf::Keyboard::Right:
-					state->delta[0] = 0;
+					state->delta.x = 0;
 					break;
 				case sf::Keyboard::U:
 				case sf::Keyboard::I:
@@ -735,20 +735,20 @@ public:
 				case sf::Keyboard::K:
 				case sf::Keyboard::Up:
 				case sf::Keyboard::Down:
-					state->delta[1] = 0;
+					state->delta.y = 0;
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
 					state->ctrl = false;
 					if (!shift)
-						state->delta[1] = 0;
+						state->delta.y = 0;
 					break;
 				case sf::Keyboard::LShift:
 				case sf::Keyboard::RShift:
 					shift = false;
 					state->sprint = false;
-					state->delta[0] = 0;
-					state->delta[1] = 0;
+					state->delta.x = 0;
+					state->delta.y = 0;
 					break;
 				default:
 					break;
@@ -1537,7 +1537,6 @@ int main()
 
 	sf::Vector2i last(-1, 0);
 	sf::Vector2i next(0, 0);
-	float held[2] = {0, 0};
 
 	CutBuffer* buffer = nullptr;
 	bool selected = false;
@@ -1553,8 +1552,7 @@ int main()
 	selection.setOutlineColor(sf::Color::White);
 
 	// keyboard
-	state.delta[0] = 0;
-	state.delta[1] = 0;
+	state.delta = {0, 0};
 	state.ch = 'A' - 1;
 	state.ctrl = false;
 	state.sprint = false;
@@ -1582,6 +1580,8 @@ int main()
 	VimControls vcontrols(&state);
 	input_readers.push_back(&scontrols);
 
+	// for controlling key repeat
+	sf::Vector2f held(0, 0);
 	float repeat_delay = 0.3;
 	float repeat_speed = 0.07;
 
@@ -1634,6 +1634,7 @@ int main()
 		// mouse moved
 		if (state.update)
 		{
+			// TODO need to do this when window is resized
 			// update mouse cursor position
 			mcursor.set_pos(sf::Vector2i(std::floor(((state.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB), std::floor(((state.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB)));
 
@@ -1975,6 +1976,44 @@ int main()
 				cursor.move(Y);
 				spos.y += PPB;
 			}
+		}
+
+		if (state.ctrl)
+			grid_view.zoom(1 + state.delta.y * (state.sprint ? 2 : 1) * time);
+		else
+		{
+			sf::Vector2i delta(0, 0);
+
+			if (state.delta.x == 0)
+				held.x = 0;
+			else
+			{
+				if (held.x == 0)
+					delta.x = state.delta.x;
+				held.x += time;
+			}
+			if (state.delta.y == 0)
+				held.y = 0;
+			else
+			{
+				if (held.y == 0)
+					delta.y = state.delta.y;
+				held.y += time;
+			}
+
+			while (held.x > repeat_delay)
+			{
+				delta += X * state.delta.x;
+				held.x -= repeat_speed;
+			}
+
+			while (held.y > repeat_delay)
+			{
+				delta += Y * state.delta.y;
+				held.y -= repeat_speed;
+			}
+
+			cursor.move(delta);
 		}
 
 		// these might have changed due to zooming
