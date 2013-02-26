@@ -121,37 +121,42 @@ public:
 		character = ch;
 	}
 
-	char ch() const
+	inline char ch() const
 	{
 		return character;
 	}
 
-	void set_pos(float x, float y)
+	inline void set_pos(float x, float y)
 	{
 		sprite.setPosition(x, y);
 	}
 
-	void set_grid_pos(int x, int y)
+	inline void set_grid_pos(int x, int y)
 	{
 		sprite.setPosition(x * PPB, y * PPB);
 	}
 
-	const sf::Color& get_color() const
+	inline void set_grid_pos(const sf::Vector2i& pos)
+	{
+		sprite.setPosition(pos.x * PPB, pos.y * PPB);
+	}
+
+	inline const sf::Color& get_color() const
 	{
 		return sprite.getColor();
 	}
 
-	void set_color(const sf::Color& color)
+	inline void set_color(const sf::Color& color)
 	{
 		sprite.setColor(color);
 	}
 
-	const sf::Vector2f& get_pos() const
+	inline const sf::Vector2f& get_pos() const
 	{
 		return sprite.getPosition();
 	}
 
-	void draw_on(sf::RenderWindow & window) const
+	inline void draw_on(sf::RenderWindow & window) const
 	{
 		window.draw(sprite);
 	}
@@ -988,8 +993,8 @@ public:
 
 class CutBuffer
 {
-	int pos[2];
-	int size[2];
+	sf::Vector2i pos;
+	sf::Vector2i size;
 	vector<Tile*> tiles;
 
 	// for when CutBuffer is done being used
@@ -1000,8 +1005,8 @@ class CutBuffer
 public:
 	CutBuffer(Grid& grid, int left, int top, int width, int height)
 	{
-		int min[2] = {left + width - 1, top + height - 1};
-		int max[2] = {left, top};
+		sf::Vector2i min(left + width - 1, top + height - 1);
+		sf::Vector2i max(left, top);
 
 		// try to shrink selection
 		for (int i = left; i < left + width; i++)
@@ -1010,28 +1015,25 @@ public:
 				auto tile = grid.get(i, j);
 				if (tile != nullptr)
 				{
-					if (i < min[0])
-						min[0] = i;
-					if (i > max[0])
-						max[0] = i;
-					if (j < min[1])
-						min[1] = j;
-					if (j > max[1])
-						max[1] = j;
+					if (i < min.x)
+						min.x = i;
+					if (i > max.x)
+						max.x = i;
+					if (j < min.y)
+						min.y = j;
+					if (j > max.y)
+						max.y = j;
 				}
 			}
 
 		// if nonempty
-		if (min[0] <= max[0] && min[1] <= max[1])
+		if (min.x <= max.x && min.y <= max.y)
 		{
-			size[0] = max[0] - min[0] + 1;
-			size[1] = max[1] - min[1] + 1;
+			size = max - min + X + Y;
+			pos = (max + min) / 2;
 
-			pos[0] = (max[0] + min[0]) / 2;
-			pos[1] = (max[1] + min[1]) / 2;
-
-			for (int i = min[0]; i <= max[0]; i++)
-				for (int j = min[1]; j <= max[1]; j++)
+			for (int i = min.x; i <= max.x; i++)
+				for (int j = min.y; j <= max.y; j++)
 				{
 					Tile* tile = grid.remove(i, j);
 					if (tile != nullptr)
@@ -1057,28 +1059,28 @@ public:
 	{
 		vector<Tile*> temp(tiles.size(), nullptr);
 		for (unsigned int i = 0; i < tiles.size(); i++)
-			temp[(i % size[1]) * size[0] + i / size[1]] = tiles[i];
+			temp[(i % size.y) * size.x + i / size.y] = tiles[i];
 		for (unsigned int i = 0; i < tiles.size(); i++)
 			tiles[i] = temp[i];
-		unsigned int tmp = size[0];
-		size[0] = size[1];
-		size[1] = tmp;
+		unsigned int tmp = size.x;
+		size.x = size.y;
+		size.y = tmp;
 
-		set_pos(sf::Vector2i(pos[0], pos[1]));
+		set_pos(pos);
 	}
 
 	// put tiles back in grid, returning displaced tiles to hand
 	void paste(Grid& grid, Hand& hand)
 	{
-		for (int i = 0; i < size[0]; i++)
-			for (int j = 0; j < size[1]; j++)
+		for (int i = 0; i < size.x; i++)
+			for (int j = 0; j < size.y; j++)
 			{
-				auto tile = tiles[i * size[1] + j];
+				auto tile = tiles[i * size.y + j];
 				if (tile != nullptr)
 				{
 					tile->set_color(sf::Color::White);
 
-					Tile* r = grid.swap(i + pos[0] - size[0] / 2, j + pos[1] - size[1] / 2, tile);
+					Tile* r = grid.swap(sf::Vector2i(i, j) + pos - size / 2, tile);
 					if (r != nullptr)
 						hand.add_tile(r);
 				}
@@ -1097,16 +1099,15 @@ public:
 
 	void set_pos(const sf::Vector2i& p)
 	{
-		pos[0] = p.x;
-		pos[1] = p.y;
+		pos = p;
 
-		for (int i = 0; i < size[0]; i++)
-			for (int j = 0; j < size[1]; j++)
+		for (int i = 0; i < size.x; i++)
+			for (int j = 0; j < size.y; j++)
 			{
-				auto tile = tiles[i * size[1] + j];
+				auto tile = tiles[i * size.y + j];
 
 				if (tile != nullptr)
-					tile->set_grid_pos(i + pos[0] - size[0] / 2, j + pos[1] - size[1] / 2);
+					tile->set_grid_pos(sf::Vector2i(i, j) + pos - size / 2);
 			}
 	}
 
