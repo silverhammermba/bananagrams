@@ -66,6 +66,7 @@ void CutBuffer::transpose()
 	set_pos(pos);
 }
 
+// TODO segfault
 // put tiles back in grid, returning displaced tiles to hand
 void CutBuffer::paste(Grid& grid, Hand& hand)
 {
