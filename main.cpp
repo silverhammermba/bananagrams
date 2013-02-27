@@ -43,6 +43,7 @@ struct State
 	float zoom; // zoom factor for grid view
 	bool switch_controls; // signal to switch control schemes
 	bool transpose; // flip selection
+	bool center; // center grid
 
 	// keyboard
 	sf::Vector2i delta; // cursor movement signal
@@ -183,6 +184,8 @@ class Grid
 {
 	// TODO keep track of center, add command for centering
 	vector<Tile*> grid;
+	unsigned int tiles;
+	sf::Vector2f center;
 	vector<string> defined;
 	map<sf::Vector2i, bool> hwords;
 	map<sf::Vector2i, bool> vwords;
@@ -219,8 +222,9 @@ class Grid
 		traverse(x, y + 1);
 	}
 public:
-	Grid() : grid()
+	Grid() : grid(), center(0, 0)
 	{
+		tiles = 0;
 	}
 
 	~Grid()
@@ -228,6 +232,12 @@ public:
 		for (auto tile : grid)
 			if (tile != nullptr)
 				delete tile;
+	}
+
+	sf::Vector2f get_center() const
+	{
+		unsigned int div = (tiles == 0 ? 1 : tiles);
+		return center / (float)div + sf::Vector2f(PPB / 2.0, PPB / 2.0);
 	}
 
 	// return the tile at the coords
@@ -251,6 +261,9 @@ public:
 			// return if nothing was changed
 			if (tile == nullptr)
 				return nullptr;
+
+			--tiles;
+			center -= tile->get_pos();
 
 			// shrink grid, if possible
 			grid[n] = nullptr;
@@ -295,6 +308,9 @@ public:
 
 		if (swp != nullptr)
 			return swp;
+
+		++tiles;
+		center += tile->get_pos();
 
 		// check for created words
 		if (get(x - 1, y) == nullptr)
@@ -542,6 +558,9 @@ public:
 					break;
 				case sf::Keyboard::Down:
 					state->delta.y = 1;
+					break;
+				case sf::Keyboard::Home:
+					state->center = true;
 					break;
 				case sf::Keyboard::LControl:
 				case sf::Keyboard::RControl:
@@ -1568,6 +1587,7 @@ int main()
 	state.dump = false;
 	state.cut = false;
 	state.paste = false;
+	state.center = false;
 
 	// mouse
 	state.pos[0] = 0;
@@ -1946,6 +1966,15 @@ int main()
 
 		messages.age(time);
 
+		bool keep_cursor_on_screen = false;
+
+		if (state.center)
+		{
+			grid_view.setCenter(grid.get_center());
+			state.center = false;
+			keep_cursor_on_screen = true;
+		}
+
 		// TODO scale cursor outline thickness with zoom
 		// zoom with mouse wheel
 		if (state.wheel_delta < 0 || (state.wheel_delta > 0 && state.zoom > 1))
@@ -1957,7 +1986,12 @@ int main()
 			grid_view.move(before - after);
 
 			state.wheel_delta = 0;
+			keep_cursor_on_screen = true;
 
+		}
+
+		if (keep_cursor_on_screen)
+		{
 			// move cursor if zooming in moves it off screen
 			center = grid_view.getCenter();
 			gsize = grid_view.getSize();
