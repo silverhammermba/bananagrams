@@ -1,6 +1,4 @@
-#include <SFML/Graphics.hpp>
 #include "bananagrams.hpp"
-#include "control.hpp"
 
 MouseControls::MouseControls(State* m)
 {

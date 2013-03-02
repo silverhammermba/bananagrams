@@ -1,6 +1,4 @@
-#include <SFML/Graphics.hpp>
 #include "bananagrams.hpp"
-#include "cursor.hpp"
 
 Cursor::Cursor(float thick, sf::Color fill, sf::Color outline)
 	: pos(0, 0), cursor(sf::Vector2f(PPB - thick * 2, PPB - thick * 2))

@@ -1,8 +1,3 @@
-#ifndef BUFFER_HPP
-#define BUFFER_HPP
-
-#include <vector>
-
 class CutBuffer
 {
 	sf::Vector2i pos;
@@ -34,5 +29,3 @@ public:
 				tile->draw_on(window);
 	}
 };
-
-#endif

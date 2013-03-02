@@ -1,5 +1,4 @@
-#include <SFML/Graphics.hpp>
-#include "message.hpp"
+#include "bananagrams.hpp"
 
 using std::string;
 

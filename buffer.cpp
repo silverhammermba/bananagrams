@@ -1,9 +1,4 @@
-#include <SFML/Graphics.hpp>
 #include "bananagrams.hpp"
-#include "tile.hpp"
-#include "grid.hpp"
-#include "hand.hpp"
-#include "buffer.hpp"
 
 CutBuffer::CutBuffer(Grid& grid, int left, int top, int width, int height)
 {

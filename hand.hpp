@@ -1,8 +1,3 @@
-#ifndef HAND_HPP
-#define HAND_HPP
-
-#include <list>
-
 // TODO inefficient
 class Hand : public InputReader
 {
@@ -43,5 +38,3 @@ public:
 		(this->*draw_func)(window);
 	}
 };
-
-#endif

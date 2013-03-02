@@ -1,10 +1,3 @@
-#ifndef GRID_HPP
-#define GRID_HPP
-
-#include <map>
-#include <string>
-#include <vector>
-
 // for hwords and vwords vectors
 namespace std
 {
@@ -72,5 +65,3 @@ public:
 
 	void draw_on(sf::RenderWindow& window) const;
 };
-
-#endif

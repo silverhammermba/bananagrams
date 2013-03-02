@@ -1,5 +1,14 @@
-#ifndef BANANAGRAMS_HPP
-#define BANANAGRAMS_HPP
+#include <cmath>
+#include <cstdlib>
+#include <array>
+#include <iostream>
+#include <fstream>
+#include <list>
+#include <map>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <SFML/Graphics.hpp>
 
 static const int PPB = 48;
 static const sf::Vector2i X(1, 0);
@@ -27,4 +36,10 @@ public:
 	virtual bool process_event(const sf::Event& event) = 0;
 };
 
-#endif
+#include "control.hpp"
+#include "message.hpp"
+#include "cursor.hpp"
+#include "tile.hpp"
+#include "grid.hpp"
+#include "hand.hpp"
+#include "buffer.hpp"

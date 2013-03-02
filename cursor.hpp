@@ -1,6 +1,3 @@
-#ifndef CURSOR_HPP
-#define CURSOR_HPP
-
 class Cursor
 {
 	sf::Vector2i pos;
@@ -31,5 +28,3 @@ public:
 		window.draw(cursor);
 	}
 };
-
-#endif

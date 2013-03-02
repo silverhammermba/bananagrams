@@ -1,8 +1,4 @@
-#include <sstream>
-#include <SFML/Graphics.hpp>
 #include "bananagrams.hpp"
-#include "tile.hpp"
-#include "hand.hpp"
 
 Hand::Hand(sf::View* v, const sf::Font& font)
 {

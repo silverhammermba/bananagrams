@@ -1,27 +1,7 @@
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
-#include <fstream>
-#include <list>
-#include <map>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <SFML/Graphics.hpp>
+#include "bananagrams.hpp"
 
 // embedded resources
 #include "icon.hpp"
-
-#include "message.hpp"
-#include "bananagrams.hpp"
-#include "cursor.hpp"
-#include "control.hpp"
-#include "tile.hpp"
-#include "grid.hpp"
-#include "hand.hpp"
-#include "buffer.hpp"
 
 using std::cerr;
 using std::endl;

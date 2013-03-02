@@ -1,6 +1,3 @@
-#ifndef CONTROL_HPP
-#define CONTROL_HPP
-
 // structs for passing around state
 struct State
 {
@@ -60,5 +57,3 @@ public:
 
 	virtual bool process_event(const sf::Event& event);
 };
-
-#endif
