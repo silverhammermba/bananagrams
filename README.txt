@@ -58,7 +58,7 @@ Credits
  * SFML 2.0
  * Enable2k North American word list
  * WordNet 3.1
- * Bitstream Vera 1.10
+ * DejaVu 2.33
 
 License
 -------
@@ -67,6 +67,5 @@ This program is licensed under the MIT License. See LICENSE.txt
 TODO
 ----
  * menu
- * cut-and-paste
  * multiplayer
  * sounds
