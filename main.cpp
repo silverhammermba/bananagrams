@@ -16,6 +16,7 @@
 
 #include "message.hpp"
 #include "bananagrams.hpp"
+#include "cursor.hpp"
 #include "control.hpp"
 #include "tile.hpp"
 #include "grid.hpp"
@@ -60,49 +61,6 @@ public:
 			state->grid_view->zoom(state->zoom);
 		}
 		return true;
-	}
-};
-
-class Cursor
-{
-	sf::Vector2i pos;
-	float outline_thickness;
-	sf::RectangleShape cursor;
-public:
-	Cursor(float thick, sf::Color fill, sf::Color outline)
-		: pos(0, 0), cursor(sf::Vector2f(PPB - thick * 2, PPB - thick * 2))
-	{
-		cursor.setOutlineThickness(outline_thickness = thick);
-
-		cursor.setFillColor(fill);
-		cursor.setOutlineColor(outline);
-	}
-
-	inline const sf::Vector2i& get_pos() const
-	{
-		return pos;
-	}
-
-	inline sf::Vector2f get_center() const
-	{
-		return ((sf::Vector2f)pos + sf::Vector2f(0.5, 0.5)) * (float)PPB;
-	}
-
-	inline void move(const sf::Vector2i& d)
-	{
-		set_pos(pos + d);
-	}
-
-	void set_pos(const sf::Vector2i& p)
-	{
-		pos = p;
-
-		cursor.setPosition((sf::Vector2f)(pos * PPB) + (sf::Vector2f)XY * cursor.getOutlineThickness());
-	}
-
-	inline void draw_on(sf::RenderWindow& window) const
-	{
-		window.draw(cursor);
 	}
 };
 
