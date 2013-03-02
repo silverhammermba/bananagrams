@@ -83,6 +83,8 @@ void CutBuffer::paste(Grid& grid, Hand& hand)
 					hand.add_tile(r);
 			}
 		}
+
+	tiles.clear();
 }
 
 // return tiles to hand
@@ -91,6 +93,8 @@ void CutBuffer::clear(Hand& hand)
 	for (auto tile : tiles)
 		if (tile != nullptr)
 			hand.add_tile(tile);
+
+	tiles.clear();
 }
 
 void CutBuffer::set_pos(const sf::Vector2i& p)
