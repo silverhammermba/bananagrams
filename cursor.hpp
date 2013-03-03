@@ -31,6 +31,8 @@ public:
 		set_pos(pos + d);
 	}
 
+	void set_zoom(float zoom);
+
 	inline void draw_on(sf::RenderWindow& window) const
 	{
 		window.draw(cursor);

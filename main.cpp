@@ -428,7 +428,6 @@ int main()
 		{
 			sel2 = mcursor.get_pos();
 			// update selection rect
-			// TODO make selection rect a cursor
 			selection.set_size(sf::Vector2u(std::abs(sel1.x - sel2.x) + 1, std::abs(sel1.y - sel2.y) + 1));
 			selection.set_pos(sf::Vector2i(std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y)));
 		}
@@ -812,6 +811,10 @@ int main()
 		if (gsize.x < wsize.x || gsize.y < wsize.y)
 			grid_view.setSize(wsize.x, wsize.y);
 		state.zoom = grid_view.getSize().x / wsize.x;
+
+		cursor.set_zoom(state.zoom);
+		mcursor.set_zoom(state.zoom);
+		selection.set_zoom(state.zoom);
 
 		// animate tiles
 		grid.step(time);

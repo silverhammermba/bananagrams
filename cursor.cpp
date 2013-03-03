@@ -14,12 +14,19 @@ void Cursor::set_size(const sf::Vector2u& sz)
 {
 	size = sz;
 
-	cursor.setSize(sf::Vector2f(PPB * size.x - outline_thickness * 2, PPB * sz.y - outline_thickness * 2));
+	cursor.setSize((sf::Vector2f)(size * PPB) - (sf::Vector2f)XY * outline_thickness);
 }
 
 void Cursor::set_pos(const sf::Vector2i& p)
 {
 	pos = p;
 
-	cursor.setPosition((sf::Vector2f)(pos * PPB) + (sf::Vector2f)XY * cursor.getOutlineThickness());
+	cursor.setPosition((sf::Vector2f)(pos * (int)PPB) + (sf::Vector2f)XY * (float)(outline_thickness * 0.5));
+}
+
+void Cursor::set_zoom(float zoom)
+{
+	cursor.setOutlineThickness(outline_thickness * zoom);
+	set_size(size);
+	set_pos(pos);
 }
