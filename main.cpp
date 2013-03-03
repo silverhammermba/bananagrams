@@ -713,7 +713,6 @@ int main()
 			keep_cursor_on_screen = true;
 		}
 
-		// TODO scale cursor outline thickness with zoom
 		// zoom with mouse wheel
 		if (state.wheel_delta < 0 || (state.wheel_delta > 0 && state.zoom > 1))
 		{
