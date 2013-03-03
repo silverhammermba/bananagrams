@@ -20,12 +20,12 @@ public:
 
 	inline void set_grid_pos(int x, int y)
 	{
-		sprite.setPosition(x * PPB, y * PPB);
+		sprite.setPosition(x * (int)PPB, y * (int)PPB);
 	}
 
 	inline void set_grid_pos(const sf::Vector2i& pos)
 	{
-		sprite.setPosition(pos.x * PPB, pos.y * PPB);
+		sprite.setPosition(pos.x * (int)PPB, pos.y * (int)PPB);
 	}
 
 	inline const sf::Color& get_color() const
