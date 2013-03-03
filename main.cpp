@@ -404,8 +404,6 @@ int main()
 		// mouse moved
 		if (state.update)
 		{
-			// TODO need to do this when window is resized
-			// TODO or maybe mcursor position isn't right in the first place at all?
 			// TODO refactor
 			// update mouse cursor position
 			mcursor.set_pos(sf::Vector2i(std::floor(((state.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB), std::floor(((state.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB)));
