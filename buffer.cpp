@@ -1,13 +1,13 @@
 #include "bananagrams.hpp"
 
-CutBuffer::CutBuffer(Grid& grid, int left, int top, int width, int height)
+CutBuffer::CutBuffer(Grid& grid, int left, int top, const sf::Vector2u& sz)
 {
-	sf::Vector2i min(left + width - 1, top + height - 1);
+	sf::Vector2i min(left + sz.x - 1, top + sz.y - 1);
 	sf::Vector2i max(left, top);
 
 	// try to shrink selection
-	for (int i = left; i < left + width; i++)
-		for (int j = top; j < top + height; j++)
+	for (int i = left; i < left + (int)sz.x; i++)
+		for (int j = top; j < top + (int)sz.y; j++)
 		{
 			auto tile = grid.get(i, j);
 			if (tile != nullptr)
@@ -104,4 +104,11 @@ void CutBuffer::set_pos(const sf::Vector2i& p)
 			if (tile != nullptr)
 				tile->set_grid_pos(sf::Vector2i(i, j) + pos - size / 2);
 		}
+}
+
+void CutBuffer::draw_on(sf::RenderWindow & window) const
+{
+	for (auto tile: tiles)
+		if (tile != nullptr)
+			tile->draw_on(window);
 }

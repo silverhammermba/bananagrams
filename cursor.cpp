@@ -1,12 +1,19 @@
 #include "bananagrams.hpp"
 
-Cursor::Cursor(float thick, sf::Color fill, sf::Color outline)
-	: pos(0, 0), cursor(sf::Vector2f(PPB - thick * 2, PPB - thick * 2))
+Cursor::Cursor(const sf::Vector2u& sz, float thick, sf::Color fill, sf::Color outline)
+	: size(sz), pos(0, 0), cursor(sf::Vector2f(PPB * sz.x - thick * 2, PPB * sz.y - thick * 2))
 {
 	cursor.setOutlineThickness(outline_thickness = thick);
 
 	cursor.setFillColor(fill);
 	cursor.setOutlineColor(outline);
+}
+
+void Cursor::set_size(const sf::Vector2u& sz)
+{
+	size = sz;
+
+	cursor.setSize(sf::Vector2f(PPB * size.x - outline_thickness * 2, PPB * sz.y - outline_thickness * 2));
 }
 
 void Cursor::set_pos(const sf::Vector2i& p)

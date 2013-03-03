@@ -9,6 +9,7 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
+// objects need globally
 sf::RenderTexture tile_texture[26];
 std::map<string, string> dictionary;
 
@@ -54,6 +55,7 @@ int main()
 		cerr << "Couldn't find font /usr/share/fonts/TTF/DejaVuSans.ttf!\n";
 		return 1;
 	}
+
 	// TODO validate somehow
 	std::ifstream words("dictionary.txt");
 	if (!words.is_open())
@@ -304,8 +306,8 @@ int main()
 
 	input_readers.push_back(&hand);
 
-	Cursor cursor(PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0));
-	Cursor mcursor(PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0, 80));
+	Cursor cursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0));
+	Cursor mcursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0, 80));
 
 	sf::Vector2i last(-1, 0);
 	sf::Vector2i next(0, 0);
@@ -316,12 +318,7 @@ int main()
 	// mouse press and release positions
 	sf::Vector2i sel1;
 	sf::Vector2i sel2;
-	unsigned int sel_size[2];
-	float selection_thickness = 1;
-	sf::RectangleShape selection;
-	selection.setFillColor(sf::Color(255, 255, 255, 25));
-	selection.setOutlineThickness(selection_thickness);
-	selection.setOutlineColor(sf::Color::White);
+	Cursor selection(sf::Vector2u(1, 1), 1, sf::Color(255, 255, 255, 25), sf::Color::White);
 
 	// keyboard
 	state.delta = {0, 0};
@@ -432,13 +429,10 @@ int main()
 		if (selecting)
 		{
 			sel2 = mcursor.get_pos();
-			// normalize selection
-			sel_size[0] = std::abs(sel1.x - sel2.x) + 1;
-			sel_size[1] = std::abs(sel1.y - sel2.y) + 1;
 			// update selection rect
 			// TODO make selection rect a cursor
-			selection.setSize(sf::Vector2f(PPB * sel_size[0] - selection_thickness * 2, PPB * sel_size[1] - selection_thickness * 2));
-			selection.setPosition(std::min(sel1.x, sel2.x) * PPB + selection_thickness, std::min(sel1.y, sel2.y) * PPB + selection_thickness);
+			selection.set_size(sf::Vector2u(std::abs(sel1.x - sel2.x) + 1, std::abs(sel1.y - sel2.y) + 1));
+			selection.set_pos(sf::Vector2i(std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y)));
 		}
 
 		// if left click release
@@ -448,7 +442,7 @@ int main()
 			selected = true;
 
 			// if the selection was only 1 square, do something else
-			if (sel_size[0] == 1 && sel_size[1] == 1)
+			if (selection.get_size() == sf::Vector2u(1, 1))
 			{
 				selected = false;
 				// move cursor to mouse cursor
@@ -495,7 +489,7 @@ int main()
 			{
 				if (selected)
 				{
-					buffer = new CutBuffer(grid, std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y), sel_size[0], sel_size[1]);
+					buffer = new CutBuffer(grid, std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y), selection.get_size());
 
 					if (buffer->is_empty())
 					{
@@ -830,7 +824,7 @@ int main()
 		window.setView(grid_view);
 		grid.draw_on(window);
 		if (selecting || selected)
-			window.draw(selection);
+			selection.draw_on(window);
 		if (buffer != nullptr)
 			buffer->draw_on(window);
 		cursor.draw_on(window);
