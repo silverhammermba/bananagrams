@@ -402,9 +402,7 @@ int main()
 				// move cursor to mouse cursor
 				cursor.set_pos(mcursor.get_pos());
 
-				// if ctrl, try to place last tile
-				// TODO refactor (maybe use KeyControls?)
-				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl))
+				if (controls["quick_place"])
 				{
 					// look for remaining tiles
 					char last = 'A' - 1;

@@ -6,12 +6,6 @@ struct State
 	sf::View* gui_view;
 	sf::View* grid_view;
 	float zoom; // zoom factor for grid view
-	bool switch_controls; // signal to switch control schemes
-	bool transpose; // flip selection
-	bool center; // center grid
-
-	// keyboard
-	char ch; // tile to place
 
 	// mouse
 	int pos[2]; // last position

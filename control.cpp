@@ -138,6 +138,9 @@ void KeyControls::set_defaults()
 	bind(key, "paste", PRESS);
 	key.code = sf::Keyboard::F;
 	bind(key, "flip", PRESS);
+	key.control = false;
+	key.code = sf::Keyboard::LControl;
+	bind(key, "quick_place", HOLD);
 }
 
 bool KeyControls::load_from_file(const std::string& file)
@@ -190,25 +193,25 @@ bool KeyControls::process_event(sf::Event& event)
 			case sf::Keyboard::Key::LAlt:
 			case sf::Keyboard::Key::RAlt:
 				for (auto pair : binds)
-					if (pair.first.alt && repeat[pair.second] == HOLD)
+					if (repeat[pair.second] == HOLD && (pair.first.alt || pair.first.code == sf::Keyboard::Key::LAlt || pair.first.code == sf::Keyboard::Key::RAlt))
 						pressed[pair.second] = false;
 				break;
 			case sf::Keyboard::Key::LControl:
 			case sf::Keyboard::Key::RControl:
 				for (auto pair : binds)
-					if (pair.first.control && repeat[pair.second] == HOLD)
+					if (repeat[pair.second] == HOLD && (pair.first.control || pair.first.code == sf::Keyboard::Key::LControl || pair.first.code == sf::Keyboard::Key::RControl))
 						pressed[pair.second] = false;
 				break;
 			case sf::Keyboard::Key::LShift:
 			case sf::Keyboard::Key::RShift:
 				for (auto pair : binds)
-					if (pair.first.shift && repeat[pair.second] == HOLD)
+					if (repeat[pair.second] == HOLD && (pair.first.shift || pair.first.code == sf::Keyboard::Key::LShift || pair.first.code == sf::Keyboard::Key::RShift))
 						pressed[pair.second] = false;
 				break;
 			case sf::Keyboard::Key::LSystem:
 			case sf::Keyboard::Key::RSystem:
 				for (auto pair : binds)
-					if (pair.first.system && repeat[pair.second] == HOLD)
+					if (repeat[pair.second] == HOLD && (pair.first.system || pair.first.code == sf::Keyboard::Key::LSystem || pair.first.code == sf::Keyboard::Key::RSystem))
 						pressed[pair.second] = false;
 				break;
 			default:
