@@ -64,7 +64,29 @@ bool MouseControls::process_event(sf::Event& event)
 
 KeyControls::KeyControls()
 {
-	// set up default binds
+	set_defaults();
+}
+
+void KeyControls::bind(const sf::Event::KeyEvent& key, const std::string& str, repeat_t rep)
+{
+	auto it = binds.find(key);
+	if (it != binds.end())
+		binds.erase(it);
+
+	binds[key] = str;
+	pressed[str] = false;
+	ready[str] = true;
+	repeat[str] = rep;
+}
+
+void KeyControls::set_defaults()
+{
+	// TODO is there a better way to structure these?
+	binds.clear();
+	pressed.clear();
+	ready.clear();
+	repeat.clear();
+
 	sf::Event::KeyEvent key;
 	key.alt = false;
 	key.control = false;
@@ -116,18 +138,6 @@ KeyControls::KeyControls()
 	bind(key, "paste", PRESS);
 	key.code = sf::Keyboard::F;
 	bind(key, "flip", PRESS);
-}
-
-void KeyControls::bind(const sf::Event::KeyEvent& key, const std::string& str, repeat_t rep)
-{
-	auto it = binds.find(key);
-	if (it != binds.end())
-		binds.erase(it);
-
-	binds[key] = str;
-	pressed[str] = false;
-	ready[str] = true;
-	repeat[str] = rep;
 }
 
 bool KeyControls::load_from_file(const std::string& file)

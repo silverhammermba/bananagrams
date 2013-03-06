@@ -64,15 +64,20 @@ namespace std
 
 class KeyControls : public InputReader
 {
+	// for mapping keys to action names
 	std::map<sf::Event::KeyEvent, std::string> binds;
+	// map action names to current state
 	std::map<std::string, bool> pressed;
+	// for repeat_t PRESS, map action name to key being released
 	std::map<std::string, bool> ready;
 	enum repeat_t {PRESS, REPEAT, HOLD};
+	// map action name to type of key repeat
 	std::map<std::string, repeat_t> repeat;
 public:
 
 	KeyControls();
 	void bind(const sf::Event::KeyEvent& key, const std::string& str, repeat_t rep);
+	void set_defaults();
 	bool load_from_file(const std::string& file);
 	bool operator[](const std::string& control);
 	virtual bool process_event(sf::Event& event);
