@@ -316,11 +316,6 @@ int main()
 	sf::Vector2i sel2;
 	Cursor selection(sf::Vector2u(1, 1), 1, sf::Color(255, 255, 255, 25), sf::Color::White);
 
-	// keyboard
-	state.ch = 'A' - 1;
-	state.ctrl = false;
-	state.center = false;
-
 	// mouse
 	state.pos[0] = 0;
 	state.pos[1] = 0;
@@ -337,6 +332,9 @@ int main()
 
 	KeyControls controls;
 	input_readers.push_back(&controls);
+
+	Typer typer;
+	input_readers.push_back(&typer);
 
 	// game loop
 	while (window.isOpen())
@@ -407,8 +405,8 @@ int main()
 				cursor.set_pos(mcursor.get_pos());
 
 				// if ctrl, try to place last tile
-				// TODO fix for new controls
-				if (state.ctrl)
+				// TODO refactor (maybe use KeyControls?)
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl))
 				{
 					// look for remaining tiles
 					char last = 'A' - 1;
@@ -608,16 +606,17 @@ int main()
 		}
 
 		// if letter key
-		if (state.ch >= 'A' && state.ch <= 'Z')
+		char ch;
+		if (typer.get_ch(&ch))
 		{
 			bool placed = false;
 
 			// if space is empty or has a different letter
-			if (grid.get(cursor.get_pos()) == nullptr || grid.get(cursor.get_pos())->ch() != state.ch)
+			if (grid.get(cursor.get_pos()) == nullptr || grid.get(cursor.get_pos())->ch() != ch)
 			{
-				if (hand.has_any(state.ch))
+				if (hand.has_any(ch))
 				{
-					Tile* tile = grid.swap(cursor.get_pos(), hand.remove_tile(state.ch));
+					Tile* tile = grid.swap(cursor.get_pos(), hand.remove_tile(ch));
 
 					if (tile != nullptr)
 						hand.add_tile(tile);
@@ -645,12 +644,9 @@ int main()
 			else
 			{
 				stringstream letter;
-				letter << state.ch;
+				letter << ch;
 				messages.add("You are out of " + letter.str() + "s!", MessageQ::HIGH);
 			}
-
-			// clear character to place
-			state.ch = 'A' - 1;
 		}
 
 		// frame-time-dependent stuff
@@ -661,10 +657,9 @@ int main()
 
 		bool keep_cursor_on_screen = false;
 
-		if (state.center)
+		if (controls["center"])
 		{
 			grid_view.setCenter(grid.get_center());
-			state.center = false;
 			keep_cursor_on_screen = true;
 		}
 

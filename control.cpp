@@ -1,5 +1,28 @@
 #include "bananagrams.hpp"
 
+Typer::Typer()
+{
+	ch = 'A' - 1;
+}
+
+bool Typer::get_ch(char* chr)
+{
+	if (ch >= 'A' && ch <= 'Z')
+	{
+		*chr = ch;
+		ch = 'A' - 1;
+		return true;
+	}
+	return false;
+}
+
+bool Typer::process_event(sf::Event& event)
+{
+	if (event.type == sf::Event::KeyPressed && event.key.code >= sf::Keyboard::Key::A && event.key.code <= sf::Keyboard::Key::Z)
+		ch = event.key.code - sf::Keyboard::Key::A + 'A';
+	return true;
+}
+
 MouseControls::MouseControls(State* m)
 {
 	state = m;
@@ -83,6 +106,8 @@ KeyControls::KeyControls()
 	key.code = sf::Keyboard::Space;
 	bind(key, "peel", PRESS);
 	key.control = true;
+	key.code = sf::Keyboard::C;
+	bind(key, "center", PRESS);
 	key.code = sf::Keyboard::D;
 	bind(key, "dump", PRESS);
 	key.code = sf::Keyboard::X;
@@ -143,6 +168,9 @@ bool KeyControls::process_event(sf::Event& event)
 					pressed[action] = true;
 					break;
 			}
+
+			// don't continue bound keypresses
+			return false;
 		}
 	}
 	else if (event.type == sf::Event::KeyReleased)

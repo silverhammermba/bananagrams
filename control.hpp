@@ -12,7 +12,6 @@ struct State
 
 	// keyboard
 	char ch; // tile to place
-	bool ctrl; // if Ctrl is being held
 
 	// mouse
 	int pos[2]; // last position
@@ -21,6 +20,16 @@ struct State
 	int wheel_delta; // amount to zoom
 	bool start_selection;
 	bool end_selection;
+};
+
+// for placing tiles
+class Typer : public InputReader
+{
+	char ch;
+public:
+	Typer();
+	bool get_ch(char* chr);
+	virtual bool process_event(sf::Event& event);
 };
 
 class MouseControls : public InputReader
