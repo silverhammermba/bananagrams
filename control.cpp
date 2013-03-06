@@ -39,252 +39,123 @@ bool MouseControls::process_event(const sf::Event& event)
 	return true;
 }
 
-SimpleControls::SimpleControls(State* s)
+KeyControls::KeyControls()
 {
-	state = s;
+	// set up default binds
+	sf::Event::KeyEvent key;
+	key.alt = false;
+	key.control = false;
+	key.shift = false;
+	key.system = false;
+
+	key.code = sf::Keyboard::Key::Left;
+	bind(key, "left", REPEAT);
+	key.code = sf::Keyboard::Right;
+	bind(key, "right", REPEAT);
+	key.code = sf::Keyboard::Up;
+	bind(key, "up", REPEAT);
+	key.code = sf::Keyboard::Down;
+	bind(key, "down", REPEAT);
+	key.shift = true;
+	key.code = sf::Keyboard::Left;
+	bind(key, "left_fast", REPEAT);
+	key.code = sf::Keyboard::Right;
+	bind(key, "right_fast", REPEAT);
+	key.code = sf::Keyboard::Up;
+	bind(key, "up_fast", REPEAT);
+	key.code = sf::Keyboard::Down;
+	bind(key, "down_fast", REPEAT);
+	key.control = true;
+	key.shift = false;
+	key.code = sf::Keyboard::Key::Up;
+	bind(key, "zoom_in", HOLD);
+	key.code = sf::Keyboard::Key::Down;
+	bind(key, "zoom_out", HOLD);
+	key.shift = true;
+	key.code = sf::Keyboard::Key::Up;
+	bind(key, "zoom_in_fast", HOLD);
+	key.code = sf::Keyboard::Key::Down;
+	bind(key, "zoom_out_fast", HOLD);
+	key.control = false;
+	key.shift = false;
+	key.code = sf::Keyboard::BackSpace;
+	bind(key, "remove", REPEAT);
+	key.code = sf::Keyboard::Space;
+	bind(key, "peel", PRESS);
+	key.control = true;
+	key.code = sf::Keyboard::D;
+	bind(key, "dump", PRESS);
+	key.code = sf::Keyboard::X;
+	bind(key, "cut", PRESS);
+	key.code = sf::Keyboard::V;
+	bind(key, "paste", PRESS);
+	key.code = sf::Keyboard::F;
+	bind(key, "flip", PRESS);
 }
 
-bool SimpleControls::process_event(const sf::Event& event)
+void KeyControls::bind(const sf::Event::KeyEvent& key, const std::string& str, repeat_t rep)
 {
-	if (event.type == sf::Event::KeyPressed)
-	{
-		switch (event.key.code)
-		{
-			case sf::Keyboard::Left:
-				state->delta.x = -1;
-				break;
-			case sf::Keyboard::Right:
-				state->delta.x = 1;
-				break;
-			case sf::Keyboard::Up:
-				state->delta.y = -1;
-				break;
-			case sf::Keyboard::Down:
-				state->delta.y = 1;
-				break;
-			case sf::Keyboard::Home:
-				state->center = true;
-				break;
-			case sf::Keyboard::LControl:
-			case sf::Keyboard::RControl:
-				state->ctrl = true;
-				break;
-			case sf::Keyboard::LShift:
-			case sf::Keyboard::RShift:
-				state->sprint = true;
-				break;
-			case sf::Keyboard::BackSpace:
-				state->kremove = true;
-				break;
-			case sf::Keyboard::Space:
-				state->peel = true;
-				break;
-			case sf::Keyboard::D:
-				if (state->ctrl)
-				{
-					state->dump = true;
-					return true;
-				}
-				break;
-			case sf::Keyboard::F:
-				if (state->ctrl)
-				{
-					state->transpose = true;
-					return true;
-				}
-				break;
-			case sf::Keyboard::X:
-				if (state->ctrl)
-				{
-					state->cut = true;
-					return true;
-				}
-				break;
-			case sf::Keyboard::V:
-				if (state->ctrl)
-				{
-					state->paste = true;
-					return true;
-				}
-				break;
-			default:
-				break;
-		}
-		if (sf::Keyboard::A <= event.key.code && event.key.code <= sf::Keyboard::Z)
-			state->ch = event.key.code - sf::Keyboard::A + 'A';
-	}
-	else if (event.type == sf::Event::KeyReleased)
-	{
-		switch (event.key.code)
-		{
-			case sf::Keyboard::Left:
-			case sf::Keyboard::Right:
-				state->delta.x = 0;
-				break;
-			case sf::Keyboard::Up:
-			case sf::Keyboard::Down:
-				state->delta.y = 0;
-				break;
-			case sf::Keyboard::LControl:
-			case sf::Keyboard::RControl:
-				state->ctrl = false;
-				break;
-			case sf::Keyboard::LShift:
-			case sf::Keyboard::RShift:
-				state->sprint = false;
-				break;
-			default:
-				break;
-		}
-	}
-	return true;
+	auto it = binds.find(key);
+	if (it != binds.end())
+		binds.erase(it);
+
+	binds[key] = str;
+	pressed[str] = false;
+	ready[str] = true;
+	repeat[str] = rep;
 }
 
-VimControls::VimControls(State* s)
+bool KeyControls::load_from_file(const std::string& file)
 {
-	state = s;
+	return false;
 }
 
-bool VimControls::process_event(const sf::Event& event)
+bool KeyControls::operator[](const std::string& control)
 {
-	if (event.type == sf::Event::KeyPressed)
+	bool press = pressed[control];
+
+	if (repeat[control] != HOLD)
+		pressed[control] = false;
+
+	return press;
+}
+
+bool KeyControls::process_event(const sf::Event& event)
+{
+	if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)
 	{
-		// return to skip processing letter key as insert
-		switch (event.key.code)
+		// TODO this doesn't work if you release modifier keys in different orders
+		auto it = binds.find(event.key);
+		if (it != binds.end())
 		{
-			// directions
-			case sf::Keyboard::Y:
-				if (state->ctrl)
-				{
-					state->cut = true;
-					return true;
-				}
-				if (shift)
-					state->sprint = true;
-				else
+			auto action = it->second;
+			switch (repeat[action])
+			{
+				case PRESS:
+					if (event.type == sf::Event::KeyPressed)
+					{
+						if (ready[action])
+						{
+							pressed[action] = true;
+							ready[action] = false;
+						}
+					}
+					else
+						ready[action] = true;
 					break;
-			case sf::Keyboard::H:
-				if (!shift)
+				case REPEAT:
+					if (event.type == sf::Event::KeyPressed)
+						pressed[action] = true;
 					break;
-			case sf::Keyboard::Left:
-				state->delta.x = -1;
-				return true;
-			case sf::Keyboard::O:
-				if (shift)
-					state->sprint = true;
-				else
+				case HOLD:
+					if (event.type == sf::Event::KeyPressed)
+						pressed[action] = true;
+					else
+						pressed[action] = false;
 					break;
-			case sf::Keyboard::L:
-				if (!shift)
-					break;
-			case sf::Keyboard::Right:
-				state->delta.x = 1;
-				return true;
-			case sf::Keyboard::I:
-				if (shift)
-					state->sprint = true;
-				else
-					break;
-			case sf::Keyboard::K:
-				if (!(shift || state->ctrl))
-					break;
-			case sf::Keyboard::Up:
-				state->delta.y = -1;
-				return true;
-			case sf::Keyboard::U:
-				if (shift)
-					state->sprint = true;
-				else
-					break;
-			case sf::Keyboard::J:
-				if (!(shift || state->ctrl))
-					break;
-			case sf::Keyboard::Down:
-				state->delta.y = 1;
-				return true;
-			// special functions
-			case sf::Keyboard::F:
-				if (shift)
-				{
-					state->transpose = true;
-					return true;
-				}
-			case sf::Keyboard::P:
-				if (shift || state->ctrl)
-				{
-					state->paste = true;
-					return true;
-				}
-				break;
-			// modifier keys
-			case sf::Keyboard::LControl:
-			case sf::Keyboard::RControl:
-				state->ctrl = true;
-				break;
-			case sf::Keyboard::LShift:
-			case sf::Keyboard::RShift:
-				shift = true;
-				break;
-			case sf::Keyboard::X:
-				if (!shift)
-					break;
-			case sf::Keyboard::BackSpace:
-				state->kremove = true;
-				return true;
-			case sf::Keyboard::D:
-				if (!shift)
-					break;
-				state->dump = true;
-				return true;
-			case sf::Keyboard::Space:
-				state->peel = true;
-				break;
-			default:
-				break;
-		}
-		if (sf::Keyboard::A <= event.key.code && event.key.code <= sf::Keyboard::Z)
-			state->ch = event.key.code - sf::Keyboard::A + 'A';
-	}
-	else if (event.type == sf::Event::KeyReleased)
-	{
-		switch (event.key.code)
-		{
-			//YUIO
-			//HJKL
-			case sf::Keyboard::Y:
-			case sf::Keyboard::O:
-				state->sprint = false;
-			case sf::Keyboard::H:
-			case sf::Keyboard::L:
-			case sf::Keyboard::Left:
-			case sf::Keyboard::Right:
-				state->delta.x = 0;
-				break;
-			case sf::Keyboard::U:
-			case sf::Keyboard::I:
-				state->sprint = false;
-			case sf::Keyboard::J:
-			case sf::Keyboard::K:
-			case sf::Keyboard::Up:
-			case sf::Keyboard::Down:
-				state->delta.y = 0;
-				break;
-			case sf::Keyboard::LControl:
-			case sf::Keyboard::RControl:
-				state->ctrl = false;
-				if (!shift)
-					state->delta.y = 0;
-				break;
-			case sf::Keyboard::LShift:
-			case sf::Keyboard::RShift:
-				shift = false;
-				state->sprint = false;
-				state->delta.x = 0;
-				state->delta.y = 0;
-				break;
-			default:
-				break;
+			}
 		}
 	}
+
 	return true;
 }

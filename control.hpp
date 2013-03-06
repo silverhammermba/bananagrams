@@ -11,15 +11,8 @@ struct State
 	bool center; // center grid
 
 	// keyboard
-	sf::Vector2i delta; // cursor movement signal
 	char ch; // tile to place
 	bool ctrl; // if Ctrl is being held
-	bool sprint; // if cursor movement should be fast
-	bool kremove; // signal to remove a tile
-	bool peel;
-	bool dump;
-	bool cut;
-	bool paste;
 
 	// mouse
 	int pos[2]; // last position
@@ -39,21 +32,39 @@ public:
 	virtual bool process_event(const sf::Event& event);
 };
 
-class SimpleControls : public InputReader
+namespace std
 {
-	State* state;
-public:
-	SimpleControls(State* s);
+	template<> struct less<sf::Event::KeyEvent>
+	{
+		bool operator() (const sf::Event::KeyEvent& lhs, const sf::Event::KeyEvent& rhs)
+		{
+			if (lhs.code != rhs.code)
+				return lhs.code < rhs.code;
+			if (lhs.alt != rhs.alt)
+				return !lhs.alt;
+			if (lhs.control != rhs.control)
+				return !lhs.control;
+			if (lhs.shift != rhs.shift)
+				return !lhs.shift;
+			if (lhs.system != rhs.system)
+				return !lhs.system;
+			return false;
+		}
+	};
+}
 
-	virtual bool process_event(const sf::Event& event);
-};
-
-class VimControls : public InputReader
+class KeyControls : public InputReader
 {
-	bool shift = false;
-	State* state;
+	std::map<sf::Event::KeyEvent, std::string> binds;
+	std::map<std::string, bool> pressed;
+	std::map<std::string, bool> ready;
+	enum repeat_t {PRESS, REPEAT, HOLD};
+	std::map<std::string, repeat_t> repeat;
 public:
-	VimControls(State* s);
 
+	KeyControls();
+	void bind(const sf::Event::KeyEvent& key, const std::string& str, repeat_t rep);
+	bool load_from_file(const std::string& file);
+	bool operator[](const std::string& control);
 	virtual bool process_event(const sf::Event& event);
 };

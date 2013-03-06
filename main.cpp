@@ -32,8 +32,6 @@ public:
 			finished = true;
 			return false;
 		}
-		else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F5)
-			state->switch_controls = true;
 		else if (event.type == sf::Event::Resized)
 		{
 			state->gui_view->setSize(event.size.width, event.size.height);
@@ -101,7 +99,6 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "Bananagrams");
 	window.setIcon(32, 32, icon);
 	window.setVerticalSyncEnabled(true);
-	window.setKeyRepeatEnabled(false);
 
 	sf::View gui_view = window.getDefaultView();
 	sf::View grid_view = window.getDefaultView();
@@ -114,7 +111,6 @@ int main()
 	state.gui_view = &gui_view;
 	state.grid_view = &grid_view;
 	state.zoom = 1;
-	state.switch_controls = false;
 
 	Game game(&state);
 	input_readers.push_back(&game);
@@ -321,15 +317,8 @@ int main()
 	Cursor selection(sf::Vector2u(1, 1), 1, sf::Color(255, 255, 255, 25), sf::Color::White);
 
 	// keyboard
-	state.delta = {0, 0};
 	state.ch = 'A' - 1;
 	state.ctrl = false;
-	state.sprint = false;
-	state.kremove = false;
-	state.peel = false;
-	state.dump = false;
-	state.cut = false;
-	state.paste = false;
 	state.center = false;
 
 	// mouse
@@ -346,9 +335,8 @@ int main()
 	MouseControls mouse(&state);
 	input_readers.push_back(&mouse);
 
-	SimpleControls scontrols(&state);
-	VimControls vcontrols(&state);
-	input_readers.push_back(&scontrols);
+	KeyControls controls;
+	input_readers.push_back(&controls);
 
 	// for controlling key repeat
 	sf::Vector2f held(0, 0);
@@ -377,28 +365,6 @@ int main()
 				if (!cont)
 					break;
 			}
-		}
-
-		if (state.switch_controls)
-		{
-			InputReader* controls = input_readers.back();
-			input_readers.pop_back();
-			if (controls == &scontrols)
-			{
-				input_readers.push_back(&vcontrols);
-				messages.add("Switched to Vim controls.", MessageQ::LOW);
-			}
-			else if (controls == &vcontrols)
-			{
-				input_readers.push_back(&scontrols);
-				messages.add("Switched to simple controls.", MessageQ::LOW);
-			}
-			else
-			{
-				cerr << "Failed to switch controls!\n";
-				return 1;
-			}
-			state.switch_controls = false;
 		}
 
 		// mouse moved
@@ -446,6 +412,7 @@ int main()
 				cursor.set_pos(mcursor.get_pos());
 
 				// if ctrl, try to place last tile
+				// TODO fix for new controls
 				if (state.ctrl)
 				{
 					// look for remaining tiles
@@ -480,7 +447,7 @@ int main()
 			state.end_selection = false;
 		}
 
-		if (state.cut)
+		if (controls["cut"])
 		{
 			if (buffer == nullptr)
 			{
@@ -507,8 +474,6 @@ int main()
 				buffer = nullptr;
 				messages.add("Added cut tiles back to your hand.", MessageQ::LOW);
 			}
-
-			state.cut = false;
 		}
 
 		if (state.transpose)
@@ -519,7 +484,7 @@ int main()
 			state.transpose = false;
 		}
 
-		if (state.paste)
+		if (controls["paste"])
 		{
 			if (buffer != nullptr)
 			{
@@ -529,8 +494,6 @@ int main()
 			}
 			else
 				messages.add("Cannot paste: no tiles were cut.", MessageQ::LOW);
-
-			state.paste = false;
 		}
 
 		if (state.mremove)
@@ -541,7 +504,7 @@ int main()
 				hand.add_tile(tile);
 		}
 
-		if (state.dump)
+		if (controls["dump"])
 		{
 			if (bunch.size() >= 3)
 			{
@@ -568,10 +531,9 @@ int main()
 			else
 				messages.add("There are not enough tiles left to dump!", MessageQ::HIGH);
 
-			state.dump = false;
 		}
 
-		if (state.peel)
+		if (controls["peel"])
 		{
 			bool spent = true;
 			for (char ch = 'A'; ch <= 'Z'; ch++)
@@ -602,13 +564,11 @@ int main()
 			}
 			else
 				messages.add("You have not used all of your letters.", MessageQ::HIGH);
-			state.peel = false;
 		}
 
 		// if backspace
-		if (state.kremove)
+		if (controls["remove"])
 		{
-			state.kremove = false;
 
 			// TODO DRY off autoadvancing
 			// if the cursor is ahead of the last added character, autoadvance
@@ -757,44 +717,35 @@ int main()
 				spos.y += PPB;
 			}
 		}
+		int zoom = 0;
+		if (controls["zoom_in"])
+			zoom += -1;
+		if (controls["zoom_out"])
+			zoom += 1;
+		if (controls["zoom_in_fast"])
+			zoom += -2;
+		if (controls["zoom_out_fast"])
+			zoom += 2;
+		grid_view.zoom(1 + zoom * time);
 
-		if (state.ctrl)
-			grid_view.zoom(1 + state.delta.y * (state.sprint ? 2 : 1) * time);
-		else
-		{
-			sf::Vector2i delta(0, 0);
-
-			if (state.delta.x == 0)
-				held.x = 0;
-			else
-			{
-				if (held.x == 0)
-					delta.x = state.delta.x;
-				held.x += time;
-			}
-			if (state.delta.y == 0)
-				held.y = 0;
-			else
-			{
-				if (held.y == 0)
-					delta.y = state.delta.y;
-				held.y += time;
-			}
-
-			while (held.x > repeat_delay)
-			{
-				delta += X * state.delta.x;
-				held.x -= repeat_speed;
-			}
-
-			while (held.y > repeat_delay)
-			{
-				delta += Y * state.delta.y;
-				held.y -= repeat_speed;
-			}
-
-			cursor.move(delta);
-		}
+		sf::Vector2i delta(0, 0);
+		if (controls["left"])
+			delta += -X;
+		if (controls["right"])
+			delta += X;
+		if (controls["up"])
+			delta += -Y;
+		if (controls["down"])
+			delta += Y;
+		if (controls["left_fast"])
+			delta += -X * 2;
+		if (controls["right_fast"])
+			delta += X * 2;
+		if (controls["up_fast"])
+			delta += -Y * 2;
+		if (controls["down_fast"])
+			delta += Y * 2;
+		cursor.move(delta);
 
 		// these might have changed due to zooming
 		center = grid_view.getCenter();
