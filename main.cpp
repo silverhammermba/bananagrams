@@ -325,8 +325,6 @@ int main()
 	state.start_selection = false;
 	state.end_selection = false;
 
-	state.transpose = false;
-
 	MouseControls mouse(&state);
 	input_readers.push_back(&mouse);
 
@@ -469,12 +467,10 @@ int main()
 			}
 		}
 
-		if (state.transpose)
+		if (controls["flip"])
 		{
 			if (buffer != nullptr)
 				buffer->transpose();
-
-			state.transpose = false;
 		}
 
 		if (controls["paste"])
