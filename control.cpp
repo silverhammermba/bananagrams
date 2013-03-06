@@ -5,7 +5,7 @@ MouseControls::MouseControls(State* m)
 	state = m;
 }
 
-bool MouseControls::process_event(const sf::Event& event)
+bool MouseControls::process_event(sf::Event& event)
 {
 	switch(event.type)
 	{
@@ -120,7 +120,7 @@ bool KeyControls::operator[](const std::string& control)
 	return press;
 }
 
-bool KeyControls::process_event(const sf::Event& event)
+bool KeyControls::process_event(sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)
 	{

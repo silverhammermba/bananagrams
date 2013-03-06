@@ -23,7 +23,7 @@ public:
 		state = s;
 	}
 
-	virtual bool process_event(const sf::Event& event)
+	virtual bool process_event(sf::Event& event)
 	{
 		if (event.type == sf::Event::Closed || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape))
 		{
@@ -338,11 +338,6 @@ int main()
 	KeyControls controls;
 	input_readers.push_back(&controls);
 
-	// for controlling key repeat
-	sf::Vector2f held(0, 0);
-	float repeat_delay = 0.3;
-	float repeat_speed = 0.07;
-
 	// game loop
 	while (window.isOpen())
 	{
@@ -355,6 +350,9 @@ int main()
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
+			if (event.type == sf::Event::KeyPressed)
+				cerr << event.key.code << endl;
+
 			for (auto r = input_readers.begin(); r != input_readers.end();)
 			{
 				bool cont = (*r)->process_event(event);
@@ -755,7 +753,8 @@ int main()
 		// measure difference from a box in the center of the screen
 		sf::Vector2f diff((std::abs(spos.x - center.x) > gsize.x / 4 ? spos.x - center.x - (spos.x >= center.x ? gsize.x / 4 : gsize.x / -4) : 0), (std::abs(spos.y - center.y) > gsize.y / 4 ? spos.y  - center.y - (spos.y >= center.y ? gsize.y / 4 : gsize.y / -4) : 0));
 		// TODO is there a better movement function?
-		grid_view.move(diff.x / (1.0 + time * 400), diff.y / (1.0 + time * 400));
+		diff /= (float)(1.0 + time * 400);
+		grid_view.move(diff.x, diff.y);
 
 		// don't allow zooming in past 1x
 		if (gsize.x < wsize.x || gsize.y < wsize.y)

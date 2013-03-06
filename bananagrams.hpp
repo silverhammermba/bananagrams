@@ -33,7 +33,7 @@ public:
 		return finished;
 	}
 
-	virtual bool process_event(const sf::Event& event) = 0;
+	virtual bool process_event(sf::Event& event) = 0;
 };
 
 #include "control.hpp"
