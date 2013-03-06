@@ -29,7 +29,7 @@ class MouseControls : public InputReader
 public:
 	MouseControls(State* m);
 
-	virtual bool process_event(const sf::Event& event);
+	virtual bool process_event(sf::Event& event);
 };
 
 namespace std
@@ -66,5 +66,5 @@ public:
 	void bind(const sf::Event::KeyEvent& key, const std::string& str, repeat_t rep);
 	bool load_from_file(const std::string& file);
 	bool operator[](const std::string& control);
-	virtual bool process_event(const sf::Event& event);
+	virtual bool process_event(sf::Event& event);
 };

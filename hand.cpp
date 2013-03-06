@@ -176,7 +176,7 @@ Tile* Hand::remove_tile(char ch)
 	return tile;
 }
 
-bool Hand::process_event(const sf::Event& event)
+bool Hand::process_event(sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed)
 	{

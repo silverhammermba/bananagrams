@@ -122,7 +122,7 @@ bool KeyControls::operator[](const std::string& control)
 
 bool KeyControls::process_event(sf::Event& event)
 {
-	if (event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased)
+	if (event.type == sf::Event::KeyPressed)
 	{
 		// TODO this doesn't work if you release modifier keys in different orders
 		auto it = binds.find(event.key);
@@ -132,26 +132,63 @@ bool KeyControls::process_event(sf::Event& event)
 			switch (repeat[action])
 			{
 				case PRESS:
-					if (event.type == sf::Event::KeyPressed)
+					if (ready[action])
 					{
-						if (ready[action])
-						{
-							pressed[action] = true;
-							ready[action] = false;
-						}
+						pressed[action] = true;
+						ready[action] = false;
 					}
-					else
-						ready[action] = true;
 					break;
 				case REPEAT:
-					if (event.type == sf::Event::KeyPressed)
-						pressed[action] = true;
+				case HOLD:
+					pressed[action] = true;
+					break;
+			}
+		}
+	}
+	else if (event.type == sf::Event::KeyReleased)
+	{
+		switch (event.key.code)
+		{
+			case sf::Keyboard::Key::LAlt:
+			case sf::Keyboard::Key::RAlt:
+				for (auto pair : binds)
+					if (pair.first.alt && repeat[pair.second] == HOLD)
+						pressed[pair.second] = false;
+				break;
+			case sf::Keyboard::Key::LControl:
+			case sf::Keyboard::Key::RControl:
+				for (auto pair : binds)
+					if (pair.first.control && repeat[pair.second] == HOLD)
+						pressed[pair.second] = false;
+				break;
+			case sf::Keyboard::Key::LShift:
+			case sf::Keyboard::Key::RShift:
+				for (auto pair : binds)
+					if (pair.first.shift && repeat[pair.second] == HOLD)
+						pressed[pair.second] = false;
+				break;
+			case sf::Keyboard::Key::LSystem:
+			case sf::Keyboard::Key::RSystem:
+				for (auto pair : binds)
+					if (pair.first.system && repeat[pair.second] == HOLD)
+						pressed[pair.second] = false;
+				break;
+			default:
+				break;
+		}
+		auto it = binds.find(event.key);
+		if (it != binds.end())
+		{
+			auto action = it->second;
+			switch (repeat[action])
+			{
+				case PRESS:
+					ready[action] = true;
+					break;
+				case REPEAT:
 					break;
 				case HOLD:
-					if (event.type == sf::Event::KeyPressed)
-						pressed[action] = true;
-					else
-						pressed[action] = false;
+					pressed[action] = false;
 					break;
 			}
 		}

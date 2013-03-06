@@ -350,9 +350,6 @@ int main()
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
-			if (event.type == sf::Event::KeyPressed)
-				cerr << event.key.code << endl;
-
 			for (auto r = input_readers.begin(); r != input_readers.end();)
 			{
 				bool cont = (*r)->process_event(event);
