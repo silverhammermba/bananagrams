@@ -62,6 +62,10 @@ int main()
 		return 1;
 	}
 
+	KeyControls controls;
+	// TODO make this optional
+	controls.load_from_file("config.yaml");
+
 	std::srand((unsigned int)std::time(nullptr));
 
 	Grid grid;
@@ -328,7 +332,6 @@ int main()
 	MouseControls mouse(&state);
 	input_readers.push_back(&mouse);
 
-	KeyControls controls;
 	input_readers.push_back(&controls);
 
 	Typer typer;
@@ -776,6 +779,8 @@ int main()
 	// delete unused tiles
 	for (auto tile: bunch)
 		delete tile;
+
+	// TODO write out config changes to YAML
 
 	return 0;
 }

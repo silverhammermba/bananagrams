@@ -58,21 +58,205 @@ namespace std
 
 class KeyControls : public InputReader
 {
-	// for mapping keys to action names
+	// for mapping keys to command names
 	std::map<sf::Event::KeyEvent, std::string> binds;
-	// map action names to current state
+	// map command names to current state
 	std::map<std::string, bool> pressed;
-	// for repeat_t PRESS, map action name to key being released
+	// for repeat_t PRESS, map command name to key being released
 	std::map<std::string, bool> ready;
 	enum repeat_t {PRESS, REPEAT, HOLD};
-	// map action name to type of key repeat
+	// map command name to type of key repeat
 	std::map<std::string, repeat_t> repeat;
+	void bind(const sf::Event::KeyEvent& key, const std::string& command, repeat_t rep);
 public:
-
 	KeyControls();
-	void bind(const sf::Event::KeyEvent& key, const std::string& str, repeat_t rep);
+
+	inline bool has_bind(const std::string& command)
+	{
+		return pressed.find(command) != pressed.end();
+	}
+
 	void set_defaults();
+	void rebind(const sf::Event::KeyEvent& key, const std::string& command);
 	bool load_from_file(const std::string& file);
 	bool operator[](const std::string& control);
 	virtual bool process_event(sf::Event& event);
 };
+
+static const std::vector<std::string> keys
+{
+	"a",
+	"b",
+	"c",
+	"d",
+	"e",
+	"f",
+	"g",
+	"h",
+	"i",
+	"j",
+	"k",
+	"l",
+	"m",
+	"n",
+	"o",
+	"p",
+	"q",
+	"r",
+	"s",
+	"t",
+	"u",
+	"v",
+	"w",
+	"x",
+	"y",
+	"z",
+	"num0",
+	"num1",
+	"num2",
+	"num3",
+	"num4",
+	"num5",
+	"num6",
+	"num7",
+	"num8",
+	"num9",
+	"escape",
+	"lcontrol",
+	"lshift",
+	"lalt",
+	"lsystem",
+	"rcontrol",
+	"rshift",
+	"ralt",
+	"rsystem",
+	"menu",
+	"lbracket",
+	"rbracket",
+	"semicolon",
+	"comma",
+	"period",
+	"quote",
+	"slash",
+	"backslash",
+	"tilde",
+	"equal",
+	"dash",
+	"space",
+	"return",
+	"backspace",
+	"tab",
+	"pageup",
+	"pagedown",
+	"end",
+	"home",
+	"insert",
+	"delete",
+	"add",
+	"subtract",
+	"multiply",
+	"divide",
+	"left",
+	"right",
+	"up",
+	"down",
+	"numpad0",
+	"numpad1",
+	"numpad2",
+	"numpad3",
+	"numpad4",
+	"numpad5",
+	"numpad6",
+	"numpad7",
+	"numpad8",
+	"numpad9",
+	"f1",
+	"f2",
+	"f3",
+	"f4",
+	"f5",
+	"f6",
+	"f7",
+	"f8",
+	"f9",
+	"f10",
+	"f11",
+	"f12",
+	"f13",
+	"f14",
+	"f15",
+	"pause"
+};
+
+namespace YAML
+{
+	template<> struct convert<sf::Event::KeyEvent>
+	{
+		static bool decode(const Node& node, sf::Event::KeyEvent& key)
+		{
+			key.alt = false;
+			key.control = false;
+			key.shift = false;
+			key.system = false;
+
+			std::string str = node.as<std::string>();
+			for (unsigned int i = 0; i < str.size(); i++)
+				str[i] = std::tolower(str[i]);
+
+			// split into substrings
+			unsigned int i = 0;
+			while (i < str.size() && str[i] == ' ')
+				++i;
+
+			if (i == str.size())
+			{
+				std::cerr << "Empty key binding\n";
+				return false;
+			}
+
+			std::vector<std::string> subs;
+
+			for (unsigned int j = i + 1; j < str.size(); j++)
+			{
+				if (str[j] == ' ')
+				{
+					if (str[i] != ' ')
+						subs.push_back(str.substr(i, j - i));
+					i = j + 1;
+				}
+			}
+
+			if (i < str.size())
+				subs.push_back(str.substr(i, str.size() - i));
+
+			for (unsigned int i = 0; i < subs.size() - 1; i++)
+			{
+				if (subs[i] == "alt")
+					key.alt = true;
+				else if (subs[i] == "ctrl")
+					key.control = true;
+				else if (subs[i] == "shift")
+					key.shift = true;
+				else if (subs[i] == "system")
+					key.system = true;
+				else
+				{
+					std::cerr << "Unrecognized key modifier: " << subs[i] << std::endl;
+					return false;
+				}
+			}
+
+			i = 0;
+			for (; i < keys.size() && keys[i] != subs.back(); i++);
+			if (i < keys.size())
+				key.code = (sf::Keyboard::Key)i;
+			else
+			{
+				std::cerr << "Unrecognized key: " << subs.back() << std::endl;
+				return false;
+			}
+
+			return true;
+		}
+	};
+}

@@ -1,5 +1,9 @@
 #include "bananagrams.hpp"
 
+using std::cerr;
+using std::endl;
+using std::string;
+
 Typer::Typer()
 {
 	ch = 'A' - 1;
@@ -67,16 +71,18 @@ KeyControls::KeyControls()
 	set_defaults();
 }
 
-void KeyControls::bind(const sf::Event::KeyEvent& key, const std::string& str, repeat_t rep)
+void KeyControls::bind(const sf::Event::KeyEvent& key, const string& command, repeat_t rep)
 {
-	auto it = binds.find(key);
-	if (it != binds.end())
-		binds.erase(it);
+	repeat[command] = rep;
+	rebind(key, command);
+}
 
-	binds[key] = str;
-	pressed[str] = false;
-	ready[str] = true;
-	repeat[str] = rep;
+void KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
+{
+	// TODO should probably put has_bind check in here
+	binds[key] = command;
+	pressed[command] = false;
+	ready[command] = true;
 }
 
 void KeyControls::set_defaults()
@@ -143,12 +149,22 @@ void KeyControls::set_defaults()
 	bind(key, "quick_place", HOLD);
 }
 
-bool KeyControls::load_from_file(const std::string& file)
+bool KeyControls::load_from_file(const string& filename)
 {
-	return false;
+	YAML::Node bindings = YAML::LoadFile(filename);
+
+	for (auto binding : bindings)
+	{
+		if (pressed.find(binding.first.as<string>()) != pressed.end())
+			rebind(binding.second.as<sf::Event::KeyEvent>(), binding.first.as<string>());
+		else
+			cerr << "Unrecognized command: " << binding.first.as<string>() << endl;
+	}
+
+	return true;
 }
 
-bool KeyControls::operator[](const std::string& control)
+bool KeyControls::operator[](const string& control)
 {
 	bool press = pressed[control];
 
@@ -166,19 +182,19 @@ bool KeyControls::process_event(sf::Event& event)
 		auto it = binds.find(event.key);
 		if (it != binds.end())
 		{
-			auto action = it->second;
-			switch (repeat[action])
+			auto command = it->second;
+			switch (repeat[command])
 			{
 				case PRESS:
-					if (ready[action])
+					if (ready[command])
 					{
-						pressed[action] = true;
-						ready[action] = false;
+						pressed[command] = true;
+						ready[command] = false;
 					}
 					break;
 				case REPEAT:
 				case HOLD:
-					pressed[action] = true;
+					pressed[command] = true;
 					break;
 			}
 
@@ -220,16 +236,16 @@ bool KeyControls::process_event(sf::Event& event)
 		auto it = binds.find(event.key);
 		if (it != binds.end())
 		{
-			auto action = it->second;
-			switch (repeat[action])
+			auto command = it->second;
+			switch (repeat[command])
 			{
 				case PRESS:
-					ready[action] = true;
+					ready[command] = true;
 					break;
 				case REPEAT:
 					break;
 				case HOLD:
-					pressed[action] = false;
+					pressed[command] = false;
 					break;
 			}
 		}
