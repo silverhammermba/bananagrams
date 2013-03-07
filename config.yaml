@@ -1,0 +1,19 @@
+# key bindings
+left: shift h
+right: shift l
+up: shift k
+down: shift j
+left_fast: shift y
+right_fast: shift o
+up_fast: shift i
+down_fast: shift u
+zoom_in: ctrl k
+zoom_out: ctrl j
+zoom_in_fast: ctrl o
+zoom_out_fast: ctrl i
+remove: backspace
+peel: space
+dump: shift m
+cut: ctrl d
+paste: ctrl p
+flip: ctrl f
