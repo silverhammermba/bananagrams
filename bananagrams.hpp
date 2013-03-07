@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <yaml-cpp/yaml.h>
 #include <SFML/Graphics.hpp>
 
 static const unsigned int PPB = 48;
