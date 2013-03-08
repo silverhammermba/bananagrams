@@ -66,6 +66,13 @@ bool MouseControls::process_event(sf::Event& event)
 	return true;
 }
 
+KeyControls::Command::Command(repeat_t rep)
+{
+	pressed = false;
+	ready = true;
+	repeat = rep;
+}
+
 KeyControls::KeyControls()
 {
 	set_defaults();
@@ -73,25 +80,24 @@ KeyControls::KeyControls()
 
 void KeyControls::bind(const sf::Event::KeyEvent& key, const string& command, repeat_t rep)
 {
-	repeat[command] = rep;
-	rebind(key, command);
+	binds[key] = command;
+	commands[command] = Command(rep);
 }
 
 void KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 {
-	// TODO should probably put has_bind check in here
+	if (!has_bind(command))
+		throw NotFound(command);
 	binds[key] = command;
-	pressed[command] = false;
-	ready[command] = true;
+	commands[command].pressed = false;
+	commands[command].ready = true;
 }
 
 void KeyControls::set_defaults()
 {
 	// TODO is there a better way to structure these?
 	binds.clear();
-	pressed.clear();
-	ready.clear();
-	repeat.clear();
+	commands.clear();
 
 	sf::Event::KeyEvent key;
 	key.alt = false;
@@ -153,23 +159,38 @@ bool KeyControls::load_from_file(const string& filename)
 {
 	YAML::Node bindings = YAML::LoadFile(filename);
 
+	if (!bindings.IsMap())
+	{
+		cerr << "Ignoring bad config file\n"
+		return false;
+	}
+
 	for (auto binding : bindings)
 	{
-		if (pressed.find(binding.first.as<string>()) != pressed.end())
+		try
+		{
 			rebind(binding.second.as<sf::Event::KeyEvent>(), binding.first.as<string>());
-		else
+		}
+		catch (NotFound)
+		{
 			cerr << "Unrecognized command: " << binding.first.as<string>() << endl;
+		}
+		catch (YAML::TypedBadConversion<sf::Event::KeyEvent>)
+		{
+			// YAML conversion already prints errors
+		}
 	}
 
 	return true;
 }
 
-bool KeyControls::operator[](const string& control)
+bool KeyControls::operator[](const string& command)
 {
-	bool press = pressed[control];
+	Command& c = commands[command];
+	bool press = c.pressed;
 
-	if (repeat[control] != HOLD)
-		pressed[control] = false;
+	if (c.get_repeat() != HOLD)
+		c.pressed = false;
 
 	return press;
 }
@@ -182,19 +203,19 @@ bool KeyControls::process_event(sf::Event& event)
 		auto it = binds.find(event.key);
 		if (it != binds.end())
 		{
-			auto command = it->second;
-			switch (repeat[command])
+			Command& c = commands[it->second];
+			switch (c.get_repeat())
 			{
 				case PRESS:
-					if (ready[command])
+					if (c.ready)
 					{
-						pressed[command] = true;
-						ready[command] = false;
+						c.pressed = true;
+						c.ready = false;
 					}
 					break;
 				case REPEAT:
 				case HOLD:
-					pressed[command] = true;
+					c.pressed = true;
 					break;
 			}
 
@@ -209,26 +230,26 @@ bool KeyControls::process_event(sf::Event& event)
 			case sf::Keyboard::Key::LAlt:
 			case sf::Keyboard::Key::RAlt:
 				for (auto pair : binds)
-					if (repeat[pair.second] == HOLD && (pair.first.alt || pair.first.code == sf::Keyboard::Key::LAlt || pair.first.code == sf::Keyboard::Key::RAlt))
-						pressed[pair.second] = false;
+					if (commands[pair.second].get_repeat() == HOLD && (pair.first.alt || pair.first.code == sf::Keyboard::Key::LAlt || pair.first.code == sf::Keyboard::Key::RAlt))
+						commands[pair.second].pressed = false;
 				break;
 			case sf::Keyboard::Key::LControl:
 			case sf::Keyboard::Key::RControl:
 				for (auto pair : binds)
-					if (repeat[pair.second] == HOLD && (pair.first.control || pair.first.code == sf::Keyboard::Key::LControl || pair.first.code == sf::Keyboard::Key::RControl))
-						pressed[pair.second] = false;
+					if (commands[pair.second].get_repeat() == HOLD && (pair.first.control || pair.first.code == sf::Keyboard::Key::LControl || pair.first.code == sf::Keyboard::Key::RControl))
+						commands[pair.second].pressed = false;
 				break;
 			case sf::Keyboard::Key::LShift:
 			case sf::Keyboard::Key::RShift:
 				for (auto pair : binds)
-					if (repeat[pair.second] == HOLD && (pair.first.shift || pair.first.code == sf::Keyboard::Key::LShift || pair.first.code == sf::Keyboard::Key::RShift))
-						pressed[pair.second] = false;
+					if (commands[pair.second].get_repeat() == HOLD && (pair.first.shift || pair.first.code == sf::Keyboard::Key::LShift || pair.first.code == sf::Keyboard::Key::RShift))
+						commands[pair.second].pressed = false;
 				break;
 			case sf::Keyboard::Key::LSystem:
 			case sf::Keyboard::Key::RSystem:
 				for (auto pair : binds)
-					if (repeat[pair.second] == HOLD && (pair.first.system || pair.first.code == sf::Keyboard::Key::LSystem || pair.first.code == sf::Keyboard::Key::RSystem))
-						pressed[pair.second] = false;
+					if (commands[pair.second].get_repeat() == HOLD && (pair.first.system || pair.first.code == sf::Keyboard::Key::LSystem || pair.first.code == sf::Keyboard::Key::RSystem))
+						commands[pair.second].pressed = false;
 				break;
 			default:
 				break;
@@ -236,16 +257,16 @@ bool KeyControls::process_event(sf::Event& event)
 		auto it = binds.find(event.key);
 		if (it != binds.end())
 		{
-			auto command = it->second;
-			switch (repeat[command])
+			Command& c = commands[it->second];
+			switch (c.get_repeat())
 			{
 				case PRESS:
-					ready[command] = true;
+					c.ready = true;
 					break;
 				case REPEAT:
 					break;
 				case HOLD:
-					pressed[command] = false;
+					c.pressed = false;
 					break;
 			}
 		}

@@ -58,22 +58,39 @@ namespace std
 
 class KeyControls : public InputReader
 {
+	enum repeat_t {PRESS, REPEAT, HOLD};
+
+	class Command
+	{
+		repeat_t repeat;
+	public:
+		bool pressed;
+		bool ready;
+		Command(repeat_t rep = REPEAT);
+
+		inline repeat_t get_repeat() const
+		{
+			return repeat;
+		}
+	};
+
 	// for mapping keys to command names
 	std::map<sf::Event::KeyEvent, std::string> binds;
-	// map command names to current state
-	std::map<std::string, bool> pressed;
-	// for repeat_t PRESS, map command name to key being released
-	std::map<std::string, bool> ready;
-	enum repeat_t {PRESS, REPEAT, HOLD};
-	// map command name to type of key repeat
-	std::map<std::string, repeat_t> repeat;
+	// map command names to commands
+	std::map<std::string, Command> commands;
 	void bind(const sf::Event::KeyEvent& key, const std::string& command, repeat_t rep);
 public:
+	class NotFound : public std::runtime_error
+	{
+	public:
+		NotFound(const std::string& str) : std::runtime_error(str) {}
+	};
+
 	KeyControls();
 
 	inline bool has_bind(const std::string& command)
 	{
-		return pressed.find(command) != pressed.end();
+		return commands.find(command) != commands.end();
 	}
 
 	void set_defaults();
