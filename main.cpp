@@ -63,7 +63,6 @@ int main()
 	}
 
 	KeyControls controls;
-	// TODO make this optional
 	controls.load_from_file("config.yaml");
 
 	std::srand((unsigned int)std::time(nullptr));
@@ -130,6 +129,7 @@ int main()
 	loading_text.setPosition(center.x + bounds.width / -2, center.y + bounds.height / -2);
 
 	// dedication
+	// TODO make window resizing/quitting work here
 	while (window.isOpen())
 	{
 		float elapsed = clock.getElapsedTime().asSeconds();
@@ -780,7 +780,8 @@ int main()
 	for (auto tile: bunch)
 		delete tile;
 
-	// TODO write out config changes to YAML
+	// TODO only do this if controls changed
+	controls.write_to_file("config.yaml");
 
 	return 0;
 }

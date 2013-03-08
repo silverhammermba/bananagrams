@@ -155,7 +155,7 @@ void KeyControls::set_defaults()
 	bind(key, "quick_place", HOLD);
 }
 
-bool KeyControls::load_from_file(const string& filename)
+void KeyControls::load_from_file(const string& filename)
 {
 	bool bad = false;
 	YAML::Node bindings;
@@ -171,7 +171,7 @@ bool KeyControls::load_from_file(const string& filename)
 	if (bad || !bindings.IsMap())
 	{
 		cerr << "Ignoring bad/missing config file\n";
-		return false;
+		return;
 	}
 
 	for (auto binding : bindings)
@@ -193,8 +193,34 @@ bool KeyControls::load_from_file(const string& filename)
 			cerr << "Empty binding: " << binding.first.as<string>() << endl;
 		}
 	}
+}
 
-	return true;
+void KeyControls::write_to_file(const std::string& filename)
+{
+	std::ofstream config(filename, std::ios_base::out);
+	if (!config.is_open())
+	{
+		cerr << "Couldn't write to " << filename << endl;
+		return;
+	}
+
+	YAML::Emitter out;
+
+	out << YAML::Comment("key bindings");
+	out << YAML::BeginMap;
+
+	// TODO somehow keep keys orderd?
+	for (auto pair : binds)
+	{
+		out << YAML::Key << pair.second
+		    << YAML::Value << YAML::Node(pair.first)
+		    << YAML::Newline;
+	}
+
+	out << YAML::EndMap;
+
+	config << out.c_str();
+	config.close();
 }
 
 bool KeyControls::operator[](const string& command)

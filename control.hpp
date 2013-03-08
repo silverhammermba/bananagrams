@@ -95,11 +95,13 @@ public:
 
 	void set_defaults();
 	void rebind(const sf::Event::KeyEvent& key, const std::string& command);
-	bool load_from_file(const std::string& file);
+	void load_from_file(const std::string& filename);
+	void write_to_file(const std::string& filename);
 	bool operator[](const std::string& control);
 	virtual bool process_event(sf::Event& event);
 };
 
+// for converting key names to sf::Keyboard::Key values
 static const std::vector<std::string> keys
 {
 	"a",
@@ -209,6 +211,21 @@ namespace YAML
 {
 	template<> struct convert<sf::Event::KeyEvent>
 	{
+		static Node encode(const sf::Event::KeyEvent& key)
+		{
+			// TODO could be dangerous for weird keys
+			std::string str = keys[key.code];
+			if (key.system)
+				str = "system " + str;
+			if (key.shift)
+				str = "shift " + str;
+			if (key.control)
+				str = "ctrl " + str;
+			if (key.alt)
+				str = "alt " + str;
+			return Node(str);
+		}
+
 		static bool decode(const Node& node, sf::Event::KeyEvent& key)
 		{
 			key.alt = false;
