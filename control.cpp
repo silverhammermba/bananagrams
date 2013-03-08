@@ -157,11 +157,20 @@ void KeyControls::set_defaults()
 
 bool KeyControls::load_from_file(const string& filename)
 {
-	YAML::Node bindings = YAML::LoadFile(filename);
-
-	if (!bindings.IsMap())
+	bool bad = false;
+	YAML::Node bindings;
+	try
 	{
-		cerr << "Ignoring bad config file\n"
+		bindings = YAML::LoadFile(filename);
+	}
+	catch (YAML::BadFile)
+	{
+		bad = true;
+	}
+
+	if (bad || !bindings.IsMap())
+	{
+		cerr << "Ignoring bad/missing config file\n";
 		return false;
 	}
 
