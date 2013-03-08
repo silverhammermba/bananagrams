@@ -188,6 +188,10 @@ bool KeyControls::load_from_file(const string& filename)
 		{
 			// YAML conversion already prints errors
 		}
+		catch (YAML::TypedBadConversion<std::string>)
+		{
+			cerr << "Empty binding: " << binding.first.as<string>() << endl;
+		}
 	}
 
 	return true;
