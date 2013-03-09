@@ -14,6 +14,12 @@ zoom_out_fast: ctrl i
 remove: backspace
 peel: space
 dump: shift m
-cut: ctrl d
-paste: ctrl p
-flip: ctrl f
+center: shift c
+quick_place: lshift
+cut: shift d
+paste: shift p
+flip: shift f
+scramble_tiles: f1
+sort_tiles: f2
+count_tiles: f3
+stack_tiles: f4
