@@ -1,5 +1,5 @@
 // TODO inefficient
-class Hand : public InputReader
+class Hand
 {
 	std::vector<Tile*> tiles[26];
 	sf::View* gui_view;
@@ -31,10 +31,13 @@ public:
 	void add_tile(Tile* tile);
 	Tile* remove_tile(char ch);
 
-	virtual bool process_event(sf::Event& event);
-
 	inline void draw_on(sf::RenderWindow& window)
 	{
 		(this->*draw_func)(window);
 	}
+
+	void set_scrambled();
+	void set_sorted();
+	void set_counts();
+	void set_stacked();
 };

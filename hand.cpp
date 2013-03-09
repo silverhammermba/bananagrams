@@ -176,30 +176,25 @@ Tile* Hand::remove_tile(char ch)
 	return tile;
 }
 
-bool Hand::process_event(sf::Event& event)
+void Hand::set_scrambled()
 {
-	if (event.type == sf::Event::KeyPressed)
-	{
-		switch (event.key.code)
-		{
-			case sf::Keyboard::F1:
-				if (draw_func == &Hand::scrambled)
-					reshuffle();
-				else
-					draw_func = &Hand::scrambled;
-				break;
-			case sf::Keyboard::F2:
-				draw_func = &Hand::ordered;
-				break;
-			case sf::Keyboard::F3:
-				draw_func = &Hand::counts;
-				break;
-			case sf::Keyboard::F4:
-				draw_func = &Hand::stacks;
-				break;
-			default:
-				break;
-		}
-	}
-	return true;
+	if (draw_func == &Hand::scrambled)
+		reshuffle();
+	else
+		draw_func = &Hand::scrambled;
+}
+
+void Hand::set_sorted()
+{
+	draw_func = &Hand::ordered;
+}
+
+void Hand::set_counts()
+{
+	draw_func = &Hand::counts;
+}
+
+void Hand::set_stacked()
+{
+	draw_func = &Hand::stacks;
 }

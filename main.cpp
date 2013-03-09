@@ -304,8 +304,6 @@ int main()
 	// stuff for game loop
 	MessageQ messages(font);
 
-	input_readers.push_back(&hand);
-
 	Cursor cursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0));
 	Cursor mcursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0, 80));
 
@@ -756,6 +754,15 @@ int main()
 
 		// animate tiles
 		grid.step(time);
+
+		if (controls["scramble_tiles"])
+			hand.set_scrambled();
+		if (controls["sort_tiles"])
+			hand.set_sorted();
+		if (controls["count_tiles"])
+			hand.set_counts();
+		if (controls["stack_tiles"])
+			hand.set_stacked();
 
 		// draw
 		window.clear(background);

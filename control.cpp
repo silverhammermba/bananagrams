@@ -1,5 +1,7 @@
 #include "bananagrams.hpp"
 
+// TODO comments
+
 using std::cerr;
 using std::endl;
 using std::string;
@@ -95,7 +97,6 @@ void KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 
 void KeyControls::set_defaults()
 {
-	// TODO is there a better way to structure these?
 	binds.clear();
 	commands.clear();
 
@@ -153,6 +154,14 @@ void KeyControls::set_defaults()
 	key.control = false;
 	key.code = sf::Keyboard::LControl;
 	bind(key, "quick_place", HOLD);
+	key.code = sf::Keyboard::F1;
+	bind(key, "scramble_tiles", PRESS);
+	key.code = sf::Keyboard::F2;
+	bind(key, "sort_tiles", PRESS);
+	key.code = sf::Keyboard::F3;
+	bind(key, "count_tiles", PRESS);
+	key.code = sf::Keyboard::F4;
+	bind(key, "stack_tiles", PRESS);
 }
 
 void KeyControls::load_from_file(const string& filename)
@@ -210,6 +219,7 @@ void KeyControls::write_to_file(const std::string& filename)
 	out << YAML::BeginMap;
 
 	// TODO somehow keep keys orderd?
+	// TODO only write keys that aren't default?
 	for (auto pair : binds)
 	{
 		out << YAML::Key << pair.second
