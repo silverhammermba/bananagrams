@@ -6,9 +6,7 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-Typer::Typer()
-{
-}
+Typer::Typer() {}
 
 bool Typer::get_ch(char* ch)
 {
@@ -23,6 +21,7 @@ bool Typer::get_ch(char* ch)
 
 bool Typer::process_event(sf::Event& event)
 {
+	// add character to queue (if a letter was pressed)
 	if (event.type == sf::Event::KeyPressed && event.key.code >= sf::Keyboard::Key::A && event.key.code <= sf::Keyboard::Key::Z)
 		chars.push(event.key.code - sf::Keyboard::Key::A + 'A');
 	return true;
@@ -286,7 +285,7 @@ void KeyControls::bind(const string& command, const string& key, repeat_t rep)
 
 void KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 {
-	if (!has_bind(command))
+	if (commands.find(command) == commands.end())
 		throw NotFound(command);
 	binds[key] = command;
 	commands[command].pressed = false;

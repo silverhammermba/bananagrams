@@ -1,6 +1,4 @@
-// TODO comments
-
-// structs for passing around state
+// for passing around state
 struct State
 {
 	// general
@@ -24,6 +22,7 @@ class Typer : public InputReader
 	std::queue<char> chars;
 public:
 	Typer();
+	// get next tile to place
 	bool get_ch(char* ch);
 	virtual bool process_event(sf::Event& event);
 };
@@ -41,6 +40,7 @@ namespace std
 {
 	template<> struct less<sf::Event::KeyEvent>
 	{
+		// for the binds map in KeyControls
 		bool operator() (const sf::Event::KeyEvent& lhs, const sf::Event::KeyEvent& rhs)
 		{
 			if (lhs.code != rhs.code)
@@ -58,10 +58,14 @@ namespace std
 	};
 }
 
+// TODO would be awesome if MouseControls could be combined
+// abstraction between keyboard and in-game commands
 class KeyControls : public InputReader
 {
+	// how holding a key behaves
 	enum repeat_t {PRESS, REPEAT, HOLD};
 
+	// stores the state of a command for key repeat purposes
 	class Command
 	{
 		repeat_t repeat;
@@ -76,14 +80,16 @@ class KeyControls : public InputReader
 		}
 	};
 
-	// for mapping keys to command names
+	// maps keys to command names
 	std::map<sf::Event::KeyEvent, std::string> binds;
-	// map command names to commands
+	// maps command names to commands
 	std::map<std::string, Command> commands;
-	// map command names to default binds
+	// maps command names to default binds
 	std::map<std::string, sf::Event::KeyEvent> defaults;
+	// easily create a command and its default
 	void bind(const std::string& command, const std::string& key, repeat_t rep);
 public:
+	// thrown when rebinding a nonexistant action
 	class NotFound : public std::runtime_error
 	{
 	public:
@@ -92,15 +98,15 @@ public:
 
 	KeyControls();
 
-	inline bool has_bind(const std::string& command)
-	{
-		return commands.find(command) != commands.end();
-	}
-
 	void set_defaults();
+	// create a key binding for an existing command
 	void rebind(const sf::Event::KeyEvent& key, const std::string& command);
+	// load from YAML file
 	void load_from_file(const std::string& filename);
+	// write (non-default) binds to YAML file
 	void write_to_file(const std::string& filename);
+	// check if a command what invoked
 	bool operator[](const std::string& control);
+
 	virtual bool process_event(sf::Event& event);
 };
