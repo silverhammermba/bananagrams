@@ -129,7 +129,6 @@ int main()
 	loading_text.setPosition(center.x + bounds.width / -2, center.y + bounds.height / -2);
 
 	// dedication
-	// TODO make window resizing/quitting work here
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -163,15 +162,19 @@ int main()
 		window.draw(loading_text);
 		window.display();
 	}
+	if (!window.isOpen())
+		return 0;
 
 	loading_text.setColor(sf::Color::White);
 
 	loading_text.setString("Loading dictionary...");
-	loading_text.setPosition(center.x + loading_text.getGlobalBounds().width / -2, center.y - 90);
+	auto ltbounds = loading_text.getGlobalBounds();
+	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
 	window.clear(background);
 	window.draw(loading_text);
 	window.display();
 
+	// parse dictionary
 	string line;
 	while (std::getline(words, line))
 	{
@@ -186,11 +189,13 @@ int main()
 	stringstream foo;
 	foo << dictionary.size();
 	loading_text.setString(foo.str() + " words loaded.");
-	loading_text.setPosition(center.x + loading_text.getGlobalBounds().width / -2, center.y - 90);
+	ltbounds = loading_text.getGlobalBounds();
+	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
 
 	std::list<Tile*> bunch;
 	Hand hand(&gui_view, font);
 
+	// generate textures
 	{
 		// for generating tiles
 		float padding = PPB / 2.0;
@@ -200,7 +205,6 @@ int main()
 		bool done_y = false;
 		vector<sf::Sprite> loaded;
 
-		// generate tile textures
 		while (window.isOpen())
 		{
 			sf::Event event;
@@ -236,6 +240,7 @@ int main()
 			auto bounds = letter.getGlobalBounds();
 			float minx = bounds.left;
 			float width = bounds.width;
+			// only calculate center height for A, to fix letters like Q
 			if (!done_y)
 			{
 				miny = bounds.top;
@@ -287,16 +292,22 @@ int main()
 			loaded.push_back(sf::Sprite(tile_texture[load_char - 'A'].getTexture()));
 
 			window.clear(background);
-			window.draw(loading_text);
-			unsigned int i = 0;
+
+			window.setView(gui_view);
 			float vwidth = gui_view.getSize().x;
 			auto vcenter = gui_view.getCenter();
+
+			loading_text.setPosition(vcenter.x - ltbounds.width / 2.5, vcenter.y - ltbounds.height * 2.5);
+			window.draw(loading_text);
+
+			unsigned int i = 0;
 			for (auto& sprite : loaded)
 			{
 				sprite.setPosition((i * (vwidth - 2 * padding - PPB)) / 25.0 + vcenter.x - vwidth / 2 + padding, vcenter.y + PPB / -2.0);
 				window.draw(sprite);
 				++i;
 			}
+
 			window.display();
 
 			load_char++;
@@ -314,6 +325,14 @@ int main()
 				break;
 			}
 		}
+	}
+	if (!window.isOpen())
+	{
+		// delete unused tiles
+		for (auto tile: bunch)
+			delete tile;
+
+		return 0;
 	}
 
 	// stuff for game loop
