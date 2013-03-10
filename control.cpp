@@ -69,7 +69,7 @@ bool MouseControls::process_event(sf::Event& event)
 }
 
 // for converting key names to sf::Keyboard::Key values
-static const std::vector<std::string> keys
+static const std::vector<string> keys
 {
 	"a",
 	"b",
@@ -188,13 +188,12 @@ sf::Event::KeyEvent str2key(const string& strn)
 
 	// split into substrings
 	unsigned int i = 0;
-	// TODO accept other kinds of whitespace?
-	for (; i < str.size() && str[i] == ' '; ++i);
+	for (; i < str.size() && std::isspace(str[i]); ++i);
 
 	if (i == str.size())
 		return key;
 
-	std::vector<std::string> subs;
+	std::vector<string> subs;
 
 	for (unsigned int j = i + 1; j < str.size(); j++)
 	{
@@ -230,9 +229,9 @@ sf::Event::KeyEvent str2key(const string& strn)
 	return key;
 }
 
-std::string key2str(const sf::Event::KeyEvent& key)
+string key2str(const sf::Event::KeyEvent& key)
 {
-	std::string str = keys[key.code];
+	string str = keys[key.code];
 	if (key.system)
 		str = "system " + str;
 	if (key.shift)
@@ -335,14 +334,14 @@ void KeyControls::load_from_file(const string& filename)
 		{
 			cerr << "Unrecognized key combination: " << binding.second.as<string>() << endl;
 		}
-		catch (YAML::TypedBadConversion<std::string>)
+		catch (YAML::TypedBadConversion<string>)
 		{
 			cerr << "Empty binding: " << binding.first.as<string>() << endl;
 		}
 	}
 }
 
-void KeyControls::write_to_file(const std::string& filename)
+void KeyControls::write_to_file(const string& filename)
 {
 	std::ofstream config(filename, std::ios_base::out);
 	if (!config.is_open())
@@ -356,8 +355,6 @@ void KeyControls::write_to_file(const std::string& filename)
 	out << YAML::Comment("key bindings");
 	out << YAML::BeginMap;
 
-	// TODO somehow keep keys orderd?
-	// TODO only write keys that aren't default?
 	for (auto pair : binds)
 	{
 		if (std::less<sf::Event::KeyEvent>()(pair.first, defaults[pair.second]) || std::less<sf::Event::KeyEvent>()(defaults[pair.second], pair.first))
@@ -387,7 +384,6 @@ bool KeyControls::process_event(sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed)
 	{
-		// TODO this doesn't work if you release modifier keys in different orders
 		auto it = binds.find(event.key);
 		if (it != binds.end())
 		{
@@ -474,7 +470,7 @@ namespace YAML
 
 		static bool decode(const Node& node, sf::Event::KeyEvent& key)
 		{
-			key = str2key(node.as<std::string>());
+			key = str2key(node.as<string>());
 
 			if (key.code == sf::Keyboard::Key::Unknown)
 				return false;
