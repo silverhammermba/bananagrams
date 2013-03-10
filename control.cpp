@@ -68,6 +68,182 @@ bool MouseControls::process_event(sf::Event& event)
 	return true;
 }
 
+// for converting key names to sf::Keyboard::Key values
+static const std::vector<std::string> keys
+{
+	"a",
+	"b",
+	"c",
+	"d",
+	"e",
+	"f",
+	"g",
+	"h",
+	"i",
+	"j",
+	"k",
+	"l",
+	"m",
+	"n",
+	"o",
+	"p",
+	"q",
+	"r",
+	"s",
+	"t", "u",
+	"v",
+	"w",
+	"x",
+	"y",
+	"z",
+	"num0",
+	"num1",
+	"num2",
+	"num3",
+	"num4",
+	"num5",
+	"num6",
+	"num7",
+	"num8",
+	"num9",
+	"escape",
+	"lcontrol",
+	"lshift",
+	"lalt",
+	"lsystem",
+	"rcontrol",
+	"rshift",
+	"ralt",
+	"rsystem",
+	"menu",
+	"lbracket",
+	"rbracket",
+	"semicolon",
+	"comma",
+	"period",
+	"quote",
+	"slash",
+	"backslash",
+	"tilde",
+	"equal",
+	"dash",
+	"space",
+	"return",
+	"backspace",
+	"tab",
+	"pageup",
+	"pagedown",
+	"end",
+	"home",
+	"insert",
+	"delete",
+	"add",
+	"subtract",
+	"multiply",
+	"divide",
+	"left",
+	"right",
+	"up",
+	"down",
+	"numpad0",
+	"numpad1",
+	"numpad2",
+	"numpad3",
+	"numpad4",
+	"numpad5",
+	"numpad6",
+	"numpad7",
+	"numpad8",
+	"numpad9",
+	"f1",
+	"f2",
+	"f3",
+	"f4",
+	"f5",
+	"f6",
+	"f7",
+	"f8",
+	"f9",
+	"f10",
+	"f11",
+	"f12",
+	"f13",
+	"f14",
+	"f15",
+	"pause"
+};
+
+sf::Event::KeyEvent str2key(const string& strn)
+{
+	sf::Event::KeyEvent key;
+	key.code = sf::Keyboard::Key::Unknown;
+	key.alt = false;
+	key.control = false;
+	key.shift = false;
+	key.system = false;
+
+	string str = strn;
+	for (unsigned int i = 0; i < str.size(); i++)
+		str[i] = std::tolower(str[i]);
+
+	// split into substrings
+	unsigned int i = 0;
+	// TODO accept other kinds of whitespace?
+	for (; i < str.size() && str[i] == ' '; ++i);
+
+	if (i == str.size())
+		return key;
+
+	std::vector<std::string> subs;
+
+	for (unsigned int j = i + 1; j < str.size(); j++)
+	{
+		if (str[j] == ' ')
+		{
+			if (str[i] != ' ')
+				subs.push_back(str.substr(i, j - i));
+			i = j + 1;
+		}
+	}
+
+	if (i < str.size())
+		subs.push_back(str.substr(i, str.size() - i));
+
+	for (unsigned int i = 0; i < subs.size() - 1; i++)
+	{
+		if (subs[i] == "alt")
+			key.alt = true;
+		else if (subs[i] == "ctrl")
+			key.control = true;
+		else if (subs[i] == "shift")
+			key.shift = true;
+		else if (subs[i] == "system")
+			key.system = true;
+		else
+			return key;
+	}
+
+	for (i = 0; i < keys.size() && keys[i] != subs.back(); i++);
+	if (i < keys.size())
+		key.code = (sf::Keyboard::Key)i;
+
+	return key;
+}
+
+std::string key2str(const sf::Event::KeyEvent& key)
+{
+	std::string str = keys[key.code];
+	if (key.system)
+		str = "system " + str;
+	if (key.shift)
+		str = "shift " + str;
+	if (key.control)
+		str = "ctrl " + str;
+	if (key.alt)
+		str = "alt " + str;
+	return str;
+}
+
 KeyControls::Command::Command(repeat_t rep)
 {
 	pressed = false;
@@ -77,13 +253,37 @@ KeyControls::Command::Command(repeat_t rep)
 
 KeyControls::KeyControls()
 {
+	bind("left"           , "left"           , REPEAT);
+	bind("right"          , "right"          , REPEAT);
+	bind("up"             , "up"             , REPEAT);
+	bind("down"           , "down"           , REPEAT);
+	bind("left_fast"      , "shift left"     , REPEAT);
+	bind("right_fast"     , "shift right"    , REPEAT);
+	bind("up_fast"        , "shift up"       , REPEAT);
+	bind("down_fast"      , "shift down"     , REPEAT);
+	bind("remove"         , "backspace"      , REPEAT);
+	bind("zoom_in"        , "ctrl up"        , HOLD  );
+	bind("zoom_out"       , "ctrl down"      , HOLD  );
+	bind("zoom_in_fast"   , "ctrl shift up"  , HOLD  );
+	bind("zoom_out_fast"  , "ctrl shift down", HOLD  );
+	bind("quick_place"    , "lcontrol"       , HOLD  );
+	bind("peel"           , "space"          , PRESS );
+	bind("center"         , "ctrl c"         , PRESS );
+	bind("dump"           , "ctrl d"         , PRESS );
+	bind("cut"            , "ctrl x"         , PRESS );
+	bind("paste"          , "ctrl p"         , PRESS );
+	bind("flip"           , "ctrl f"         , PRESS );
+	bind("scramble_tiles" , "f1"             , PRESS );
+	bind("sort_tiles"     , "f2"             , PRESS );
+	bind("count_tiles"    , "f3"             , PRESS );
+	bind("stack_tiles"    , "f4"             , PRESS );
 	set_defaults();
 }
 
-void KeyControls::bind(const sf::Event::KeyEvent& key, const string& command, repeat_t rep)
+void KeyControls::bind(const string& command, const string& key, repeat_t rep)
 {
-	binds[key] = command;
 	commands[command] = Command(rep);
+	defaults[command] = str2key(key);
 }
 
 void KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
@@ -98,70 +298,8 @@ void KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 void KeyControls::set_defaults()
 {
 	binds.clear();
-	commands.clear();
-
-	sf::Event::KeyEvent key;
-	key.alt = false;
-	key.control = false;
-	key.shift = false;
-	key.system = false;
-
-	key.code = sf::Keyboard::Key::Left;
-	bind(key, "left", REPEAT);
-	key.code = sf::Keyboard::Right;
-	bind(key, "right", REPEAT);
-	key.code = sf::Keyboard::Up;
-	bind(key, "up", REPEAT);
-	key.code = sf::Keyboard::Down;
-	bind(key, "down", REPEAT);
-	key.shift = true;
-	key.code = sf::Keyboard::Left;
-	bind(key, "left_fast", REPEAT);
-	key.code = sf::Keyboard::Right;
-	bind(key, "right_fast", REPEAT);
-	key.code = sf::Keyboard::Up;
-	bind(key, "up_fast", REPEAT);
-	key.code = sf::Keyboard::Down;
-	bind(key, "down_fast", REPEAT);
-	key.control = true;
-	key.shift = false;
-	key.code = sf::Keyboard::Key::Up;
-	bind(key, "zoom_in", HOLD);
-	key.code = sf::Keyboard::Key::Down;
-	bind(key, "zoom_out", HOLD);
-	key.shift = true;
-	key.code = sf::Keyboard::Key::Up;
-	bind(key, "zoom_in_fast", HOLD);
-	key.code = sf::Keyboard::Key::Down;
-	bind(key, "zoom_out_fast", HOLD);
-	key.control = false;
-	key.shift = false;
-	key.code = sf::Keyboard::BackSpace;
-	bind(key, "remove", REPEAT);
-	key.code = sf::Keyboard::Space;
-	bind(key, "peel", PRESS);
-	key.control = true;
-	key.code = sf::Keyboard::C;
-	bind(key, "center", PRESS);
-	key.code = sf::Keyboard::D;
-	bind(key, "dump", PRESS);
-	key.code = sf::Keyboard::X;
-	bind(key, "cut", PRESS);
-	key.code = sf::Keyboard::V;
-	bind(key, "paste", PRESS);
-	key.code = sf::Keyboard::F;
-	bind(key, "flip", PRESS);
-	key.control = false;
-	key.code = sf::Keyboard::LControl;
-	bind(key, "quick_place", HOLD);
-	key.code = sf::Keyboard::F1;
-	bind(key, "scramble_tiles", PRESS);
-	key.code = sf::Keyboard::F2;
-	bind(key, "sort_tiles", PRESS);
-	key.code = sf::Keyboard::F3;
-	bind(key, "count_tiles", PRESS);
-	key.code = sf::Keyboard::F4;
-	bind(key, "stack_tiles", PRESS);
+	for (auto pair : defaults)
+		binds[pair.second] = pair.first;
 }
 
 void KeyControls::load_from_file(const string& filename)
@@ -195,7 +333,7 @@ void KeyControls::load_from_file(const string& filename)
 		}
 		catch (YAML::TypedBadConversion<sf::Event::KeyEvent>)
 		{
-			// YAML conversion already prints errors
+			cerr << "Unrecognized key combination: " << binding.second.as<string>() << endl;
 		}
 		catch (YAML::TypedBadConversion<std::string>)
 		{
@@ -222,9 +360,10 @@ void KeyControls::write_to_file(const std::string& filename)
 	// TODO only write keys that aren't default?
 	for (auto pair : binds)
 	{
-		out << YAML::Key << pair.second
-		    << YAML::Value << YAML::Node(pair.first)
-		    << YAML::Newline;
+		if (std::less<sf::Event::KeyEvent>()(pair.first, defaults[pair.second]) || std::less<sf::Event::KeyEvent>()(defaults[pair.second], pair.first))
+			out << YAML::Key << pair.second
+			    << YAML::Value << YAML::Node(pair.first)
+			    << YAML::Newline;
 	}
 
 	out << YAML::EndMap;
@@ -322,4 +461,25 @@ bool KeyControls::process_event(sf::Event& event)
 	}
 
 	return true;
+}
+
+namespace YAML
+{
+	template<> struct convert<sf::Event::KeyEvent>
+	{
+		static Node encode(const sf::Event::KeyEvent& key)
+		{
+			return Node(key2str(key));
+		}
+
+		static bool decode(const Node& node, sf::Event::KeyEvent& key)
+		{
+			key = str2key(node.as<std::string>());
+
+			if (key.code == sf::Keyboard::Key::Unknown)
+				return false;
+
+			return true;
+		}
+	};
 }
