@@ -8,15 +8,14 @@ using std::string;
 
 Typer::Typer()
 {
-	ch = 'A' - 1;
 }
 
-bool Typer::get_ch(char* chr)
+bool Typer::get_ch(char* ch)
 {
-	if (ch >= 'A' && ch <= 'Z')
+	if (!chars.empty())
 	{
-		*chr = ch;
-		ch = 'A' - 1;
+		*ch = chars.front();
+		chars.pop();
 		return true;
 	}
 	return false;
@@ -25,7 +24,7 @@ bool Typer::get_ch(char* chr)
 bool Typer::process_event(sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed && event.key.code >= sf::Keyboard::Key::A && event.key.code <= sf::Keyboard::Key::Z)
-		ch = event.key.code - sf::Keyboard::Key::A + 'A';
+		chars.push(event.key.code - sf::Keyboard::Key::A + 'A');
 	return true;
 }
 

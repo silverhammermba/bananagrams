@@ -6,6 +6,7 @@
 #include <fstream>
 #include <list>
 #include <map>
+#include <queue>
 #include <string>
 #include <sstream>
 #include <vector>

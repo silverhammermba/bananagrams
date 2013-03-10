@@ -21,10 +21,10 @@ struct State
 // for placing tiles
 class Typer : public InputReader
 {
-	char ch;
+	std::queue<char> chars;
 public:
 	Typer();
-	bool get_ch(char* chr);
+	bool get_ch(char* ch);
 	virtual bool process_event(sf::Event& event);
 };
 
