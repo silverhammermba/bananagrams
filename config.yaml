@@ -7,11 +7,11 @@ left_fast: shift y
 right_fast: shift o
 up_fast: shift i
 down_fast: shift u
+remove: backspace
 zoom_in: ctrl k
 zoom_out: ctrl j
-zoom_in_fast: ctrl o
+zoom_in_fast: ctrl u
 zoom_out_fast: ctrl i
-remove: backspace
 peel: space
 dump: shift m
 center: shift c
