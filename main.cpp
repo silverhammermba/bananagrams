@@ -132,6 +132,21 @@ int main()
 	// TODO make window resizing/quitting work here
 	while (window.isOpen())
 	{
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			for (auto r = input_readers.begin(); r != input_readers.end();)
+			{
+				bool cont = (*r)->process_event(event);
+				if ((*r)->is_finished())
+					r = input_readers.erase(r);
+				else
+					r++;
+				if (!cont)
+					break;
+			}
+		}
+
 		float elapsed = clock.getElapsedTime().asSeconds();
 
 		if (elapsed < 1)
