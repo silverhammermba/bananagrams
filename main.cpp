@@ -591,38 +591,81 @@ int main()
 		// if backspace
 		if (controls["remove"])
 		{
-
+			const sf::Vector2i& pos = cursor.get_pos();
 			// TODO DRY off autoadvancing
 			// if the cursor is ahead of the last added character, autoadvance
-			if (cursor.get_pos() == last + next)
+			if (pos == last + next)
 			{
 				cursor.set_pos(last);
 				last -= next;
 			}
+			// TODO guess based on cursor movement first?
 			// else if you are not near the last character and the space is empty, try to autoadvance
-			else if (grid.get(cursor.get_pos()) == nullptr)
+			else if (grid.get(pos) == nullptr)
 			{
-				if (grid.get(cursor.get_pos() - X) != nullptr)
+				// TODO last case covers these first ones
+				// if right of a tile
+				if (grid.get(pos - X) != nullptr)
 				{
 					next = X;
 					cursor.move(-next);
 					last = cursor.get_pos() - next;
 				}
-				else if (grid.get(cursor.get_pos() - Y) != nullptr)
+				// if below a tile
+				else if (grid.get(pos - Y) != nullptr)
 				{
 					next = Y;
+					cursor.move(-next);
+					last = cursor.get_pos() - next;
+				}
+				else // try to find nearest tile
+				{
+					// TODO use sf::IntRect for this?
+					// TODO could probably refactor
+					int xd = pos.x - 1;
+					bool foundx = false;
+					if (pos.y >= grid.get_min().y && pos.y <= grid.get_max().y)
+						for (; xd >= grid.get_min().x; --xd)
+							if (grid.get(xd, pos.y) != nullptr)
+							{
+								foundx = true;
+								break;
+							}
+
+					int yd = pos.y - 1;
+					bool foundy = false;
+					if (pos.x >= grid.get_min().x && pos.x <= grid.get_max().x)
+						for (; yd >= grid.get_min().y; --yd)
+							if (grid.get(pos.x, yd) != nullptr)
+							{
+								foundy = true;
+								break;
+							}
+
+					if (foundx)
+					{
+						if (!foundy || pos.x - xd <= pos.y - yd)
+							next = X;
+						else
+							next = Y;
+					}
+					else if (foundy)
+						next = Y;
+					else // just do something
+						next = X;
+
 					cursor.move(-next);
 					last = cursor.get_pos() - next;
 				}
 			}
 			else // not near last character, position not empty, try to set autoadvance for next time
 			{
-				if (grid.get(cursor.get_pos() - X) != nullptr)
+				if (grid.get(pos - X) != nullptr)
 				{
 					next = X;
 					last = cursor.get_pos() - next;
 				}
-				else if (grid.get(cursor.get_pos() - Y) != nullptr)
+				else if (grid.get(pos - Y) != nullptr)
 				{
 					next = Y;
 					last = cursor.get_pos() - next;
@@ -656,6 +699,7 @@ int main()
 				placed = true;
 
 			// if we placed a letter, try to autoadvance
+			// TODO make autoadvancing smarter when not near last
 			if (placed)
 			{
 				next = {0, 0};

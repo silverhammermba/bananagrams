@@ -59,6 +59,16 @@ public:
 		return swap(pos.x, pos.y, tile);
 	}
 
+	inline const sf::Vector2i& get_min() const
+	{
+		return min;
+	}
+
+	inline const sf::Vector2i& get_max() const
+	{
+		return max;
+	}
+
 	// animate tiles
 	void step(float time);
 
