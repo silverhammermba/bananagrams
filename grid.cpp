@@ -4,7 +4,7 @@ using std::array;
 using std::string;
 using std::vector;
 
-Grid::Grid() : grid(), center(0, 0)
+Grid::Grid() : grid(), min(0, 0), max(0, 0)
 {
 	tiles = 0;
 }
@@ -44,9 +44,7 @@ void Grid::traverse(int x, int y)
 
 sf::Vector2f Grid::get_center() const
 {
-	// TODO make this actual center not average
-	unsigned int div = (tiles == 0 ? 1 : tiles);
-	return center / (float)div + sf::Vector2f(PPB / 2.0, PPB / 2.0);
+	return ((sf::Vector2f)(max + min) / (float)2.0 + sf::Vector2f(0.5, 0.5)) * (float)PPB;
 }
 
 // return the tile at the coords
@@ -72,7 +70,6 @@ Tile* Grid::remove(int x, int y)
 			return nullptr;
 
 		--tiles;
-		center -= tile->get_pos();
 
 		// shrink grid, if possible
 		grid[n] = nullptr;
@@ -81,6 +78,40 @@ Tile* Grid::remove(int x, int y)
 				break;
 
 		grid.resize(n, nullptr);
+
+		if (tiles == 0)
+		{
+			// reset center if all tiles removed
+			min = sf::Vector2i(0, 0);
+			max = sf::Vector2i(0, 0);
+		}
+		// if tile is removed at a boundary
+		else if (x == max.x || x == min.x || y == max.y || y == min.y)
+		{
+			// completely recalculate center :/
+			bool first = true;
+			for (auto tl : grid)
+			{
+				if (tl != nullptr)
+				{
+					const sf::Vector2i& pos = tl->get_grid_pos();
+					if (first)
+						min = max = pos;
+					else
+					{
+						if (pos.x > max.x)
+							max.x = pos.x;
+						else if (pos.x < min.x)
+							min.x = pos.x;
+						if (pos.y > max.y)
+							max.y = pos.y;
+						else if (pos.y < min.y)
+							min.y = pos.y;
+					}
+					first = false;
+				}
+			}
+		}
 
 		// check for created words
 		if (get(x + 1, y) != nullptr && get(x + 2, y) != nullptr)
@@ -118,8 +149,20 @@ Tile* Grid::swap(int x, int y, Tile* tile)
 	if (swp != nullptr)
 		return swp;
 
+	if (tiles == 0)
+		min = max = sf::Vector2i(x, y);
+	else
+	{
+		if (x > max.x)
+			max.x = x;
+		else if (x < min.x)
+			min.x = x;
+		if (y > max.y)
+			max.y = y;
+		else if (y < min.y)
+			min.y = y;
+	}
 	++tiles;
-	center += tile->get_pos();
 
 	// check for created words
 	if (get(x - 1, y) == nullptr)

@@ -14,7 +14,8 @@ class Grid
 {
 	std::vector<Tile*> grid;
 	unsigned int tiles;
-	sf::Vector2f center;
+	sf::Vector2i min;
+	sf::Vector2i max;
 	std::vector<std::string> defined;
 	std::map<sf::Vector2i, bool> hwords;
 	std::map<sf::Vector2i, bool> vwords;
@@ -32,7 +33,7 @@ public:
 	Grid();
 	~Grid();
 
-	// get average tile position (not reall center)
+	// return center of bounding box
 	sf::Vector2f get_center() const;
 
 	// return tile at x, y
