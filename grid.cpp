@@ -164,6 +164,8 @@ Tile* Grid::swap(int x, int y, Tile* tile)
 	}
 	++tiles;
 
+	last = sf::Vector2i(x, y);
+
 	// check for created words
 	if (get(x - 1, y) == nullptr)
 	{
@@ -243,26 +245,40 @@ bool Grid::is_valid(vector<string>& messages)
 	Tile* tile;
 
 	// get words
+	bool define; // whether we should define this word
 	for (auto& pair: hwords)
 	{
 		temp.str("");
-		for (unsigned int x = pair.first.x; (tile = get(x, pair.first.y)) != nullptr; x++)
+		define = false;
+		for (int x = pair.first.x; (tile = get(x, pair.first.y)) != nullptr; x++)
+		{
 			temp << tile->ch();
+			if (x == last.x && pair.first.y == last.y)
+				define = true;
+		}
+		if (define)
+			defns.push_back(temp.str());
 		if (!words.count(temp.str()))
-				words[temp.str()] = vector<array<int, 3>>();
+			words[temp.str()] = vector<array<int, 3>>();
 		words[temp.str()].push_back(array<int, 3>{{pair.first.x, pair.first.y, 0}});
 	}
 	for (auto& pair: vwords)
 	{
 		temp.str("");
-		for (unsigned int y = pair.first.y; (tile = get(pair.first.x, y)) != nullptr; y++)
+		define = false;
+		for (int y = pair.first.y; (tile = get(pair.first.x, y)) != nullptr; y++)
+		{
 			temp << tile->ch();
+			if (pair.first.x == last.x && y == last.y)
+				define = true;
+		}
+		if (define)
+			defns.push_back(temp.str());
 		if (!words.count(temp.str()))
-				words[temp.str()] = vector<array<int, 3>>();
+			words[temp.str()] = vector<array<int, 3>>();
 		words[temp.str()].push_back(array<int, 3>{{pair.first.x, pair.first.y, 1}});
 	}
 
-	// TODO only define the most recently spelled words
 	// check words
 	for (auto& word : words)
 	{
@@ -271,9 +287,6 @@ bool Grid::is_valid(vector<string>& messages)
 		// if invalid
 		if (it == dictionary.end())
 		{
-			// if this is first error, clear definitions
-			if (valid)
-				messages.clear();
 			valid = false;
 			messages.push_back(word.first + " is not a word.");
 			int coord[2];
@@ -282,37 +295,32 @@ bool Grid::is_valid(vector<string>& messages)
 				for (coord[0] = pos[0], coord[1] = pos[1]; (tile = get(coord[0], coord[1])) != nullptr; coord[pos[2]]++)
 					tile->set_color(sf::Color(255, 50, 50));
 		}
-		// if valid and defined
-		else if (valid && std::rand() % 100 == 0 && it->second.length() > 0)
+	}
+
+	// if error-free, (maybe) display definitions
+	if (valid && std::rand() % 100 == 0)
+	{
+		for (auto word : defns)
 		{
 			// check if we have already displayed the definition
 			bool defd = false;
 			for (string& wd : defined)
-				if (word.first == wd)
+				if (word == wd)
 				{
 					defd = true;
 					break;
 				}
-			if (!defd)
-				for (string& wd : defns)
-					if (word.first == wd)
-					{
-						defd = true;
-						break;
-					}
 
 			if (!defd)
 			{
-				defns.push_back(word.first);
-				messages.push_back(word.first + ": " + it->second);
+				defined.push_back(word);
+
+				auto it = dictionary.find(word);
+				if (it->second.length() > 0)
+					messages.push_back(word + ": " + it->second);
 			}
 		}
 	}
-
-	// if error-free, keep track of displayed definitions
-	if (valid)
-		for (string& wd : defns)
-			defined.push_back(wd);
 
 	return valid;
 }

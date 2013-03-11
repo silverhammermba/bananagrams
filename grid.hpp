@@ -16,6 +16,7 @@ class Grid
 	unsigned int tiles;
 	sf::Vector2i min;
 	sf::Vector2i max;
+	sf::Vector2i last;
 	std::vector<std::string> defined;
 	std::map<sf::Vector2i, bool> hwords;
 	std::map<sf::Vector2i, bool> vwords;
