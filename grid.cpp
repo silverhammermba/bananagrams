@@ -206,8 +206,8 @@ void Grid::step(float time)
 	}
 }
 
-// check for connectedness and valid words
-bool Grid::is_valid(vector<string>& messages)
+// check for connectedness and valid words, chance of displaying definitions of valid words
+bool Grid::is_valid(vector<string>& messages, unsigned int chance)
 {
 	// need at least one word to be valid
 	if (hwords.size() == 0 && vwords.size() == 0)
@@ -298,7 +298,7 @@ bool Grid::is_valid(vector<string>& messages)
 	}
 
 	// if error-free, (maybe) display definitions
-	if (valid && std::rand() % 100 == 0)
+	if (valid && std::rand() % chance == 0)
 	{
 		for (auto word : defns)
 		{

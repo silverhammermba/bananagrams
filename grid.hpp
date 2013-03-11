@@ -62,8 +62,8 @@ public:
 	// animate tiles
 	void step(float time);
 
-	// check for connectedness and valid words
-	bool is_valid(std::vector<std::string>& messages);
+	// check for connectedness and valid words, chance of displaying definitions of valid words
+	bool is_valid(std::vector<std::string>& messages, unsigned int chance = 100);
 
 	void draw_on(sf::RenderWindow& window) const;
 };
