@@ -44,6 +44,7 @@ void Grid::traverse(int x, int y)
 
 sf::Vector2f Grid::get_center() const
 {
+	// TODO make this actual center not average
 	unsigned int div = (tiles == 0 ? 1 : tiles);
 	return center / (float)div + sf::Vector2f(PPB / 2.0, PPB / 2.0);
 }

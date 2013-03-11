@@ -1,7 +1,5 @@
 #include "bananagrams.hpp"
 
-// TODO comments
-
 using std::cerr;
 using std::endl;
 using std::string;
@@ -69,111 +67,24 @@ bool MouseControls::process_event(sf::Event& event)
 // for converting key names to sf::Keyboard::Key values
 static const std::vector<string> keys
 {
-	"a",
-	"b",
-	"c",
-	"d",
-	"e",
-	"f",
-	"g",
-	"h",
-	"i",
-	"j",
-	"k",
-	"l",
-	"m",
-	"n",
-	"o",
-	"p",
-	"q",
-	"r",
-	"s",
-	"t", "u",
-	"v",
-	"w",
-	"x",
-	"y",
-	"z",
-	"num0",
-	"num1",
-	"num2",
-	"num3",
-	"num4",
-	"num5",
-	"num6",
-	"num7",
-	"num8",
-	"num9",
-	"escape",
-	"lcontrol",
-	"lshift",
-	"lalt",
-	"lsystem",
-	"rcontrol",
-	"rshift",
-	"ralt",
-	"rsystem",
-	"menu",
-	"lbracket",
-	"rbracket",
-	"semicolon",
-	"comma",
-	"period",
-	"quote",
-	"slash",
-	"backslash",
-	"tilde",
-	"equal",
-	"dash",
-	"space",
-	"return",
-	"backspace",
-	"tab",
-	"pageup",
-	"pagedown",
-	"end",
-	"home",
-	"insert",
-	"delete",
-	"add",
-	"subtract",
-	"multiply",
-	"divide",
-	"left",
-	"right",
-	"up",
-	"down",
-	"numpad0",
-	"numpad1",
-	"numpad2",
-	"numpad3",
-	"numpad4",
-	"numpad5",
-	"numpad6",
-	"numpad7",
-	"numpad8",
-	"numpad9",
-	"f1",
-	"f2",
-	"f3",
-	"f4",
-	"f5",
-	"f6",
-	"f7",
-	"f8",
-	"f9",
-	"f10",
-	"f11",
-	"f12",
-	"f13",
-	"f14",
-	"f15",
-	"pause"
+	"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o",
+	"p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "num0", "num1",
+	"num2", "num3", "num4", "num5", "num6", "num7", "num8", "num9", "escape",
+	"lcontrol", "lshift", "lalt", "lsystem", "rcontrol", "rshift", "ralt",
+	"rsystem", "menu", "lbracket", "rbracket", "semicolon", "comma", "period",
+	"quote", "slash", "backslash", "tilde", "equal", "dash", "space", "return",
+	"backspace", "tab", "pageup", "pagedown", "end", "home", "insert",
+	"delete", "add", "subtract", "multiply", "divide", "left", "right", "up",
+	"down", "numpad0", "numpad1", "numpad2", "numpad3", "numpad4", "numpad5",
+	"numpad6", "numpad7", "numpad8", "numpad9", "f1", "f2", "f3", "f4", "f5",
+	"f6", "f7", "f8", "f9", "f10", "f11", "f12", "f13", "f14", "f15", "pause"
 };
 
 sf::Event::KeyEvent str2key(const string& strn)
 {
 	sf::Event::KeyEvent key;
+
+	// key code if we can't find it in the keys array
 	key.code = sf::Keyboard::Key::Unknown;
 	key.alt = false;
 	key.control = false;
@@ -206,6 +117,7 @@ sf::Event::KeyEvent str2key(const string& strn)
 	if (i < str.size())
 		subs.push_back(str.substr(i, str.size() - i));
 
+	// parse key modifiers
 	for (unsigned int i = 0; i < subs.size() - 1; i++)
 	{
 		if (subs[i] == "alt")
@@ -216,10 +128,11 @@ sf::Event::KeyEvent str2key(const string& strn)
 			key.shift = true;
 		else if (subs[i] == "system")
 			key.system = true;
-		else
+		else // invalid modifier
 			return key;
 	}
 
+	// find matching key value
 	for (i = 0; i < keys.size() && keys[i] != subs.back(); i++);
 	if (i < keys.size())
 		key.code = (sf::Keyboard::Key)i;
@@ -287,6 +200,7 @@ void KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 {
 	if (commands.find(command) == commands.end())
 		throw NotFound(command);
+	// TODO clear other binds?
 	binds[key] = command;
 	commands[command].pressed = false;
 	commands[command].ready = true;
@@ -301,7 +215,6 @@ void KeyControls::set_defaults()
 
 void KeyControls::load_from_file(const string& filename)
 {
-	bool bad = false;
 	YAML::Node bindings;
 	try
 	{
@@ -309,12 +222,13 @@ void KeyControls::load_from_file(const string& filename)
 	}
 	catch (YAML::BadFile)
 	{
-		bad = true;
+		cerr << "Can't read " << filename << endl;
+		return;
 	}
 
-	if (bad || !bindings.IsMap())
+	if (!bindings.IsMap())
 	{
-		cerr << "Ignoring bad/missing config file\n";
+		cerr << "Ignoring bad config file\n";
 		return;
 	}
 
@@ -355,6 +269,7 @@ void KeyControls::write_to_file(const string& filename)
 
 	for (auto pair : binds)
 	{
+		// if bind is non-default
 		if (std::less<sf::Event::KeyEvent>()(pair.first, defaults[pair.second]) || std::less<sf::Event::KeyEvent>()(defaults[pair.second], pair.first))
 			out << YAML::Key << pair.second
 			    << YAML::Value << YAML::Node(pair.first)
@@ -407,6 +322,7 @@ bool KeyControls::process_event(sf::Event& event)
 	}
 	else if (event.type == sf::Event::KeyReleased)
 	{
+		// for modifiers, need to disable any HOLD binds relying on them
 		switch (event.key.code)
 		{
 			case sf::Keyboard::Key::LAlt:
