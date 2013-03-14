@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-std=c++0x -Wall -Wextra -Wfatal-errors -ggdb
+CXXFLAGS=-std=c++0x -Wall -Wextra -Wfatal-errors -ggdb -pg
 SOURCE:=$(wildcard *.cpp)
 
 bananagrams: $(patsubst %.cpp,%.o,$(SOURCE))
