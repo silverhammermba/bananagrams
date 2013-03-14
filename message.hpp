@@ -42,6 +42,7 @@ public:
 	enum severity_t {LOW, HIGH};
 
 	MessageQ(const sf::Font& f);
+	~MessageQ();
 
 	void add(const std::string& message, severity_t severity);
 	void age(float time); // TODO inefficient?

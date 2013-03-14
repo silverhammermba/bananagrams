@@ -12,6 +12,12 @@ MessageQ::MessageQ(const sf::Font& f) : font(f)
 	bottom = 0;
 }
 
+MessageQ::~MessageQ()
+{
+	for (auto message : messages)
+		delete message;
+}
+
 void MessageQ::add(const string& message, severity_t severity)
 {
 	sf::Color color;
@@ -44,6 +50,7 @@ void MessageQ::age(float time)
 		(*mess)->age(time);
 		if ((*mess)->age() > 5)
 		{
+			delete *mess;
 			mess = messages.erase(mess);
 			change = true;
 		}
