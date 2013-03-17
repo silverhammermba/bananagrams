@@ -47,10 +47,10 @@ bool Menu::process_event(sf::Event& event)
 		case sf::Event::KeyPressed:
 			if (event.key.code == sf::Keyboard::Escape)
 				finished = true;
-			else if (highlighted > 0 && event.key.code == sf::Keyboard::Up)
-				highlight(highlighted - 1);
-			else if (highlighted < entries.size() - 1 && event.key.code == sf::Keyboard::Down)
-				highlight(highlighted + 1);
+			else if (event.key.code == sf::Keyboard::Up)
+				highlight(highlighted == 0 ? entries.size() - 1 : highlighted - 1);
+			else if (event.key.code == sf::Keyboard::Down)
+				highlight(highlighted == entries.size() - 1 ? 0 : highlighted + 1);
 			else if (event.key.code == sf::Keyboard::Return)
 				select(highlighted);
 			break;
