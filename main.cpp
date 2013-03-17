@@ -9,7 +9,8 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-// objects need globally
+// objects needed globally
+sf::Font font;
 sf::RenderTexture tile_texture[26];
 std::map<string, string> dictionary;
 
@@ -25,7 +26,7 @@ public:
 
 	virtual bool process_event(sf::Event& event)
 	{
-		if (event.type == sf::Event::Closed || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape))
+		if (event.type == sf::Event::Closed)
 		{
 			state->window->close();
 
@@ -43,11 +44,9 @@ public:
 	}
 };
 
-// TODO profile
 int main()
 {
 	// load resources
-	sf::Font font;
 	if (!font.loadFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf"))
 	{
 		cerr << "Couldn't find font /usr/share/fonts/TTF/DejaVuSans.ttf!\n";
@@ -335,6 +334,9 @@ int main()
 		return 0;
 	}
 
+	Menu menu {"BANANAGRAMS", {"SOLITAIRE", "CONTROLS", "EXIT"}};
+	input_readers.push_back(&menu);
+
 	// stuff for game loop
 	MessageQ messages(font);
 
@@ -392,6 +394,8 @@ int main()
 					break;
 			}
 		}
+
+		// TODO only redraw window if you need to? sleep when no events received maybe...
 
 		// mouse moved
 		if (state.update)
@@ -842,6 +846,21 @@ int main()
 		if (controls["stack_tiles"])
 			hand.set_stacked();
 
+		if (controls["menu"])
+		{
+			menu.enable();
+
+			// insert menu after game input reader
+			for (auto it = input_readers.begin(); it != input_readers.end(); ++it)
+			{
+				if (*it == &game)
+				{
+					input_readers.insert(++it, &menu);
+					break;
+				}
+			}
+		}
+
 		// draw
 		window.clear(background);
 
@@ -857,6 +876,9 @@ int main()
 		window.setView(gui_view);
 		messages.draw_on(window);
 		hand.draw_on(window);
+
+		if (!menu.is_finished())
+			menu.draw_on(window);
 
 		window.display();
 	}

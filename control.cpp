@@ -177,6 +177,7 @@ KeyControls::KeyControls()
 	bind("zoom_in_fast"   , "ctrl shift up"  , HOLD  );
 	bind("zoom_out_fast"  , "ctrl shift down", HOLD  );
 	bind("quick_place"    , "lcontrol"       , HOLD  );
+	bind("menu"           , "escape"         , PRESS );
 	bind("peel"           , "space"          , PRESS );
 	bind("center"         , "ctrl c"         , PRESS );
 	bind("dump"           , "ctrl d"         , PRESS );
