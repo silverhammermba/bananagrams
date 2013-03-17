@@ -334,7 +334,16 @@ int main()
 		return 0;
 	}
 
-	Menu menu {gui_view, "BANANAGRAMS", {"SOLITAIRE", "CONTROLS", "EXIT"}, 30};
+	Submenu main {gui_view, nullptr, "BANANAGRAMS", 30};
+	main.add_entry("SOLITAIRE", nullptr);
+	main.add_entry("CONTROLS", nullptr);
+	Submenu quit {gui_view, &main, "Really quit?", 30};
+	main.add_entry("QUIT", &quit);
+
+	quit.add_entry("YES", nullptr);
+	quit.add_entry("NO", nullptr);
+
+	Menu menu {main};
 	input_readers.push_back(&menu);
 
 	// stuff for game loop
