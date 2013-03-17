@@ -1,5 +1,6 @@
 class Menu : public InputReader
 {
+	const sf::View& view;
 	sf::Text title;
 	std::vector<sf::Text> entries;
 	unsigned int highlighted;
@@ -7,7 +8,7 @@ class Menu : public InputReader
 	void highlight(unsigned int i);
 	void select(unsigned int i);
 public:
-	Menu(const std::string& ttl, const std::vector<std::string>& ents);
+	Menu(const sf::View& vw, const std::string& ttl, const std::vector<std::string>& ents, float size);
 
 	void draw_on(sf::RenderWindow& window) const;
 

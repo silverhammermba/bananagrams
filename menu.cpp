@@ -1,23 +1,28 @@
 #include "bananagrams.hpp"
 
-Menu::Menu(const std::string& ttl, const std::vector<std::string>& ents)
-	: title(ttl, font, 50)
+Menu::Menu(const sf::View& vw, const std::string& ttl, const std::vector<std::string>& ents, float size)
+	: view(vw), title(ttl, font, size * 2)
 {
 	title.setColor(sf::Color::White);
-	auto bounds = title.getGlobalBounds();
-	sf::Vector2f pos {-bounds.width / 2, 0};
+	sf::Vector2f pos {view.getCenter().x - title.getGlobalBounds().width / 2, 0};
 	title.setPosition(pos);
-	pos.y += bounds.height * 1.5;
+	pos.y += size * 3;
 
 	for (auto& entry : ents)
 	{
-		entries.push_back(sf::Text(entry, font, 30));
+		entries.push_back(sf::Text(entry, font, size));
 		entries.back().setColor(sf::Color(150, 150, 150));
-		bounds = entries.back().getGlobalBounds();
-		pos.x = -bounds.width / 2;
-		pos.y += bounds.height * 1.5;
+		pos.x = view.getCenter().x - entries.back().getGlobalBounds().width / 2;
 		entries.back().setPosition(pos);
+		pos.y += size * 1.5;
 	}
+
+	float shift = (view.getSize().y - entries.back().getGlobalBounds().top - title.getGlobalBounds().top + entries.back().getGlobalBounds().height) / 2;
+
+	title.move(0, shift);
+
+	for (auto& entry : entries)
+		entry.move(0, shift);
 
 	highlighted = 0;
 	highlight(0);

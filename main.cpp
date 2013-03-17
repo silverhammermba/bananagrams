@@ -334,7 +334,7 @@ int main()
 		return 0;
 	}
 
-	Menu menu {"BANANAGRAMS", {"SOLITAIRE", "CONTROLS", "EXIT"}};
+	Menu menu {gui_view, "BANANAGRAMS", {"SOLITAIRE", "CONTROLS", "EXIT"}, 30};
 	input_readers.push_back(&menu);
 
 	// stuff for game loop
