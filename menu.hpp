@@ -4,6 +4,7 @@ class Menu : public InputReader
 	sf::Text title;
 	std::vector<sf::Text> entries;
 	unsigned int highlighted;
+	sf::RectangleShape background;
 
 	void highlight(unsigned int i);
 	void select(unsigned int i);

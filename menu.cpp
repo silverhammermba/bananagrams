@@ -4,25 +4,34 @@ Menu::Menu(const sf::View& vw, const std::string& ttl, const std::vector<std::st
 	: view(vw), title(ttl, font, size * 2)
 {
 	title.setColor(sf::Color::White);
-	sf::Vector2f pos {view.getCenter().x - title.getGlobalBounds().width / 2, 0};
+	sf::Vector2f pos {-title.getGlobalBounds().width / 2, 0};
 	title.setPosition(pos);
 	pos.y += size * 3;
+	float left = pos.x;
 
 	for (auto& entry : ents)
 	{
 		entries.push_back(sf::Text(entry, font, size));
 		entries.back().setColor(sf::Color(150, 150, 150));
-		pos.x = view.getCenter().x - entries.back().getGlobalBounds().width / 2;
+		pos.x = -entries.back().getGlobalBounds().width / 2;
 		entries.back().setPosition(pos);
+
+		if (pos.x < left)
+			left = pos.x;
+
 		pos.y += size * 1.5;
 	}
 
 	float shift = (view.getSize().y - entries.back().getGlobalBounds().top - title.getGlobalBounds().top + entries.back().getGlobalBounds().height) / 2;
 
-	title.move(0, shift);
+	title.move(view.getCenter().x, shift);
 
 	for (auto& entry : entries)
-		entry.move(0, shift);
+		entry.move(view.getCenter().x, shift);
+
+	background.setFillColor(sf::Color(0, 0, 0, 200));
+	background.setSize({-2 * left + size, view.getSize().y + size});
+	background.setPosition(view.getCenter().x + left - size / 2, size / -2);
 
 	highlighted = 0;
 	highlight(0);
@@ -40,6 +49,7 @@ void Menu::select(unsigned int i)
 
 void Menu::draw_on(sf::RenderWindow& window) const
 {
+	window.draw(background);
 	window.draw(title);
 	for (auto& entry: entries)
 		window.draw(entry);
