@@ -1,17 +1,34 @@
-class Submenu
+class Entry : public InputReader
+{
+	sf::Text text;
+public:
+	Entry(const std::string& txt);
+
+	virtual float get_width() const;
+	virtual float get_height() const;
+	virtual sf::FloatRect bounds() const;
+	virtual void set_menu_pos(float top, float width);
+
+	virtual void highlight();
+	virtual void lowlight();
+
+	virtual void draw_on(sf::RenderWindow& window) const;
+
+	virtual void select() = 0;
+};
+
+class Menu : public InputReader
 {
 	const sf::View& view;
-	Submenu* const parent;
+	Menu* parent;
 	sf::Text title;
-	std::vector<sf::Text> entries;
-	std::vector<Submenu*> submenus;
-	unsigned int highlighted;
+	std::list<Entry*> entries;
+	std::list<Entry*>::iterator highlighted;
 	sf::RectangleShape background;
-	float size;
 public:
-	Submenu(const sf::View& vw, Submenu* p, const std::string& ttl, float sz);
+	Menu(const sf::View& vw, Menu* p, const std::string& ttl);
 
-	inline Submenu* get_parent() const
+	inline Menu* get_parent() const
 	{
 		return parent;
 	}
@@ -21,39 +38,47 @@ public:
 		return entries.size();
 	}
 
-	void add_entry(const std::string& entry, Submenu* sub);
+	void add_entry(std::list<Entry*>::iterator it, Entry* entry);
+	inline void append_entry(Entry* entry)
+	{
+		add_entry(entries.end(), entry);
+	}
+	void remove_entry(Entry* entry);
 
-	void highlight(unsigned int i);
-	inline void highlight_prev()
-	{
-		highlight(highlighted == 0 ? entries.size() - 1 : highlighted - 1);
-	}
-	inline void highlight_next()
-	{
-		highlight(highlighted == entries.size() - 1 ? 0 : highlighted + 1);
-	}
+	void highlight(std::list<Entry*>::iterator it);
+	void highlight_prev();
+	void highlight_next();
 	void highlight_coords(float x, float y);
 
-	inline Submenu* select()
-	{
-		return submenus[highlighted];
-	}
-
 	void draw_on(sf::RenderWindow& window) const;
+	virtual bool process_event(sf::Event& event);
 };
 
-class Menu : public InputReader
+class MenuWrapper : public InputReader
 {
-	Submenu* submenu;
 public:
-	Menu(Submenu& root);
-
-	void draw_on(sf::RenderWindow& window) const;
+	Menu** menu;
+	MenuWrapper(Menu** current) { menu = current; };
 
 	inline void enable()
 	{
 		finished = false;
 	}
 
+	inline virtual bool process_event(sf::Event& event)
+	{
+		bool go = (*menu)->process_event(event);
+		finished = (*menu)->is_finished();
+		return go;
+	}
+};
+
+class MenuEntry : public Entry
+{
+	Menu** root;
+public:
+	Menu* submenu;
+	MenuEntry(std::string txt, Menu** rt, Menu* sub = nullptr);
+	virtual void select();
 	virtual bool process_event(sf::Event& event);
 };

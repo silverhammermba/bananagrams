@@ -1,87 +1,145 @@
 #include "bananagrams.hpp"
 
-Submenu::Submenu(const sf::View& vw, Submenu* p, const std::string& ttl, float sz)
-	: view(vw), parent(p), title(ttl, font, sz * 2)
+Entry::Entry(const std::string& txt)
+	: text(txt, font, PPB * 1.5)
 {
-	size = sz;
+}
+
+float Entry::get_width() const
+{
+	return text.getGlobalBounds().width;
+}
+
+float Entry::get_height() const
+{
+	return PPB * 1.5;
+}
+
+sf::FloatRect Entry::bounds() const
+{
+	return text.getGlobalBounds();
+}
+
+void Entry::set_menu_pos(float top, float width)
+{
+	text.setPosition(top, width / -2);
+}
+
+void Entry::highlight()
+{
+	text.setColor(sf::Color::White);
+}
+
+void Entry::lowlight()
+{
+	text.setColor(sf::Color(150, 150, 150));
+}
+
+void Entry::draw_on(sf::RenderWindow& window) const
+{
+	window.draw(text);
+}
+
+MenuEntry::MenuEntry(std::string txt, Menu** rt, Menu* sub)
+	: Entry(txt)
+{
+	submenu = sub;
+	root = rt;
+}
+
+void MenuEntry::select()
+{
+	if (submenu != nullptr)
+		*root = submenu;
+}
+
+bool MenuEntry::process_event(sf::Event& event)
+{
+	return true;
+}
+
+Menu::Menu(const sf::View& vw, Menu* p, const std::string& ttl)
+	: view(vw), parent(p), title(ttl, font, PPB * 2.0)
+{
 	title.setColor(sf::Color::White);
 
 	background.setFillColor(sf::Color(0, 0, 0, 200));
 
 	// TODO dangerous if no entries are added
-	highlighted = 0;
+	highlighted = entries.begin();
 }
 
-void Submenu::add_entry(const std::string& entry, Submenu* sub)
+void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 {
-	sf::Vector2f pos {-title.getGlobalBounds().width / 2, 0};
-	title.setPosition(pos);
-	pos.y += size * 3;
-	float left = pos.x;
+	float max_width = title.getGlobalBounds().width;
 
-	entries.push_back(sf::Text(entry, font, size));
-	entries.back().setColor(sf::Color(150, 150, 150));
+	entries.insert(it, entry);
 
-	for (auto& entry : entries)
+	for (auto entry : entries)
 	{
-		pos.x = -entry.getGlobalBounds().width / 2;
-		entry.setPosition(pos);
-
-		if (pos.x < left)
-			left = pos.x;
-
-		pos.y += size * 1.5;
+		float width = entry->get_width();
+		if (width > max_width)
+			max_width = width;
 	}
 
-	float shift = (view.getSize().y - entries.back().getGlobalBounds().top - title.getGlobalBounds().top + entries.back().getGlobalBounds().height) / 2;
+	float height = PPB * 2.5 + (entries.size() - 1) * PPB * 1.5 + entries.back()->get_height();
+	float shift = (view.getSize().y - height) / 2;
 
-	title.move(view.getCenter().x, shift);
+	title.setPosition(shift, title.getGlobalBounds().width / -2);
 
-	for (auto& entry : entries)
-		entry.move(view.getCenter().x, shift);
+	unsigned int i = 0;
+	for (auto entry : entries)
+		entry->set_menu_pos(shift + PPB * 2.5 + i++ * PPB * 1.5, max_width / -2);
 
-	background.setSize({-2 * left + size, view.getSize().y + size});
-	background.setPosition(view.getCenter().x + left - size / 2, size / -2);
-
-	submenus.push_back(sub);
+	background.setSize({max_width + PPB, view.getSize().y + PPB});
+	background.setPosition(view.getCenter().x + max_width - PPB / 2.0, PPB / -2.0);
 
 	if (entries.size() == 1)
-		highlight(0);
+		highlight(entries.begin());
 }
 
-void Submenu::highlight(unsigned int i)
+void Menu::highlight(std::list<Entry*>::iterator it)
 {
-	entries[highlighted].setColor(sf::Color(150, 150, 150));
-	entries[highlighted = i].setColor(sf::Color::White);
+	if (highlighted != entries.end())
+		(*highlighted)->lowlight();
+	(*(highlighted = it))->highlight();
 }
 
-void Submenu::highlight_coords(float x, float y)
+void Menu::highlight_prev()
+{
+	auto it = highlighted;
+	if (it == entries.begin())
+		it = entries.end();
+	--it; // TODO dangerous if menu is empty!
+	highlight(it);
+}
+
+void Menu::highlight_next()
+{
+	auto it = highlighted;
+	++it; // TODO dangerous if menu is empty!
+	if (it == entries.end())
+		it = entries.begin();
+	highlight(it);
+}
+
+void Menu::highlight_coords(float x, float y)
 {
 	sf::Vector2f mouse {x, y};
-	for (unsigned int i = 0; i < entries.size(); i++)
-		if (entries[i].getGlobalBounds().contains(mouse))
+	for (auto it = entries.begin(); it != entries.end(); it++)
+		if ((*it)->bounds().contains(mouse))
 		{
-			highlight(i);
+			highlight(it);
 			break;
 		}
 }
 
-void Submenu::draw_on(sf::RenderWindow& window) const
+void Menu::draw_on(sf::RenderWindow& window) const
 {
 	window.draw(background);
 	window.draw(title);
-	for (auto& entry: entries)
-		window.draw(entry);
-}
-
-Menu::Menu(Submenu& root)
-{
-	submenu = &root;
-}
-
-void Menu::draw_on(sf::RenderWindow& window) const
-{
-	submenu->draw_on(window);
+	for (auto entry: entries)
+		entry->draw_on(window);
 }
 
 bool Menu::process_event(sf::Event& event)
@@ -92,42 +150,36 @@ bool Menu::process_event(sf::Event& event)
 			switch (event.key.code)
 			{
 				case sf::Keyboard::Escape:
-					if (submenu->get_parent() == nullptr)
-						finished = true;
-					else
-						submenu = submenu->get_parent();
+					finished = true;
 					break;
 				case sf::Keyboard::Up:
-					submenu->highlight_prev();
+					highlight_prev();
 					break;
 				case sf::Keyboard::Down:
-					submenu->highlight_next();
+					highlight_next();
 					break;
 				case sf::Keyboard::Return:
-				{
-					Submenu* sub = submenu->select();
-					if (sub != nullptr)
-						submenu = sub;
+					(*highlighted)->select();
 					break;
-				}
 				default:
 					break;
 			}
 			break;
 		case sf::Event::MouseMoved:
-			submenu->highlight_coords((float)event.mouseMove.x, (float)event.mouseMove.y);
-			break;
-		case sf::Event::MouseButtonPressed:
-			submenu->highlight_coords((float)event.mouseButton.x, (float)event.mouseButton.y);
-			break;
-		case sf::Event::MouseButtonReleased:
 		{
-			Submenu* sub = submenu->select();
-			if (sub != nullptr)
-				submenu = sub;
+			highlight_coords(event.mouseMove.x, event.mouseMove.y);
 			break;
 		}
+		case sf::Event::MouseButtonPressed:
+		{
+			highlight_coords(event.mouseButton.x, event.mouseButton.y);
+			break;
+		}
+		case sf::Event::MouseButtonReleased:
+			(*highlighted)->select();
+			break;
 		default:
+			(*highlighted)->process_event(event);
 			break;
 	}
 

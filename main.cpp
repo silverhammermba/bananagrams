@@ -334,17 +334,21 @@ int main()
 		return 0;
 	}
 
-	Submenu main {gui_view, nullptr, "BANANAGRAMS", 30};
-	main.add_entry("SOLITAIRE", nullptr);
-	main.add_entry("CONTROLS", nullptr);
-	Submenu quit {gui_view, &main, "Really quit?", 30};
-	main.add_entry("QUIT", &quit);
+	Menu* main = new Menu(gui_view, nullptr, "BANANAGRAMS");
+	MenuWrapper current(&main);
+	MenuEntry* solitaire = new MenuEntry("SOLITAIRE", current.menu);
+	MenuEntry* customize = new MenuEntry("CONTROLS", current.menu);
+	MenuEntry* quit = new MenuEntry("QUIT", current.menu);
+	main->append_entry(solitaire);
+	main->append_entry(customize);
+	main->append_entry(quit);
 
-	quit.add_entry("YES", nullptr);
-	quit.add_entry("NO", nullptr);
+	Menu* confirm_quit = new Menu(gui_view, main, "Really quit?");
+	quit->submenu = confirm_quit;
+	confirm_quit->append_entry(new MenuEntry("YES", current.menu));
+	confirm_quit->append_entry(new MenuEntry("NO", current.menu, main));
 
-	Menu menu {main};
-	input_readers.push_back(&menu);
+	input_readers.push_back(&current);
 
 	// stuff for game loop
 	MessageQ messages(font);
@@ -857,14 +861,14 @@ int main()
 
 		if (controls["menu"])
 		{
-			menu.enable();
+			current.enable();
 
 			// insert menu after game input reader
 			for (auto it = input_readers.begin(); it != input_readers.end(); ++it)
 			{
 				if (*it == &game)
 				{
-					input_readers.insert(++it, &menu);
+					input_readers.insert(++it, &current);
 					break;
 				}
 			}
@@ -886,8 +890,8 @@ int main()
 		messages.draw_on(window);
 		hand.draw_on(window);
 
-		if (!menu.is_finished())
-			menu.draw_on(window);
+		if (!current.is_finished())
+			(*(current.menu))->draw_on(window);
 
 		window.display();
 	}
