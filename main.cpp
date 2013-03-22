@@ -62,6 +62,7 @@ int main()
 	}
 
 	KeyControls controls;
+	// TODO store last dictionary name, last resolution settings, etc.
 	controls.load_from_file("config.yaml");
 
 	std::srand((unsigned int)std::time(nullptr));
@@ -166,6 +167,7 @@ int main()
 
 	loading_text.setColor(sf::Color::White);
 
+	// TODO make it so you can start a new game without quitting
 	loading_text.setString("Loading dictionary...");
 	auto ltbounds = loading_text.getGlobalBounds();
 	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
@@ -899,6 +901,8 @@ int main()
 
 		window.display();
 	}
+
+	// TODO save game if player hasn't won
 
 	// delete unused tiles
 	for (auto tile: bunch)

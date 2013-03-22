@@ -49,7 +49,9 @@ MenuEntry::MenuEntry(std::string txt, MenuSystem& sys, Menu* sub)
 
 void MenuEntry::select()
 {
-	if (submenu != nullptr)
+	if (submenu == nullptr)
+		system.close(); // TODO why do we need to double tap Esc when closing this way?
+	else
 		system.set_menu(*submenu);
 }
 
@@ -62,6 +64,7 @@ void QuitEntry::select()
 	window.close();
 }
 
+// TODO react to changing view
 Menu::Menu(const sf::View& vw, MenuSystem& sys, Menu* p, const std::string& ttl)
 	: view(vw), system(sys), parent(p), title(ttl, font, PPB * 2.0)
 {
