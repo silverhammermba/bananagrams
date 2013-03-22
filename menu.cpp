@@ -22,7 +22,7 @@ sf::FloatRect Entry::bounds() const
 
 void Entry::set_menu_pos(float top, float width)
 {
-	text.setPosition(top, width / -2);
+	text.setPosition(text.getGlobalBounds().width / -2, top);
 }
 
 void Entry::highlight()
@@ -85,14 +85,14 @@ void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 	float height = PPB * 2.5 + (entries.size() - 1) * PPB * 1.5 + entries.back()->get_height();
 	float shift = (view.getSize().y - height) / 2;
 
-	title.setPosition(shift, title.getGlobalBounds().width / -2);
+	title.setPosition(title.getGlobalBounds().width / -2, shift);
 
 	unsigned int i = 0;
 	for (auto entry : entries)
 		entry->set_menu_pos(shift + PPB * 2.5 + i++ * PPB * 1.5, max_width / -2);
 
 	background.setSize({max_width + PPB, view.getSize().y + PPB});
-	background.setPosition(view.getCenter().x + max_width - PPB / 2.0, PPB / -2.0);
+	background.setPosition(background.getSize().x / -2, PPB / -2.0);
 
 	if (entries.size() == 1)
 		highlight(entries.begin());

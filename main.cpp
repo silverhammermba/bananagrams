@@ -891,7 +891,13 @@ int main()
 		hand.draw_on(window);
 
 		if (!current.is_finished())
+		{
+			auto center = gui_view.getCenter();
+			gui_view.setCenter(0, center.y);
+			window.setView(gui_view);
 			(*(current.menu))->draw_on(window);
+			gui_view.setCenter(center);
+		}
 
 		window.display();
 	}
