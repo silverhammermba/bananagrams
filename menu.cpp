@@ -21,9 +21,9 @@ sf::FloatRect Entry::bounds() const
 	return text.getGlobalBounds();
 }
 
-void Entry::set_menu_pos(float top, float width)
+void Entry::set_menu_pos(float center, float width, float top)
 {
-	text.setPosition(text.getGlobalBounds().width / -2, top);
+	text.setPosition(center + text.getGlobalBounds().width / -2, top);
 }
 
 void Entry::highlight()
@@ -89,7 +89,7 @@ void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 
 	unsigned int i = 0;
 	for (auto entry : entries)
-		entry->set_menu_pos(view.getCenter().x + shift + PPB * 2.5 + i++ * PPB * 1.5, max_width / -2);
+		entry->set_menu_pos(view.getCenter().x, max_width, shift + PPB * 2.5 + i++ * PPB * 1.5);
 
 	background.setSize({max_width + PPB, view.getSize().y + PPB});
 	background.setPosition(view.getCenter().x + background.getSize().x / -2, PPB / -2.0);

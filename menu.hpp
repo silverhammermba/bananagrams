@@ -7,7 +7,7 @@ public:
 	virtual float get_width() const;
 	virtual float get_height() const;
 	virtual sf::FloatRect bounds() const;
-	virtual void set_menu_pos(float top, float width);
+	virtual void set_menu_pos(float center, float width, float top);
 
 	virtual void highlight();
 	virtual void lowlight();
