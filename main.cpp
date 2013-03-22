@@ -15,11 +15,11 @@ sf::RenderTexture tile_texture[26];
 std::map<string, string> dictionary;
 
 // class for handling game-related events
-class Game : public InputReader
+class WindowEvents : public InputReader
 {
 	State* state;
 public:
-	Game(State* s)
+	WindowEvents(State* s)
 	{
 		state = s;
 	}
@@ -69,36 +69,6 @@ int main()
 
 	Grid grid;
 
-	unsigned int letter_count[26] =
-	{
-		13,
-		3,
-		3,
-		6,
-		18,
-		3,
-		4,
-		3,
-		12,
-		2,
-		2,
-		5,
-		3,
-		8,
-		11,
-		3,
-		2,
-		9,
-		6,
-		9,
-		6,
-		3,
-		3,
-		2,
-		3,
-		2
-	};
-
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "Bananagrams");
 	window.setIcon(32, 32, icon);
 	window.setVerticalSyncEnabled(true);
@@ -115,8 +85,8 @@ int main()
 	state.grid_view = &grid_view;
 	state.zoom = 1;
 
-	Game game(&state);
-	input_readers.push_back(&game);
+	WindowEvents win_events(&state);
+	input_readers.push_back(&win_events);
 
 	sf::Color background(22, 22, 22);
 
@@ -167,34 +137,9 @@ int main()
 
 	loading_text.setColor(sf::Color::White);
 
-	// TODO make it so you can start a new game without quitting
-	loading_text.setString("Loading dictionary...");
+	loading_text.setString("Generating textures...");
 	auto ltbounds = loading_text.getGlobalBounds();
 	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
-	window.clear(background);
-	window.draw(loading_text);
-	window.display();
-
-	// parse dictionary
-	string line;
-	while (std::getline(words, line))
-	{
-		auto pos = line.find_first_of(' ');
-		if (pos == string::npos)
-			dictionary[line] = "";
-		else
-			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
-	}
-	words.close();
-
-	stringstream foo;
-	foo << dictionary.size();
-	loading_text.setString(foo.str() + " words loaded.");
-	ltbounds = loading_text.getGlobalBounds();
-	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
-
-	std::list<Tile*> bunch;
-	Hand hand(&gui_view, font);
 
 	// generate textures
 	{
@@ -280,15 +225,6 @@ int main()
 			tile_texture[load_char - 'A'].draw(letter);
 			tile_texture[load_char - 'A'].display();
 
-			// create tiles for the bunch
-			for (unsigned int i = 0; i < letter_count[load_char - 'A']; i++)
-			{
-				auto it = bunch.begin();
-				auto pos = std::rand() % (bunch.size() + 1);
-				for (unsigned int i = 0; i != pos && it != bunch.end(); it++, i++);
-				bunch.insert(it, new Tile(load_char));
-			}
-
 			// display generated texture
 			loaded.push_back(sf::Sprite(tile_texture[load_char - 'A'].getTexture()));
 
@@ -311,30 +247,48 @@ int main()
 
 			window.display();
 
-			load_char++;
-			// if we're done
-			if(load_char > 'Z')
-			{
-				// take tiles from the bunch for player
-				for (unsigned int i = 0; i < 21; i++)
-				{
-					Tile* tile = bunch.back();
-					bunch.pop_back();
-					hand.add_tile(tile);
-				}
-
+			// we're done
+			if(++load_char > 'Z')
 				break;
-			}
 		}
 	}
 	if (!window.isOpen())
-	{
-		// delete unused tiles
-		for (auto tile: bunch)
-			delete tile;
-
 		return 0;
+
+	std::list<Tile*> bunch;
+	Hand hand(&gui_view, font);
+	// create tiles for the bunch
+	for (char ch = 'A'; ch <= 'Z'; ++ch)
+		for (unsigned int i = 0; i < letter_count[ch - 'A']; ++i)
+			random_insert(bunch, new Tile(ch));
+
+	// take tiles from the bunch for player
+	for (unsigned int i = 0; i < 21; i++)
+	{
+		Tile* tile = bunch.back();
+		bunch.pop_back();
+		hand.add_tile(tile);
 	}
+
+	// TODO make it so you can start a new game without quitting
+	loading_text.setString("Loading dictionary...");
+	ltbounds = loading_text.getGlobalBounds();
+	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
+	window.clear(background);
+	window.draw(loading_text);
+	window.display();
+
+	// parse dictionary
+	string line;
+	while (std::getline(words, line))
+	{
+		auto pos = line.find_first_of(' ');
+		if (pos == string::npos)
+			dictionary[line] = "";
+		else
+			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
+	}
+	words.close();
 
 	MenuSystem current;
 	Menu main(gui_view, current, nullptr, "BANANAGRAMS");
@@ -869,10 +823,10 @@ int main()
 		{
 			current.open();
 
-			// insert menu after game input reader
+			// insert menu after window event input reader
 			for (auto it = input_readers.begin(); it != input_readers.end(); ++it)
 			{
-				if (*it == &game)
+				if (*it == &win_events)
 				{
 					input_readers.insert(++it, &current);
 					break;

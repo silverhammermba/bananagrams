@@ -114,12 +114,7 @@ void Hand::reshuffle()
 	for (char ch = 'A'; ch <= 'Z'; ch++)
 	{
 		for (auto tile: tiles[ch - 'A'])
-		{
-			auto it = scram.begin();
-			auto j = std::rand() % (scram.size() + 1);
-			for (unsigned int i = 0; i != j && it != scram.end(); it++, i++);
-			scram.insert(it, tile);
-		}
+			random_insert(scram, tile);
 	}
 }
 

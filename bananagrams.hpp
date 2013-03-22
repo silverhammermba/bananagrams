@@ -23,6 +23,46 @@ extern sf::Font font;
 extern sf::RenderTexture tile_texture[26];
 extern std::map<std::string, std::string> dictionary;
 
+static const unsigned int letter_count[26] =
+{
+	13,
+	3,
+	3,
+	6,
+	18,
+	3,
+	4,
+	3,
+	12,
+	2,
+	2,
+	5,
+	3,
+	8,
+	11,
+	3,
+	2,
+	9,
+	6,
+	9,
+	6,
+	3,
+	3,
+	2,
+	3,
+	2
+};
+
+// insert x into list l at a random position
+template <class T>
+void random_insert(std::list<T>& l, T x)
+{
+	auto it = l.begin();
+	auto pos = std::rand() % (l.size() + 1);
+	for (unsigned int i = 0; i != pos && it != l.end(); it++, i++);
+	l.insert(it, x);
+}
+
 // TODO better place for this?
 // for classes that handle sf::Events
 class InputReader
