@@ -865,7 +865,7 @@ int main()
 
 		if (controls["menu"])
 		{
-			current.menu().enable();
+			current.open();
 
 			// insert menu after game input reader
 			for (auto it = input_readers.begin(); it != input_readers.end(); ++it)
@@ -894,7 +894,7 @@ int main()
 		messages.draw_on(window);
 		hand.draw_on(window);
 
-		if (!current.menu().is_finished())
+		if (!current.is_finished())
 			current.menu().draw_on(window);
 
 		window.display();

@@ -41,11 +41,6 @@ public:
 		return entries.size();
 	}
 
-	inline void enable()
-	{
-		finished = false;
-	}
-
 	void add_entry(std::list<Entry*>::iterator it, Entry* entry);
 	inline void append_entry(Entry* entry)
 	{
@@ -69,7 +64,7 @@ class MenuSystem : public InputReader
 public:
 	MenuSystem() {}
 
-	inline void enable()
+	inline void open()
 	{
 		finished = false;
 	}
