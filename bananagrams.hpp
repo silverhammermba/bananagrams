@@ -38,10 +38,12 @@ public:
 		return finished;
 	}
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 	virtual bool process_event(sf::Event& event)
 	{
 		return true;
 	}
+#pragma GCC diagnostic pop
 };
 
 #include "menu.hpp"
