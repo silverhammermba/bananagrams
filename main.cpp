@@ -53,14 +53,6 @@ int main()
 		return 1;
 	}
 
-	// TODO validate somehow
-	std::ifstream words("dictionary.txt");
-	if (!words.is_open())
-	{
-		cerr << "Couldn't find dictionary.txt!\n";
-		return 1;
-	}
-
 	KeyControls controls;
 	// TODO store last dictionary name, last resolution settings, etc.
 	controls.load_from_file("config.yaml");
@@ -255,6 +247,35 @@ int main()
 	if (!window.isOpen())
 		return 0;
 
+	MenuSystem current;
+	Menu main(gui_view, current, nullptr, "BANANAGRAMS");
+	MenuEntry solitaire("SOLITAIRE", current);
+	MenuEntry customize("CONTROLS", current);
+	MenuEntry quit("QUIT", current);
+	main.append_entry(&solitaire);
+	main.append_entry(&customize);
+	main.append_entry(&quit);
+
+	Menu solitaire_opts(gui_view, current, &main, "SOLITAIRE");
+	solitaire.submenu = &solitaire_opts;
+
+	SolitaireEntry start("START GAME");
+	TextEntry dict_entry("DICTIONARY", "(default)", "dictionary.txt");
+	MultiEntry multiplier("BUNCH MULTIPLIER", {"1/2", "1", "2", "3", "4"});
+
+	solitaire_opts.append_entry(&start);
+	solitaire_opts.append_entry(&dict_entry);
+	solitaire_opts.append_entry(&multiplier);
+
+	Menu confirm_quit(gui_view, current, &main, "Really quit?");
+	quit.submenu = &confirm_quit;
+	QuitEntry yes("YES", window);
+	MenuEntry no("NO", current, &main);
+	confirm_quit.append_entry(&yes);
+	confirm_quit.append_entry(&no);
+
+	current.set_menu(main);
+
 	std::list<Tile*> bunch;
 	Hand hand(&gui_view, font);
 	// create tiles for the bunch
@@ -278,6 +299,14 @@ int main()
 	window.draw(loading_text);
 	window.display();
 
+	// TODO validate somehow
+	std::ifstream words(dict_entry.get_string());
+	if (!words.is_open())
+	{
+		cerr << "Couldn't find dictionary.txt!\n";
+		return 1;
+	}
+
 	// parse dictionary
 	string line;
 	while (std::getline(words, line))
@@ -289,24 +318,6 @@ int main()
 			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
 	}
 	words.close();
-
-	MenuSystem current;
-	Menu main(gui_view, current, nullptr, "BANANAGRAMS");
-	MenuEntry solitaire("SOLITAIRE", current);
-	MenuEntry customize("CONTROLS", current);
-	MenuEntry quit("QUIT", current);
-	main.append_entry(&solitaire);
-	main.append_entry(&customize);
-	main.append_entry(&quit);
-
-	Menu confirm_quit(gui_view, current, &main, "Really quit?");
-	quit.submenu = &confirm_quit;
-	QuitEntry yes("YES", window);
-	MenuEntry no("NO", current, &main);
-	confirm_quit.append_entry(&yes);
-	confirm_quit.append_entry(&no);
-
-	current.set_menu(main);
 
 	input_readers.push_back(&current);
 

@@ -41,7 +41,7 @@ void Entry::draw_on(sf::RenderWindow& window) const
 	window.draw(text);
 }
 
-MenuEntry::MenuEntry(std::string txt, MenuSystem& sys, Menu* sub)
+MenuEntry::MenuEntry(const std::string& txt, MenuSystem& sys, Menu* sub)
 	: Entry(txt), system(sys)
 {
 	submenu = sub;
@@ -55,7 +55,63 @@ void MenuEntry::select()
 		system.set_menu(*submenu);
 }
 
-QuitEntry::QuitEntry(std::string txt, sf::RenderWindow& win)
+SolitaireEntry::SolitaireEntry(const std::string& txt)
+	: Entry(txt)
+{
+}
+
+void SolitaireEntry::select()
+{
+	// TODO start solitaire game
+}
+
+TextEntry::TextEntry(const std::string& txt, const std::string& def_display, const std::string& def)
+	: Entry(txt), input(def_display, font, PPB * 1.3), str(def), default_display(def_display), default_str(def)
+{
+	input.setColor(sf::Color(150, 150, 150));
+	selected = false;
+}
+
+void TextEntry::lowlight()
+{
+	selected = false;
+	Entry::lowlight();
+}
+
+void TextEntry::select()
+{
+	selected = !selected;
+}
+
+bool TextEntry::process_event(sf::Event& event)
+{
+	if (selected)
+	{
+	}
+
+	return true;
+}
+
+MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& ch)
+	: Entry(txt), choices(ch)
+{
+	choice = 0;
+}
+
+bool MultiEntry::process_event(sf::Event& event)
+{
+	if (event.type == sf::Event::KeyPressed)
+	{
+		if (choice > 0 && event.key.code == sf::Keyboard::Left)
+			--choice;
+		else if (choice < choices.size() - 1 && event.key.code == sf::Keyboard::Right)
+			++choice;
+	}
+
+	return true;
+}
+
+QuitEntry::QuitEntry(const std::string& txt, sf::RenderWindow& win)
 	: Entry(txt), window(win)
 {}
 

@@ -92,14 +92,53 @@ class MenuEntry : public Entry
 	MenuSystem& system;
 public:
 	Menu* submenu;
-	MenuEntry(std::string txt, MenuSystem& sys, Menu* sub = nullptr);
+	MenuEntry(const std::string& txt, MenuSystem& sys, Menu* sub = nullptr);
 	virtual void select();
+};
+
+class SolitaireEntry : public Entry
+{
+public:
+	SolitaireEntry(const std::string& txt);
+
+	virtual void select();
+};
+
+class TextEntry : public Entry
+{
+	sf::Text input;
+	std::string str;
+	std::string default_display;
+	std::string default_str;
+	bool selected;
+public:
+	TextEntry(const std::string& txt, const std::string& def_display, const std::string& def);
+
+	inline const std::string& get_string()
+	{
+		return str;
+	}
+
+	virtual void lowlight();
+	virtual void select();
+	virtual bool process_event(sf::Event& event);
+};
+
+class MultiEntry : public Entry
+{
+	unsigned int choice;
+	std::vector<std::string> choices;
+public:
+	MultiEntry(const std::string& txt, const std::vector<std::string>& ch);
+
+	inline virtual void select() {} // nothing to do
+	virtual bool process_event(sf::Event& event);
 };
 
 class QuitEntry : public Entry
 {
 	sf::RenderWindow& window;
 public:
-	QuitEntry(std::string txt, sf::RenderWindow& win);
+	QuitEntry(const std::string& txt, sf::RenderWindow& win);
 	virtual void select();
 };
