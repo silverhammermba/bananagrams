@@ -17,16 +17,19 @@ public:
 	virtual void select() = 0;
 };
 
+class MenuSystem;
+
 class Menu : public InputReader
 {
 	const sf::View& view;
+	MenuSystem& system;
 	Menu* parent;
 	sf::Text title;
 	std::list<Entry*> entries;
 	std::list<Entry*>::iterator highlighted;
 	sf::RectangleShape background;
 public:
-	Menu(const sf::View& vw, Menu* p, const std::string& ttl);
+	Menu(const sf::View& vw, MenuSystem& sys, Menu* p, const std::string& ttl);
 
 	inline Menu* get_parent() const
 	{
@@ -36,6 +39,11 @@ public:
 	inline unsigned int get_size() const
 	{
 		return entries.size();
+	}
+
+	inline void enable()
+	{
+		finished = false;
 	}
 
 	void add_entry(std::list<Entry*>::iterator it, Entry* entry);
@@ -54,31 +62,42 @@ public:
 	virtual bool process_event(sf::Event& event);
 };
 
-class MenuWrapper : public InputReader
+class MenuSystem : public InputReader
 {
+	// TODO dangerous if not initialized
+	Menu* menu_p;
 public:
-	Menu** menu;
-	MenuWrapper(Menu** current) { menu = current; };
+	MenuSystem() {}
 
 	inline void enable()
 	{
 		finished = false;
 	}
 
-	inline virtual bool process_event(sf::Event& event)
+	inline void close()
 	{
-		bool go = (*menu)->process_event(event);
-		finished = (*menu)->is_finished();
-		return go;
+		finished = true;
 	}
+
+	inline void set_menu(Menu& m)
+	{
+		menu_p = &m;
+	}
+
+	inline Menu& menu() const
+	{
+		return *menu_p;
+	}
+
+	virtual bool process_event(sf::Event& event);
 };
 
 class MenuEntry : public Entry
 {
-	Menu** root;
+	MenuSystem& system;
 public:
 	Menu* submenu;
-	MenuEntry(std::string txt, Menu** rt, Menu* sub = nullptr);
+	MenuEntry(std::string txt, MenuSystem& sys, Menu* sub = nullptr);
 	virtual void select();
 	virtual bool process_event(sf::Event& event);
 };

@@ -3,6 +3,7 @@
 Entry::Entry(const std::string& txt)
 	: text(txt, font, PPB * 1.5)
 {
+	lowlight();
 }
 
 float Entry::get_width() const
@@ -40,17 +41,16 @@ void Entry::draw_on(sf::RenderWindow& window) const
 	window.draw(text);
 }
 
-MenuEntry::MenuEntry(std::string txt, Menu** rt, Menu* sub)
-	: Entry(txt)
+MenuEntry::MenuEntry(std::string txt, MenuSystem& sys, Menu* sub)
+	: Entry(txt), system(sys)
 {
 	submenu = sub;
-	root = rt;
 }
 
 void MenuEntry::select()
 {
 	if (submenu != nullptr)
-		*root = submenu;
+		system.set_menu(*submenu);
 }
 
 bool MenuEntry::process_event(sf::Event& event)
@@ -58,8 +58,8 @@ bool MenuEntry::process_event(sf::Event& event)
 	return true;
 }
 
-Menu::Menu(const sf::View& vw, Menu* p, const std::string& ttl)
-	: view(vw), parent(p), title(ttl, font, PPB * 2.0)
+Menu::Menu(const sf::View& vw, MenuSystem& sys, Menu* p, const std::string& ttl)
+	: view(vw), system(sys), parent(p), title(ttl, font, PPB * 2.0)
 {
 	title.setColor(sf::Color::White);
 
@@ -85,14 +85,14 @@ void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 	float height = PPB * 2.5 + (entries.size() - 1) * PPB * 1.5 + entries.back()->get_height();
 	float shift = (view.getSize().y - height) / 2;
 
-	title.setPosition(title.getGlobalBounds().width / -2, shift);
+	title.setPosition(view.getCenter().x + title.getGlobalBounds().width / -2, shift);
 
 	unsigned int i = 0;
 	for (auto entry : entries)
-		entry->set_menu_pos(shift + PPB * 2.5 + i++ * PPB * 1.5, max_width / -2);
+		entry->set_menu_pos(view.getCenter().x + shift + PPB * 2.5 + i++ * PPB * 1.5, max_width / -2);
 
 	background.setSize({max_width + PPB, view.getSize().y + PPB});
-	background.setPosition(background.getSize().x / -2, PPB / -2.0);
+	background.setPosition(view.getCenter().x + background.getSize().x / -2, PPB / -2.0);
 
 	if (entries.size() == 1)
 		highlight(entries.begin());
@@ -150,7 +150,10 @@ bool Menu::process_event(sf::Event& event)
 			switch (event.key.code)
 			{
 				case sf::Keyboard::Escape:
-					finished = true;
+					if (parent != nullptr)
+						system.set_menu(*parent);
+					else
+						system.close();
 					break;
 				case sf::Keyboard::Up:
 					highlight_prev();
@@ -182,6 +185,13 @@ bool Menu::process_event(sf::Event& event)
 			(*highlighted)->process_event(event);
 			break;
 	}
+
+	return false;
+}
+
+bool MenuSystem::process_event(sf::Event& event)
+{
+	menu_p->process_event(event);
 
 	return false;
 }
