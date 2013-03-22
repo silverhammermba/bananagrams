@@ -345,7 +345,7 @@ int main()
 
 	Menu confirm_quit(gui_view, current, &main, "Really quit?");
 	quit.submenu = &confirm_quit;
-	MenuEntry yes("YES", current);
+	QuitEntry yes("YES", window);
 	MenuEntry no("NO", current, &main);
 	confirm_quit.append_entry(&yes);
 	confirm_quit.append_entry(&no);

@@ -53,9 +53,13 @@ void MenuEntry::select()
 		system.set_menu(*submenu);
 }
 
-bool MenuEntry::process_event(sf::Event& event)
+QuitEntry::QuitEntry(std::string txt, sf::RenderWindow& win)
+	: Entry(txt), window(win)
+{}
+
+void QuitEntry::select()
 {
-	return true;
+	window.close();
 }
 
 Menu::Menu(const sf::View& vw, MenuSystem& sys, Menu* p, const std::string& ttl)

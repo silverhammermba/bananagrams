@@ -24,7 +24,7 @@ extern sf::RenderTexture tile_texture[26];
 extern std::map<std::string, std::string> dictionary;
 
 // TODO better place for this?
-// ABC for classes that handle sf::Events
+// for classes that handle sf::Events
 class InputReader
 {
 protected:
@@ -38,7 +38,10 @@ public:
 		return finished;
 	}
 
-	virtual bool process_event(sf::Event& event) = 0;
+	virtual bool process_event(sf::Event& event)
+	{
+		return true;
+	}
 };
 
 #include "menu.hpp"

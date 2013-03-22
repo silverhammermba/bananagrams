@@ -94,5 +94,12 @@ public:
 	Menu* submenu;
 	MenuEntry(std::string txt, MenuSystem& sys, Menu* sub = nullptr);
 	virtual void select();
-	virtual bool process_event(sf::Event& event);
+};
+
+class QuitEntry : public Entry
+{
+	sf::RenderWindow& window;
+public:
+	QuitEntry(std::string txt, sf::RenderWindow& win);
+	virtual void select();
 };
