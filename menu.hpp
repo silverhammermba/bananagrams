@@ -112,15 +112,6 @@ public:
 	virtual void select();
 };
 
-// TODO start a solitaire game
-class SolitaireEntry : public Entry
-{
-public:
-	SolitaireEntry(const std::string& txt);
-
-	virtual void select();
-};
-
 // enter text
 class TextEntry : public Entry
 {
@@ -168,6 +159,10 @@ public:
 	// create multiple choice entry with choices ch, defaulting to def
 	MultiEntry(const std::string& txt, const std::vector<std::string>& ch, unsigned int def = 0);
 
+	inline unsigned int get_choice() const
+	{
+		return choice;
+	}
 	virtual float get_width() const;
 	virtual sf::FloatRect bounds() const;
 	void update_choice();
@@ -178,6 +173,19 @@ public:
 	inline virtual void select() {} // nothing to do
 	virtual bool process_event(sf::Event& event);
 	virtual void draw_on(sf::RenderWindow& window) const;
+};
+
+// TODO start a solitaire game
+class SolitaireEntry : public Entry
+{
+	MenuSystem& system;
+	TextEntry& dict_entry;
+	MultiEntry& multiplier;
+	Game& game;
+public:
+	SolitaireEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict_entry, MultiEntry& multiplier, Game& game);
+
+	virtual void select();
 };
 
 // close the window

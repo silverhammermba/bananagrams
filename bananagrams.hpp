@@ -86,7 +86,6 @@ public:
 #pragma GCC diagnostic pop
 };
 
-#include "menu.hpp"
 #include "control.hpp"
 #include "message.hpp"
 #include "cursor.hpp"
@@ -95,3 +94,4 @@ public:
 #include "hand.hpp"
 #include "buffer.hpp"
 #include "game.hpp"
+#include "menu.hpp"

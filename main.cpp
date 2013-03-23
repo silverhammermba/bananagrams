@@ -258,9 +258,10 @@ int main()
 	Menu solitaire_opts(current, &main, "SOLITAIRE");
 	solitaire.submenu = &solitaire_opts;
 
-	SolitaireEntry start("START GAME");
+	Game game;
 	TextEntry dict_entry("DICTIONARY", PPB * 8, "dictionary.txt");
 	MultiEntry multiplier("BUNCH x", {"1/2", "1", "2", "3", "4"}, 1);
+	SolitaireEntry start("START GAME", current, dict_entry, multiplier, game);
 
 	solitaire_opts.append_entry(&start);
 	solitaire_opts.append_entry(&dict_entry);
@@ -285,8 +286,7 @@ int main()
 	window.display();
 
 	// stuff for game loop
-	Game game;
-	game.restart(dict_entry.get_string());
+	//game.restart(dict_entry.get_string());
 
 	Cursor cursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color::Transparent, sf::Color(0, 200, 0));
 	Cursor mcursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color::Transparent, sf::Color(0, 200, 0, 80));
