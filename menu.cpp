@@ -69,7 +69,7 @@ void SolitaireEntry::select()
 	// TODO start solitaire game
 }
 
-TextEntry::TextEntry(const std::string& txt, const std::string& def_display, const std::string& def, float mbw)
+TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, const std::string& def_display)
 	: Entry(txt), box(), input(def_display, font, PPB), str(def), default_display(def_display), default_str(def)
 {
 	min_box_width = mbw;
@@ -99,6 +99,14 @@ float TextEntry::get_width() const
 	return text.getGlobalBounds().width + PPB * 0.5 + min_box_width;
 }
 
+sf::FloatRect TextEntry::bounds() const
+{
+	auto tb = text.getGlobalBounds();
+	auto bb = box.getGlobalBounds();
+	sf::FloatRect b(tb.left, bb.top, bb.left + bb.width - tb.left, bb.height);
+	return b;
+}
+
 // center input in box
 void TextEntry::set_input_pos()
 {
@@ -112,9 +120,9 @@ void TextEntry::set_input_pos()
 void TextEntry::set_menu_pos(float center, float width, float top)
 {
 	text.setPosition(center - width / 2, top);
-	auto bounds = text.getGlobalBounds();
-	box.setSize({(float)(width - bounds.width - PPB * 0.5), b_height});
-	box.setPosition(center - width / 2 + bounds.width + PPB * 0.5, bounds.top + bounds.height - b_height);
+	auto tb = text.getGlobalBounds();
+	box.setSize({(float)(width - tb.width - PPB * 0.5), b_height});
+	box.setPosition(center - width / 2 + tb.width + PPB * 0.5, tb.top + tb.height - b_height);
 	set_input_pos();
 }
 
@@ -215,6 +223,14 @@ MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& c
 float MultiEntry::get_width() const
 {
 	return text.getGlobalBounds().width + PPB + max_width;
+}
+
+sf::FloatRect MultiEntry::bounds() const
+{
+	auto tb = text.getGlobalBounds();
+	auto cb = chooser.getGlobalBounds();
+	sf::FloatRect b(tb.left, std::min(tb.top, cb.top), cb.left + cb.width - tb.left, std::max(tb.height, cb.height));
+	return b;
 }
 
 void MultiEntry::update_choice()

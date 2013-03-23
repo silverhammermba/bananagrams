@@ -1,3 +1,4 @@
+// ABC for entries in Menus
 class Entry : public InputReader
 {
 protected:
@@ -5,41 +6,47 @@ protected:
 public:
 	Entry(const std::string& txt);
 
+	// get minimum width occupied by this entry
 	virtual float get_width() const;
+	// TODO do we need this?
+	// get minimum height occupied by this entry
 	virtual float get_height() const;
+	// get bounding FloatRect (for mouse selection)
 	virtual sf::FloatRect bounds() const;
+	// position entry given menu center, width, and entry top
 	virtual void set_menu_pos(float center, float width, float top);
 
+	// indicate that entry is current
 	virtual void highlight();
+	// remove that indication
 	virtual void lowlight();
 
 	virtual void draw_on(sf::RenderWindow& window) const;
 
+	// TODO can I make an implementation for this?
+	// triggered when return is pressed for this entry
 	virtual void select() = 0;
 };
 
 class MenuSystem;
 
+// stores list of Entries and manages navigation
 class Menu : public InputReader
 {
-	const sf::View& view;
-	MenuSystem& system;
-	Menu* parent;
+	const sf::View& view; // for centering the menu
+	MenuSystem& system; // system managing this menu
+	Menu* parent; // nullptr for no parent
 	sf::Text title;
 	std::list<Entry*> entries;
 	std::list<Entry*>::iterator highlighted;
 	sf::RectangleShape background;
 public:
+	// create menu centered on vw, managed by sys, with parent p, and title ttl
 	Menu(const sf::View& vw, MenuSystem& sys, Menu* p, const std::string& ttl);
 
 	inline Menu* get_parent() const
 	{
 		return parent;
-	}
-
-	inline unsigned int get_size() const
-	{
-		return entries.size();
 	}
 
 	void add_entry(std::list<Entry*>::iterator it, Entry* entry);
@@ -49,15 +56,20 @@ public:
 	}
 	void remove_entry(Entry* entry);
 
+	// highlight entry
 	void highlight(std::list<Entry*>::iterator it);
 	void highlight_prev();
 	void highlight_next();
+	// use Entry#bounds to highlight
 	void highlight_coords(float x, float y);
 
 	void draw_on(sf::RenderWindow& window) const;
+
+	// navigate menu and pass events to the highlighted entry
 	virtual bool process_event(sf::Event& event);
 };
 
+// keeps track of current menu, delegates Events
 class MenuSystem : public InputReader
 {
 	// TODO dangerous if not initialized
@@ -65,6 +77,7 @@ class MenuSystem : public InputReader
 public:
 	MenuSystem() {}
 
+	// use InputReader finished state to determine if menu should be dispayed
 	inline void open()
 	{
 		finished = false;
@@ -75,6 +88,7 @@ public:
 		finished = true;
 	}
 
+	// to switch to parent/child menus
 	inline void set_menu(Menu& m)
 	{
 		menu_p = &m;
@@ -85,10 +99,11 @@ public:
 		return *menu_p;
 	}
 
+	// forward events to current menu
 	virtual bool process_event(sf::Event& event);
 };
 
-// go to a submenu
+// change MenuSystem's Menu
 class MenuEntry : public Entry
 {
 	MenuSystem& system;
@@ -98,7 +113,7 @@ public:
 	virtual void select();
 };
 
-// start a solitaire game
+// TODO start a solitaire game
 class SolitaireEntry : public Entry
 {
 public:
@@ -112,16 +127,18 @@ class TextEntry : public Entry
 {
 	sf::RectangleShape box;
 	sf::Text input;
-	std::string str;
-	std::string default_display;
-	std::string default_str;
+	std::string str; // internal input string
+	std::string default_display; // what to display when input is empty
+	std::string default_str; // what to set str to when input is empty
+	// for setting input position
 	float b_height, i_height, shift;
-	bool selected;
 	float min_box_width;
+	bool selected; // if input is being handled
 
-	void set_input_pos();
+	void set_input_pos(); // update position of input Text
 public:
-	TextEntry(const std::string& txt, const std::string& def_display, const std::string& def, float mbw);
+	// create text entry at least mbw wide, storing def and displaying def_display for empty input
+	TextEntry(const std::string& txt, float mbw, const std::string& def = "", const std::string& def_display = "");
 
 	inline const std::string& get_string()
 	{
@@ -129,6 +146,8 @@ public:
 	}
 
 	virtual float get_width() const;
+	virtual sf::FloatRect bounds() const;
+	// left align text, fill remaining space with box, center input text in box
 	virtual void set_menu_pos(float center, float width, float top);
 	virtual void highlight();
 	virtual void lowlight();
@@ -137,18 +156,23 @@ public:
 	virtual void draw_on(sf::RenderWindow& window) const;
 };
 
+// choose from multiple options
 class MultiEntry : public Entry
 {
-	unsigned int choice;
-	std::vector<std::string> choices;
-	sf::Text chooser;
+	unsigned int choice; // index of selection
+	std::vector<std::string> choices; // strings to display for choices
+	sf::Text chooser; // display of choice
+	// for layout
 	float max_width;
 	float set_width;
 public:
+	// create multiple choice entry with choices ch, defaulting to def
 	MultiEntry(const std::string& txt, const std::vector<std::string>& ch, unsigned int def = 0);
 
 	virtual float get_width() const;
+	virtual sf::FloatRect bounds() const;
 	void update_choice();
+	// left align text, center choice in remaining space
 	virtual void set_menu_pos(float center, float width, float top);
 	virtual void highlight();
 	virtual void lowlight();
@@ -157,6 +181,7 @@ public:
 	virtual void draw_on(sf::RenderWindow& window) const;
 };
 
+// close the window
 class QuitEntry : public Entry
 {
 	sf::RenderWindow& window;
