@@ -1,9 +1,7 @@
 #include "bananagrams.hpp"
 
-Hand::Hand(sf::View* v, const sf::Font& font)
+Hand::Hand(const sf::Font& font)
 {
-	gui_view = v;
-
 	// prepare counts numbers
 	for (char ch = 'A'; ch <= 'Z'; ch++)
 	{
@@ -25,7 +23,7 @@ void Hand::position_list(std::list<Tile*>& l)
 {
 	if (l.size() == 0)
 		return;
-	auto size = gui_view->getSize();
+	auto size = gui_view.getSize();
 	float padding = PPB / 8.f;
 	float min_width = PPB + padding;
 	// leave PPB/2 space on either side of tiles, one tile gets full PPB width
@@ -60,7 +58,7 @@ void Hand::counts(sf::RenderWindow& window)
 
 void Hand::stacks(sf::RenderWindow& window)
 {
-	auto size = gui_view->getSize();
+	auto size = gui_view.getSize();
 	unsigned int nonempty = 0;
 	for (char ch = 'A'; ch <= 'Z'; ch++)
 		if (has_any(ch))

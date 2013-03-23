@@ -2,7 +2,6 @@
 class Hand
 {
 	std::vector<Tile*> tiles[26];
-	sf::View* gui_view;
 	std::list<Tile*> scram; // for shuffle
 	std::list<Tile*> sort; // for ordered
 	std::list<Tile*> single; // for counts
@@ -20,7 +19,7 @@ class Hand
 
 	void reshuffle();
 public:
-	Hand(sf::View* v, const sf::Font& font);
+	Hand(const sf::Font& font);
 	~Hand();
 
 	inline bool has_any(char ch) const

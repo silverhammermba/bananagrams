@@ -3,7 +3,6 @@ struct State
 {
 	// general
 	sf::RenderWindow* window;
-	sf::View* gui_view;
 	sf::View* grid_view;
 	float zoom; // zoom factor for grid view
 

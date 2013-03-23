@@ -13,6 +13,7 @@ using std::vector;
 sf::Font font;
 sf::RenderTexture tile_texture[26];
 std::map<string, string> dictionary;
+sf::View gui_view;
 
 // class for handling game-related events
 class WindowEvents : public InputReader
@@ -35,8 +36,8 @@ public:
 		}
 		else if (event.type == sf::Event::Resized)
 		{
-			state->gui_view->setSize(event.size.width, event.size.height);
-			state->gui_view->setCenter(event.size.width / 2.0, event.size.height / 2.0);
+			gui_view.setSize(event.size.width, event.size.height);
+			gui_view.setCenter(event.size.width / 2.0, event.size.height / 2.0);
 			state->grid_view->setSize(event.size.width, event.size.height);
 			state->grid_view->zoom(state->zoom);
 		}
@@ -65,7 +66,7 @@ int main()
 	window.setIcon(32, 32, icon);
 	window.setVerticalSyncEnabled(true);
 
-	sf::View gui_view = window.getDefaultView();
+	gui_view = window.getDefaultView();
 	sf::View grid_view = window.getDefaultView();
 	grid_view.setCenter(PPB / 2.0, PPB / 2.0);
 
@@ -73,7 +74,6 @@ int main()
 
 	State state;
 	state.window = &window;
-	state.gui_view = &gui_view;
 	state.grid_view = &grid_view;
 	state.zoom = 1;
 
@@ -248,7 +248,7 @@ int main()
 		return 0;
 
 	MenuSystem current;
-	Menu main(gui_view, current, nullptr, "BANANAGRAMS");
+	Menu main(current, nullptr, "BANANAGRAMS");
 	MenuEntry solitaire("SOLITAIRE", current);
 	MenuEntry customize("CONTROLS", current);
 	MenuEntry quit("QUIT", current);
@@ -256,7 +256,7 @@ int main()
 	main.append_entry(&customize);
 	main.append_entry(&quit);
 
-	Menu solitaire_opts(gui_view, current, &main, "SOLITAIRE");
+	Menu solitaire_opts(current, &main, "SOLITAIRE");
 	solitaire.submenu = &solitaire_opts;
 
 	SolitaireEntry start("START GAME");
@@ -267,7 +267,7 @@ int main()
 	solitaire_opts.append_entry(&dict_entry);
 	solitaire_opts.append_entry(&multiplier);
 
-	Menu confirm_quit(gui_view, current, &main, "Really quit?");
+	Menu confirm_quit(current, &main, "Really quit?");
 	quit.submenu = &confirm_quit;
 	QuitEntry yes("YES", window);
 	MenuEntry no("NO", current, &main);
@@ -277,7 +277,7 @@ int main()
 	current.set_menu(main);
 
 	std::list<Tile*> bunch;
-	Hand hand(&gui_view, font);
+	Hand hand(font);
 	// create tiles for the bunch
 	for (char ch = 'A'; ch <= 'Z'; ++ch)
 		for (unsigned int i = 0; i < letter_count[ch - 'A']; ++i)

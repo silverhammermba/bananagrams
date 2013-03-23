@@ -22,6 +22,7 @@ static const sf::Vector2i XY(1, 1);
 extern sf::Font font;
 extern sf::RenderTexture tile_texture[26];
 extern std::map<std::string, std::string> dictionary;
+extern sf::View gui_view;
 
 static const unsigned int letter_count[26] =
 {

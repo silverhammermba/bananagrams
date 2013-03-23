@@ -289,8 +289,8 @@ void QuitEntry::select()
 }
 
 // TODO react to changing view
-Menu::Menu(const sf::View& vw, MenuSystem& sys, Menu* p, const std::string& ttl)
-	: view(vw), system(sys), parent(p), title(ttl, font, PPB * 2.0)
+Menu::Menu(MenuSystem& sys, Menu* p, const std::string& ttl)
+	: system(sys), parent(p), title(ttl, font, PPB * 2.0)
 {
 	title.setColor(ACTIVE);
 
@@ -314,16 +314,16 @@ void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 	}
 
 	float height = PPB * 2.5 + (entries.size() - 1) * PPB * 1.5 + entries.back()->get_height();
-	float shift = (view.getSize().y - height) / 2;
+	float shift = (gui_view.getSize().y - height) / 2;
 
-	title.setPosition(view.getCenter().x + title.getGlobalBounds().width / -2, shift);
+	title.setPosition(gui_view.getCenter().x + title.getGlobalBounds().width / -2, shift);
 
 	unsigned int i = 0;
 	for (auto entry : entries)
-		entry->set_menu_pos(view.getCenter().x, max_width, shift + PPB * 2.5 + i++ * PPB * 1.5);
+		entry->set_menu_pos(gui_view.getCenter().x, max_width, shift + PPB * 2.5 + i++ * PPB * 1.5);
 
-	background.setSize({max_width + PPB, view.getSize().y + PPB});
-	background.setPosition(view.getCenter().x + background.getSize().x / -2, PPB / -2.0);
+	background.setSize({max_width + PPB, gui_view.getSize().y + PPB});
+	background.setPosition(gui_view.getCenter().x + background.getSize().x / -2, PPB / -2.0);
 
 	if (entries.size() == 1)
 		highlight(entries.begin());
