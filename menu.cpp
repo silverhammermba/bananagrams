@@ -128,6 +128,7 @@ void TextEntry::select()
 	else
 	{
 		input.setColor(INACTIVE);
+		// TODO some string processing?
 		if (str == "")
 		{
 			str = default_str;
@@ -140,6 +141,23 @@ bool TextEntry::process_event(sf::Event& event)
 {
 	if (selected)
 	{
+		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::BackSpace)
+		{
+			str = str.substr(0, str.size() - 1); // TODO better way to remove last?
+			input.setString(str);
+		}
+		else if (event.type == sf::Event::TextEntered)
+		{
+			// TODO I am a terrible person
+			char ch = (char)event.text.unicode;
+			if (ch >= ' ' && ch <= '~')
+			{
+				std::stringstream fuck;
+				fuck << ch;
+				str += fuck.str();
+				input.setString(str);
+			}
+		}
 	}
 
 	return true;
@@ -162,9 +180,9 @@ bool MultiEntry::process_event(sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed)
 	{
-		if (choice > 0 && event.key.code == sf::Keyboard::Left)
+		if (choice > 0 && event.key.code == sf::Keyboard::Key::Left)
 			--choice;
-		else if (choice < choices.size() - 1 && event.key.code == sf::Keyboard::Right)
+		else if (choice < choices.size() - 1 && event.key.code == sf::Keyboard::Key::Right)
 			++choice;
 	}
 
@@ -288,6 +306,7 @@ bool Menu::process_event(sf::Event& event)
 					(*highlighted)->select();
 					break;
 				default:
+					(*highlighted)->process_event(event);
 					break;
 			}
 			break;
