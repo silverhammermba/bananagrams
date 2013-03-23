@@ -66,15 +66,41 @@ void SolitaireEntry::select()
 }
 
 TextEntry::TextEntry(const std::string& txt, const std::string& def_display, const std::string& def)
-	: Entry(txt), input(def_display, font, PPB * 1.3), str(def), default_display(def_display), default_str(def)
+	: Entry(txt), box(), input(def_display, font, PPB * 1.3), str(def), default_display(def_display), default_str(def)
 {
+	box.setFillColor(sf::Color::Transparent);
+	box.setOutlineColor(sf::Color(150, 150, 150));
+	box.setOutlineThickness(PPB / 8.0);
 	input.setColor(sf::Color(150, 150, 150));
 	selected = false;
+}
+
+float TextEntry::get_width()
+{
+	// TODO set minimum width of box?
+	return text.getGlobalBounds().width + PPB * 0.5 + PPB * 4;
+}
+
+void TextEntry::set_menu_pos(float center, float width, float top)
+{
+	auto tw = text.getGlobalBounds().width;
+	text.setPosition(center - width / 2, top);
+	box.setSize({(float)(width - tw - PPB * 0.5), (float)(PPB * 1.5)});
+	box.setPosition(center - width / 2 + tw + PPB * 0.5, top);
+	box.setOutlineThickness(PPB / 8.0);
+	// TODO set input
+}
+
+void TextEntry::highlight()
+{
+	box.setOutlineColor(sf::Color::White);
+	Entry::highlight();
 }
 
 void TextEntry::lowlight()
 {
 	selected = false;
+	box.setOutlineColor(sf::Color(150, 150, 150));
 	Entry::lowlight();
 }
 
@@ -90,6 +116,12 @@ bool TextEntry::process_event(sf::Event& event)
 	}
 
 	return true;
+}
+
+void TextEntry::draw_on(sf::RenderWindow& window)
+{
+	window.draw(text);
+	window.draw(box);
 }
 
 MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& ch)

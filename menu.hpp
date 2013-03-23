@@ -1,5 +1,6 @@
 class Entry : public InputReader
 {
+protected:
 	sf::Text text;
 public:
 	Entry(const std::string& txt);
@@ -87,6 +88,7 @@ public:
 	virtual bool process_event(sf::Event& event);
 };
 
+// go to a submenu
 class MenuEntry : public Entry
 {
 	MenuSystem& system;
@@ -96,6 +98,7 @@ public:
 	virtual void select();
 };
 
+// start a solitaire game
 class SolitaireEntry : public Entry
 {
 public:
@@ -104,8 +107,10 @@ public:
 	virtual void select();
 };
 
+// enter text
 class TextEntry : public Entry
 {
+	sf::RectangleShape box;
 	sf::Text input;
 	std::string str;
 	std::string default_display;
@@ -119,9 +124,13 @@ public:
 		return str;
 	}
 
+	virtual float get_width();
+	virtual void set_menu_pos(float center, float width, float top);
+	virtual void highlight();
 	virtual void lowlight();
 	virtual void select();
 	virtual bool process_event(sf::Event& event);
+	virtual void draw_on(sf::RenderWindow& window);
 };
 
 class MultiEntry : public Entry
