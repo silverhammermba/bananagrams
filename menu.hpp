@@ -146,6 +146,7 @@ public:
 	MultiEntry(const std::string& txt, const std::vector<std::string>& ch);
 
 	virtual float get_width() const;
+	void update_choice();
 	virtual void set_menu_pos(float center, float width, float top);
 	virtual void highlight();
 	virtual void lowlight();

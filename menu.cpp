@@ -206,20 +206,26 @@ MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& c
 	}
 
 	chooser.setString("< " + choices[0] + " >");
+	lowlight();
 }
 
 float MultiEntry::get_width() const
 {
-	std::cerr << "Get " << (text.getGlobalBounds().width + PPB + max_width) << "\n";
 	return text.getGlobalBounds().width + PPB + max_width;
+}
+
+void MultiEntry::update_choice()
+{
+	chooser.setString("< " + choices[choice] + " >");
+	chooser.setPosition(text.getGlobalBounds().left + text.getGlobalBounds().width + PPB + (max_width - chooser.getGlobalBounds().width) / 2, chooser.getPosition().y);
 }
 
 void MultiEntry::set_menu_pos(float center, float width, float top)
 {
 	text.setPosition(center - width / 2, top);
-	auto bounds = text.getGlobalBounds();
-	chooser.setPosition(bounds.left + bounds.width + PPB, top);
-	std::cerr << "Set " << (text.getGlobalBounds().width + PPB + chooser.getGlobalBounds().width) << "\n";
+	chooser.setPosition(chooser.getPosition().x, top);
+	max_width = width - PPB - text.getGlobalBounds().width;
+	update_choice();
 }
 
 void MultiEntry::highlight()
@@ -242,6 +248,7 @@ bool MultiEntry::process_event(sf::Event& event)
 			--choice;
 		else if (choice < choices.size() - 1 && event.key.code == sf::Keyboard::Key::Right)
 			++choice;
+		update_choice();
 	}
 
 	return true;
