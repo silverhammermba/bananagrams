@@ -130,7 +130,7 @@ public:
 	virtual void lowlight();
 	virtual void select();
 	virtual bool process_event(sf::Event& event);
-	virtual void draw_on(sf::RenderWindow& window);
+	virtual void draw_on(sf::RenderWindow& window) const;
 };
 
 class MultiEntry : public Entry

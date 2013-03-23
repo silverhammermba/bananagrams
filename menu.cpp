@@ -1,5 +1,9 @@
 #include "bananagrams.hpp"
 
+// TODO put these in Entry
+static const sf::Color ACTIVE(255, 255, 255);
+static const sf::Color INACTIVE(150, 150, 150);
+
 Entry::Entry(const std::string& txt)
 	: text(txt, font, PPB * 1.5)
 {
@@ -28,12 +32,12 @@ void Entry::set_menu_pos(float center, float width, float top)
 
 void Entry::highlight()
 {
-	text.setColor(sf::Color::White);
+	text.setColor(ACTIVE);
 }
 
 void Entry::lowlight()
 {
-	text.setColor(sf::Color(150, 150, 150));
+	text.setColor(INACTIVE);
 }
 
 void Entry::draw_on(sf::RenderWindow& window) const
@@ -66,12 +70,12 @@ void SolitaireEntry::select()
 }
 
 TextEntry::TextEntry(const std::string& txt, const std::string& def_display, const std::string& def)
-	: Entry(txt), box(), input(def_display, font, PPB * 1.3), str(def), default_display(def_display), default_str(def)
+	: Entry(txt), box(), input(def_display, font, PPB), str(def), default_display(def_display), default_str(def)
 {
 	box.setFillColor(sf::Color::Transparent);
-	box.setOutlineColor(sf::Color(150, 150, 150));
-	box.setOutlineThickness(PPB / 8.0);
-	input.setColor(sf::Color(150, 150, 150));
+	box.setOutlineColor(INACTIVE);
+	box.setOutlineThickness(2);
+	input.setColor(INACTIVE);
 	selected = false;
 }
 
@@ -83,30 +87,53 @@ float TextEntry::get_width()
 
 void TextEntry::set_menu_pos(float center, float width, float top)
 {
-	auto tw = text.getGlobalBounds().width;
 	text.setPosition(center - width / 2, top);
-	box.setSize({(float)(width - tw - PPB * 0.5), (float)(PPB * 1.5)});
-	box.setPosition(center - width / 2 + tw + PPB * 0.5, top);
-	box.setOutlineThickness(PPB / 8.0);
-	// TODO set input
+	auto bounds = text.getGlobalBounds();
+	box.setSize({(float)(width - bounds.width - PPB * 0.5), bounds.height});
+	box.setPosition(center - width / 2 + bounds.width + PPB * 0.5, bounds.top);
+	// center input in box
+	auto i_pos = input.getPosition();
+	auto i_bounds = input.getGlobalBounds();
+	auto b_pos = box.getPosition();
+	auto b_size = box.getSize();
+	input.setPosition(b_pos.x + (b_size.x - i_bounds.width) / 2 - (i_bounds.left - i_pos.x), b_pos.y + (b_size.y - i_bounds.height) / 2 - (i_bounds.top - i_pos.y));
 }
 
 void TextEntry::highlight()
 {
-	box.setOutlineColor(sf::Color::White);
+	box.setOutlineColor(ACTIVE);
 	Entry::highlight();
 }
 
 void TextEntry::lowlight()
 {
 	selected = false;
-	box.setOutlineColor(sf::Color(150, 150, 150));
+	box.setOutlineColor(INACTIVE);
+	input.setColor(INACTIVE);
 	Entry::lowlight();
 }
 
 void TextEntry::select()
 {
 	selected = !selected;
+	if (selected)
+	{
+		input.setColor(ACTIVE);
+		if (str == default_str)
+		{
+			str = "";
+			input.setString(str);
+		}
+	}
+	else
+	{
+		input.setColor(INACTIVE);
+		if (str == "")
+		{
+			str = default_str;
+			input.setString(default_display);
+		}
+	}
 }
 
 bool TextEntry::process_event(sf::Event& event)
@@ -118,10 +145,11 @@ bool TextEntry::process_event(sf::Event& event)
 	return true;
 }
 
-void TextEntry::draw_on(sf::RenderWindow& window)
+void TextEntry::draw_on(sf::RenderWindow& window) const
 {
 	window.draw(text);
 	window.draw(box);
+	window.draw(input);
 }
 
 MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& ch)
@@ -156,7 +184,7 @@ void QuitEntry::select()
 Menu::Menu(const sf::View& vw, MenuSystem& sys, Menu* p, const std::string& ttl)
 	: view(vw), system(sys), parent(p), title(ttl, font, PPB * 2.0)
 {
-	title.setColor(sf::Color::White);
+	title.setColor(ACTIVE);
 
 	background.setFillColor(sf::Color(0, 0, 0, 200));
 
