@@ -66,6 +66,8 @@ SolitaireEntry::SolitaireEntry(const std::string& txt, MenuSystem& sys, TextEntr
 
 void SolitaireEntry::select()
 {
+	system.close();
+	// TODO display loading text
 	int mul = 1;
 	int div = 1;
 	if (multiplier.get_choice() == 0)
@@ -73,7 +75,6 @@ void SolitaireEntry::select()
 	else
 		mul = multiplier.get_choice();
 	game.restart(dict_entry.get_string(), mul, div);
-	system.close();
 }
 
 TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, const std::string& def_display)

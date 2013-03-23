@@ -69,6 +69,9 @@ public:
 		return max;
 	}
 
+	// remove all tiles
+	void clear();
+
 	// animate tiles
 	void step(float time);
 

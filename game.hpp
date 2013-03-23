@@ -3,6 +3,7 @@ class Game
 public:
 	std::map<std::string, std::string> dictionary;
 	std::list<Tile*> bunch;
+	Grid grid;
 	Hand hand;
 	MessageQ messages;
 	CutBuffer* buffer;

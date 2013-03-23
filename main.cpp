@@ -59,8 +59,6 @@ int main()
 
 	std::srand((unsigned int)std::time(nullptr));
 
-	Grid grid;
-
 	sf::RenderWindow window(sf::VideoMode(1280, 720), "Bananagrams");
 	window.setIcon(32, 32, icon);
 	window.setVerticalSyncEnabled(true);
@@ -410,7 +408,7 @@ int main()
 						game.messages.add("You have too many letters to place using the mouse.", MessageQ::HIGH);
 					else
 					{
-						Tile* tile = grid.swap(cursor.get_pos(), game.hand.remove_tile(last));
+						Tile* tile = game.grid.swap(cursor.get_pos(), game.hand.remove_tile(last));
 
 						if (tile != nullptr)
 							game.hand.add_tile(tile);
@@ -426,7 +424,7 @@ int main()
 			{
 				if (game.selected)
 				{
-					game.buffer = new CutBuffer(grid, std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y), selection.get_size());
+					game.buffer = new CutBuffer(game.grid, std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y), selection.get_size());
 
 					if (game.buffer->is_empty())
 					{
@@ -457,7 +455,7 @@ int main()
 		{
 			if (game.buffer != nullptr)
 			{
-				game.buffer->paste(grid, game.hand);
+				game.buffer->paste(game.grid, game.hand);
 				game.clear_buffer();
 			}
 			else
@@ -467,7 +465,7 @@ int main()
 		if (state.mremove)
 		{
 			// remove tile
-			Tile* tile = grid.remove(mcursor.get_pos());
+			Tile* tile = game.grid.remove(mcursor.get_pos());
 			if (tile != nullptr)
 				game.hand.add_tile(tile);
 		}
@@ -476,7 +474,7 @@ int main()
 		{
 			if (game.bunch.size() >= 3)
 			{
-				auto dumped = grid.remove(cursor.get_pos());
+				auto dumped = game.grid.remove(cursor.get_pos());
 				if (dumped == nullptr)
 					game.messages.add("You need to select a tile to dump.", MessageQ::LOW);
 				else
@@ -513,7 +511,7 @@ int main()
 			if (spent)
 			{
 				vector<string> mess;
-				if (grid.is_valid(game.dictionary, mess))
+				if (game.grid.is_valid(game.dictionary, mess))
 				{
 					if (game.bunch.size() > 0)
 					{
@@ -547,18 +545,18 @@ int main()
 			}
 			// TODO guess based on cursor movement first?
 			// else if you are not near the last character and the space is empty, try to autoadvance
-			else if (grid.get(pos) == nullptr)
+			else if (game.grid.get(pos) == nullptr)
 			{
 				// TODO last case covers these first ones
 				// if right of a tile
-				if (grid.get(pos - X) != nullptr)
+				if (game.grid.get(pos - X) != nullptr)
 				{
 					next = X;
 					cursor.move(-next);
 					last = cursor.get_pos() - next;
 				}
 				// if below a tile
-				else if (grid.get(pos - Y) != nullptr)
+				else if (game.grid.get(pos - Y) != nullptr)
 				{
 					next = Y;
 					cursor.move(-next);
@@ -570,9 +568,9 @@ int main()
 					// TODO could probably refactor
 					int xd = pos.x - 1;
 					bool foundx = false;
-					if (pos.y >= grid.get_min().y && pos.y <= grid.get_max().y)
-						for (; xd >= grid.get_min().x; --xd)
-							if (grid.get(xd, pos.y) != nullptr)
+					if (pos.y >= game.grid.get_min().y && pos.y <= game.grid.get_max().y)
+						for (; xd >= game.grid.get_min().x; --xd)
+							if (game.grid.get(xd, pos.y) != nullptr)
 							{
 								foundx = true;
 								break;
@@ -580,9 +578,9 @@ int main()
 
 					int yd = pos.y - 1;
 					bool foundy = false;
-					if (pos.x >= grid.get_min().x && pos.x <= grid.get_max().x)
-						for (; yd >= grid.get_min().y; --yd)
-							if (grid.get(pos.x, yd) != nullptr)
+					if (pos.x >= game.grid.get_min().x && pos.x <= game.grid.get_max().x)
+						for (; yd >= game.grid.get_min().y; --yd)
+							if (game.grid.get(pos.x, yd) != nullptr)
 							{
 								foundy = true;
 								break;
@@ -606,19 +604,19 @@ int main()
 			}
 			else // not near last character, position not empty, try to set autoadvance for next time
 			{
-				if (grid.get(pos - X) != nullptr)
+				if (game.grid.get(pos - X) != nullptr)
 				{
 					next = X;
 					last = cursor.get_pos() - next;
 				}
-				else if (grid.get(pos - Y) != nullptr)
+				else if (game.grid.get(pos - Y) != nullptr)
 				{
 					next = Y;
 					last = cursor.get_pos() - next;
 				}
 			}
 
-			auto tile = grid.remove(cursor.get_pos());
+			auto tile = game.grid.remove(cursor.get_pos());
 			if (tile != nullptr)
 				game.hand.add_tile(tile);
 		}
@@ -630,11 +628,11 @@ int main()
 			bool placed = false;
 
 			// if space is empty or has a different letter
-			if (grid.get(cursor.get_pos()) == nullptr || grid.get(cursor.get_pos())->ch() != ch)
+			if (game.grid.get(cursor.get_pos()) == nullptr || game.grid.get(cursor.get_pos())->ch() != ch)
 			{
 				if (game.hand.has_any(ch))
 				{
-					Tile* tile = grid.swap(cursor.get_pos(), game.hand.remove_tile(ch));
+					Tile* tile = game.grid.swap(cursor.get_pos(), game.hand.remove_tile(ch));
 
 					if (tile != nullptr)
 						game.hand.add_tile(tile);
@@ -653,9 +651,9 @@ int main()
 					next.x = 1;
 				else if (cursor.get_pos() == last + Y)
 					next.y = 1;
-				else if (grid.get(cursor.get_pos() - X) != nullptr)
+				else if (game.grid.get(cursor.get_pos() - X) != nullptr)
 					next.x = 1;
-				else if (grid.get(cursor.get_pos() - Y) != nullptr)
+				else if (game.grid.get(cursor.get_pos() - Y) != nullptr)
 					next.y = 1;
 				last = cursor.get_pos();
 				cursor.move(next);
@@ -678,7 +676,7 @@ int main()
 
 		if (controls["center"])
 		{
-			grid_view.setCenter(grid.get_center());
+			grid_view.setCenter(game.grid.get_center());
 			keep_cursor_on_screen = true;
 		}
 
@@ -777,7 +775,7 @@ int main()
 		selection.set_zoom(state.zoom);
 
 		// animate tiles
-		grid.step(time);
+		game.grid.step(time);
 
 		if (controls["scramble_tiles"])
 			game.hand.set_scrambled();
@@ -807,7 +805,7 @@ int main()
 		window.clear(background);
 
 		window.setView(grid_view);
-		grid.draw_on(window);
+		game.grid.draw_on(window);
 		if (game.selecting || game.selected)
 			selection.draw_on(window);
 		if (game.buffer != nullptr)

@@ -193,6 +193,20 @@ Tile* Grid::swap(int x, int y, Tile* tile)
 	return nullptr;
 }
 
+void Grid::clear()
+{
+	for (auto tile : grid)
+		if (tile != nullptr)
+			delete tile;
+	grid.clear();
+	tiles = 0;
+	min = {0, 0};
+	max = {0, 0};
+	defined.clear();
+	hwords.clear();
+	vwords.clear();
+}
+
 // animate tiles
 void Grid::step(float time)
 {

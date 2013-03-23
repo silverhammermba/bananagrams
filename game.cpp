@@ -40,6 +40,8 @@ void Game::end()
 		delete tile;
 	bunch.clear();
 
+	grid.clear();
+
 	hand.clear();
 
 	dictionary.clear();
@@ -55,7 +57,7 @@ void Game::restart(const std::string& dict, int multiplier, int divider)
 
 	// create tiles for the bunch
 	for (char ch = 'A'; ch <= 'Z'; ++ch)
-		for (unsigned int i = 0; i < letter_count[ch - 'A']; ++i)
+		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * multiplier) / divider); ++i)
 			random_insert(bunch, new Tile(ch));
 
 	// take tiles from the bunch for player
