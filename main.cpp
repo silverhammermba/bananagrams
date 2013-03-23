@@ -261,7 +261,7 @@ int main()
 
 	SolitaireEntry start("START GAME");
 	TextEntry dict_entry("DICTIONARY", "(default)", "dictionary.txt");
-	MultiEntry multiplier("BUNCH MULTIPLIER", {"1/2", "1", "2", "3", "4"});
+	MultiEntry multiplier("BUNCH x", {"1/2", "1", "2", "3", "4"});
 
 	solitaire_opts.append_entry(&start);
 	solitaire_opts.append_entry(&dict_entry);

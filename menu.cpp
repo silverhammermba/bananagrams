@@ -91,7 +91,7 @@ TextEntry::TextEntry(const std::string& txt, const std::string& def_display, con
 	selected = false;
 }
 
-float TextEntry::get_width()
+float TextEntry::get_width() const
 {
 	// TODO set minimum width of box?
 	return text.getGlobalBounds().width + PPB * 0.5 + PPB * 4;
@@ -191,9 +191,47 @@ void TextEntry::draw_on(sf::RenderWindow& window) const
 }
 
 MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& ch)
-	: Entry(txt), choices(ch)
+	: Entry(txt), choices(ch), chooser("", font, PPB * 1.5)
 {
 	choice = 0;
+	max_width = 0;
+
+	// find max width
+	for (auto choice : choices)
+	{
+		chooser.setString("< " + choice + " >");
+		float w = chooser.getGlobalBounds().width;
+		if (w > max_width)
+			max_width = w;
+	}
+
+	chooser.setString("< " + choices[0] + " >");
+}
+
+float MultiEntry::get_width() const
+{
+	std::cerr << "Get " << (text.getGlobalBounds().width + PPB + max_width) << "\n";
+	return text.getGlobalBounds().width + PPB + max_width;
+}
+
+void MultiEntry::set_menu_pos(float center, float width, float top)
+{
+	text.setPosition(center - width / 2, top);
+	auto bounds = text.getGlobalBounds();
+	chooser.setPosition(bounds.left + bounds.width + PPB, top);
+	std::cerr << "Set " << (text.getGlobalBounds().width + PPB + chooser.getGlobalBounds().width) << "\n";
+}
+
+void MultiEntry::highlight()
+{
+	chooser.setColor(ACTIVE);
+	Entry::highlight();
+}
+
+void MultiEntry::lowlight()
+{
+	chooser.setColor(INACTIVE);
+	Entry::lowlight();
 }
 
 bool MultiEntry::process_event(sf::Event& event)
@@ -207,6 +245,12 @@ bool MultiEntry::process_event(sf::Event& event)
 	}
 
 	return true;
+}
+
+void MultiEntry::draw_on(sf::RenderWindow& window) const
+{
+	window.draw(chooser);
+	Entry::draw_on(window);
 }
 
 QuitEntry::QuitEntry(const std::string& txt, sf::RenderWindow& win)

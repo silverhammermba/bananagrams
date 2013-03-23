@@ -127,7 +127,7 @@ public:
 		return str;
 	}
 
-	virtual float get_width();
+	virtual float get_width() const;
 	virtual void set_menu_pos(float center, float width, float top);
 	virtual void highlight();
 	virtual void lowlight();
@@ -140,11 +140,18 @@ class MultiEntry : public Entry
 {
 	unsigned int choice;
 	std::vector<std::string> choices;
+	sf::Text chooser;
+	float max_width;
 public:
 	MultiEntry(const std::string& txt, const std::vector<std::string>& ch);
 
+	virtual float get_width() const;
+	virtual void set_menu_pos(float center, float width, float top);
+	virtual void highlight();
+	virtual void lowlight();
 	inline virtual void select() {} // nothing to do
 	virtual bool process_event(sf::Event& event);
+	virtual void draw_on(sf::RenderWindow& window) const;
 };
 
 class QuitEntry : public Entry
