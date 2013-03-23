@@ -117,10 +117,11 @@ class TextEntry : public Entry
 	std::string default_str;
 	float b_height, i_height, shift;
 	bool selected;
+	float min_box_width;
 
 	void set_input_pos();
 public:
-	TextEntry(const std::string& txt, const std::string& def_display, const std::string& def);
+	TextEntry(const std::string& txt, const std::string& def_display, const std::string& def, float mbw);
 
 	inline const std::string& get_string()
 	{
@@ -142,8 +143,9 @@ class MultiEntry : public Entry
 	std::vector<std::string> choices;
 	sf::Text chooser;
 	float max_width;
+	float set_width;
 public:
-	MultiEntry(const std::string& txt, const std::vector<std::string>& ch);
+	MultiEntry(const std::string& txt, const std::vector<std::string>& ch, unsigned int def = 0);
 
 	virtual float get_width() const;
 	void update_choice();

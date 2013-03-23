@@ -69,9 +69,11 @@ void SolitaireEntry::select()
 	// TODO start solitaire game
 }
 
-TextEntry::TextEntry(const std::string& txt, const std::string& def_display, const std::string& def)
+TextEntry::TextEntry(const std::string& txt, const std::string& def_display, const std::string& def, float mbw)
 	: Entry(txt), box(), input(def_display, font, PPB), str(def), default_display(def_display), default_str(def)
 {
+	min_box_width = mbw;
+
 	// get heights and shifts
 	text.setString("A");
 	b_height = text.getGlobalBounds().height;
@@ -94,7 +96,7 @@ TextEntry::TextEntry(const std::string& txt, const std::string& def_display, con
 float TextEntry::get_width() const
 {
 	// TODO set minimum width of box?
-	return text.getGlobalBounds().width + PPB * 0.5 + PPB * 4;
+	return text.getGlobalBounds().width + PPB * 0.5 + min_box_width;
 }
 
 // center input in box
@@ -190,10 +192,11 @@ void TextEntry::draw_on(sf::RenderWindow& window) const
 	window.draw(input);
 }
 
-MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& ch)
+MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& ch, unsigned int def)
 	: Entry(txt), choices(ch), chooser("", font, PPB * 1.5)
 {
-	choice = 0;
+	// TODO throw something if def is bad
+	choice = def;
 	max_width = 0;
 
 	// find max width
@@ -217,14 +220,14 @@ float MultiEntry::get_width() const
 void MultiEntry::update_choice()
 {
 	chooser.setString("< " + choices[choice] + " >");
-	chooser.setPosition(text.getGlobalBounds().left + text.getGlobalBounds().width + PPB + (max_width - chooser.getGlobalBounds().width) / 2, chooser.getPosition().y);
+	chooser.setPosition(text.getGlobalBounds().left + text.getGlobalBounds().width + PPB + (set_width - chooser.getGlobalBounds().width) / 2, chooser.getPosition().y);
 }
 
 void MultiEntry::set_menu_pos(float center, float width, float top)
 {
 	text.setPosition(center - width / 2, top);
 	chooser.setPosition(chooser.getPosition().x, top);
-	max_width = width - PPB - text.getGlobalBounds().width;
+	set_width = width - PPB - text.getGlobalBounds().width;
 	update_choice();
 }
 

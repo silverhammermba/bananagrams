@@ -260,8 +260,8 @@ int main()
 	solitaire.submenu = &solitaire_opts;
 
 	SolitaireEntry start("START GAME");
-	TextEntry dict_entry("DICTIONARY", "(default)", "dictionary.txt");
-	MultiEntry multiplier("BUNCH x", {"1/2", "1", "2", "3", "4"});
+	TextEntry dict_entry("DICTIONARY", "(default)", "dictionary.txt", PPB * 8);
+	MultiEntry multiplier("BUNCH x", {"1/2", "1", "2", "3", "4"}, 1);
 
 	solitaire_opts.append_entry(&start);
 	solitaire_opts.append_entry(&dict_entry);
