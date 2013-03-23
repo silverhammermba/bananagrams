@@ -27,6 +27,8 @@ public:
 		return tiles[ch - 'A'].size() > 0;
 	}
 
+	void clear();
+
 	void add_tile(Tile* tile);
 	Tile* remove_tile(char ch);
 

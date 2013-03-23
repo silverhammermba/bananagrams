@@ -13,9 +13,7 @@ Hand::Hand(const sf::Font& font)
 
 Hand::~Hand()
 {
-	for (char ch = 'A'; ch <= 'Z'; ch++)
-		for (auto tile : tiles[ch - 'A'])
-			delete tile;
+	clear();
 }
 
 // position tiles in list in nice rows
@@ -114,6 +112,19 @@ void Hand::reshuffle()
 		for (auto tile: tiles[ch - 'A'])
 			random_insert(scram, tile);
 	}
+}
+
+void Hand::clear()
+{
+	for (char ch = 'A'; ch <= 'Z'; ch++)
+	{
+		for (auto tile : tiles[ch - 'A'])
+			delete tile;
+		tiles[ch - 'A'].clear();
+	}
+	scram.clear();
+	sort.clear();
+	single.clear();
 }
 
 void Hand::add_tile(Tile* tile)

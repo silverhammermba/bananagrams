@@ -14,8 +14,7 @@ MessageQ::MessageQ(const sf::Font& f) : font(f)
 
 MessageQ::~MessageQ()
 {
-	for (auto message : messages)
-		delete message;
+	clear();
 }
 
 void MessageQ::add(const string& message, severity_t severity)
@@ -66,6 +65,15 @@ void MessageQ::age(float time)
 			bottom += padding + message->get_height();
 		}
 	}
+}
+
+void MessageQ::clear()
+{
+	for (auto message : messages)
+		delete message;
+	messages.clear();
+
+	bottom = 0;
 }
 
 void MessageQ::draw_on(sf::RenderWindow& window) const

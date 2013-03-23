@@ -207,7 +207,7 @@ void Grid::step(float time)
 }
 
 // check for connectedness and valid words, chance of displaying definitions of valid words
-bool Grid::is_valid(vector<string>& messages, unsigned int chance)
+bool Grid::is_valid(std::map<string, string>& dictionary, vector<string>& messages, unsigned int chance)
 {
 	// need at least one word to be valid
 	if (hwords.size() == 0 && vwords.size() == 0)

@@ -73,7 +73,7 @@ public:
 	void step(float time);
 
 	// check for connectedness and valid words, chance of displaying definitions of valid words
-	bool is_valid(std::vector<std::string>& messages, unsigned int chance = 100);
+	bool is_valid(std::map<std::string, std::string>& dictionary, std::vector<std::string>& messages, unsigned int chance = 100);
 
 	void draw_on(sf::RenderWindow& window) const;
 };

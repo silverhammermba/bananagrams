@@ -12,7 +12,6 @@ using std::vector;
 // objects needed globally
 sf::Font font;
 sf::RenderTexture tile_texture[26];
-std::map<string, string> dictionary;
 sf::View gui_view;
 
 // class for handling game-related events
@@ -275,21 +274,7 @@ int main()
 	confirm_quit.append_entry(&no);
 
 	current.set_menu(main);
-
-	std::list<Tile*> bunch;
-	Hand hand(font);
-	// create tiles for the bunch
-	for (char ch = 'A'; ch <= 'Z'; ++ch)
-		for (unsigned int i = 0; i < letter_count[ch - 'A']; ++i)
-			random_insert(bunch, new Tile(ch));
-
-	// take tiles from the bunch for player
-	for (unsigned int i = 0; i < 21; i++)
-	{
-		Tile* tile = bunch.back();
-		bunch.pop_back();
-		hand.add_tile(tile);
-	}
+	input_readers.push_back(&current);
 
 	// TODO make it so you can start a new game without quitting
 	loading_text.setString("Loading dictionary...");
@@ -299,40 +284,16 @@ int main()
 	window.draw(loading_text);
 	window.display();
 
-	// TODO validate somehow
-	std::ifstream words(dict_entry.get_string());
-	if (!words.is_open())
-	{
-		cerr << "Couldn't find dictionary.txt!\n";
-		return 1;
-	}
-
-	// parse dictionary
-	string line;
-	while (std::getline(words, line))
-	{
-		auto pos = line.find_first_of(' ');
-		if (pos == string::npos)
-			dictionary[line] = "";
-		else
-			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
-	}
-	words.close();
-
-	input_readers.push_back(&current);
-
 	// stuff for game loop
-	MessageQ messages(font);
+	Game game;
+	game.restart(dict_entry.get_string());
 
-	Cursor cursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0));
-	Cursor mcursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color(0, 0, 0, 0), sf::Color(0, 200, 0, 80));
+	Cursor cursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color::Transparent, sf::Color(0, 200, 0));
+	Cursor mcursor(sf::Vector2u(1, 1), PPB / 16.0, sf::Color::Transparent, sf::Color(0, 200, 0, 80));
 
 	sf::Vector2i last(-1, 0);
 	sf::Vector2i next(0, 0);
 
-	CutBuffer* buffer = nullptr;
-	bool selected = false;
-	bool selecting = false;
 	// mouse press and release positions
 	sf::Vector2i sel1;
 	sf::Vector2i sel2;
@@ -388,8 +349,8 @@ int main()
 			// update mouse cursor position
 			mcursor.set_pos(sf::Vector2i(std::floor(((state.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB), std::floor(((state.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB)));
 
-			if (buffer != nullptr)
-				buffer->set_pos(mcursor.get_pos());
+			if (game.buffer != nullptr)
+				game.buffer->set_pos(mcursor.get_pos());
 
 			state.update = false;
 		}
@@ -397,14 +358,14 @@ int main()
 		// left click
 		if (state.start_selection)
 		{
-			selecting = true;
-			selected = false;
+			game.selecting = true;
+			game.selected = false;
 			sel1 = mcursor.get_pos();
 			state.start_selection = false;
 		}
 
 		// if left click held down
-		if (selecting)
+		if (game.selecting)
 		{
 			sel2 = mcursor.get_pos();
 			// update selection rect
@@ -415,13 +376,13 @@ int main()
 		// if left click release
 		if (state.end_selection)
 		{
-			selecting = false;
-			selected = true;
+			game.selecting = false;
+			game.selected = true;
 
 			// if the selection was only 1 square, do something else
 			if (selection.get_size() == sf::Vector2u(1, 1))
 			{
-				selected = false;
+				game.selected = false;
 				// move cursor to mouse cursor
 				cursor.set_pos(mcursor.get_pos());
 
@@ -431,7 +392,7 @@ int main()
 					char last = 'A' - 1;
 					for (char ch = 'A'; ch <= 'Z'; ch++)
 					{
-						if (hand.has_any(ch))
+						if (game.hand.has_any(ch))
 						{
 							if (last < 'A')
 								last = ch;
@@ -444,15 +405,15 @@ int main()
 					}
 
 					if (last < 'A')
-						messages.add("You do not have any tiles.", MessageQ::LOW);
+						game.messages.add("You do not have any tiles.", MessageQ::LOW);
 					else if (last > 'Z')
-						messages.add("You have too many letters to place using the mouse.", MessageQ::HIGH);
+						game.messages.add("You have too many letters to place using the mouse.", MessageQ::HIGH);
 					else
 					{
-						Tile* tile = grid.swap(cursor.get_pos(), hand.remove_tile(last));
+						Tile* tile = grid.swap(cursor.get_pos(), game.hand.remove_tile(last));
 
 						if (tile != nullptr)
-							hand.add_tile(tile);
+							game.hand.add_tile(tile);
 					}
 				}
 			}
@@ -461,49 +422,46 @@ int main()
 
 		if (controls["cut"])
 		{
-			if (buffer == nullptr)
+			if (game.buffer == nullptr)
 			{
-				if (selected)
+				if (game.selected)
 				{
-					buffer = new CutBuffer(grid, std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y), selection.get_size());
+					game.buffer = new CutBuffer(grid, std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y), selection.get_size());
 
-					if (buffer->is_empty())
+					if (game.buffer->is_empty())
 					{
-						messages.add("Nothing selected.", MessageQ::LOW);
-						delete buffer;
-						buffer = nullptr;
+						game.messages.add("Nothing selected.", MessageQ::LOW);
+						game.clear_buffer();
 					}
 				}
 				else
-					messages.add("Nothing selected.", MessageQ::LOW);
+					game.messages.add("Nothing selected.", MessageQ::LOW);
 
-				selected = false;
+				game.selected = false;
 			}
 			else
 			{
-				buffer->clear(hand);
-				delete buffer;
-				buffer = nullptr;
-				messages.add("Added cut tiles back to your hand.", MessageQ::LOW);
+				game.buffer->clear(game.hand);
+				game.clear_buffer();
+				game.messages.add("Added cut tiles back to your hand.", MessageQ::LOW);
 			}
 		}
 
 		if (controls["flip"])
 		{
-			if (buffer != nullptr)
-				buffer->transpose();
+			if (game.buffer != nullptr)
+				game.buffer->transpose();
 		}
 
 		if (controls["paste"])
 		{
-			if (buffer != nullptr)
+			if (game.buffer != nullptr)
 			{
-				buffer->paste(grid, hand);
-				delete buffer;
-				buffer = nullptr;
+				game.buffer->paste(grid, game.hand);
+				game.clear_buffer();
 			}
 			else
-				messages.add("Cannot paste: no tiles were cut.", MessageQ::LOW);
+				game.messages.add("Cannot paste: no tiles were cut.", MessageQ::LOW);
 		}
 
 		if (state.mremove)
@@ -511,35 +469,35 @@ int main()
 			// remove tile
 			Tile* tile = grid.remove(mcursor.get_pos());
 			if (tile != nullptr)
-				hand.add_tile(tile);
+				game.hand.add_tile(tile);
 		}
 
 		if (controls["dump"])
 		{
-			if (bunch.size() >= 3)
+			if (game.bunch.size() >= 3)
 			{
 				auto dumped = grid.remove(cursor.get_pos());
 				if (dumped == nullptr)
-					messages.add("You need to select a tile to dump.", MessageQ::LOW);
+					game.messages.add("You need to select a tile to dump.", MessageQ::LOW);
 				else
 				{
 					// take three
 					for (unsigned int i = 0; i < 3; i++)
 					{
-						Tile* tile = bunch.back();
-						bunch.pop_back();
-						hand.add_tile(tile);
+						Tile* tile = game.bunch.back();
+						game.bunch.pop_back();
+						game.hand.add_tile(tile);
 					}
 
-					// add tile to bunch in random position
-					auto it = bunch.begin();
-					auto j = std::rand() % (bunch.size() + 1);
-					for (unsigned int i = 0; i != j && it != bunch.end(); it++, i++);
-					bunch.insert(it, dumped);
+					// add tile to game.bunch in random position
+					auto it = game.bunch.begin();
+					auto j = std::rand() % (game.bunch.size() + 1);
+					for (unsigned int i = 0; i != j && it != game.bunch.end(); it++, i++);
+					game.bunch.insert(it, dumped);
 				}
 			}
 			else
-				messages.add("There are not enough tiles left to dump!", MessageQ::HIGH);
+				game.messages.add("There are not enough tiles left to dump!", MessageQ::HIGH);
 
 		}
 
@@ -547,7 +505,7 @@ int main()
 		{
 			bool spent = true;
 			for (char ch = 'A'; ch <= 'Z'; ch++)
-				if (hand.has_any(ch))
+				if (game.hand.has_any(ch))
 				{
 					spent = false;
 					break;
@@ -555,25 +513,25 @@ int main()
 			if (spent)
 			{
 				vector<string> mess;
-				if (grid.is_valid(mess))
+				if (grid.is_valid(game.dictionary, mess))
 				{
-					if (bunch.size() > 0)
+					if (game.bunch.size() > 0)
 					{
-						Tile* tile = bunch.back();
-						bunch.pop_back();
-						hand.add_tile(tile);
+						Tile* tile = game.bunch.back();
+						game.bunch.pop_back();
+						game.hand.add_tile(tile);
 						for (auto message : mess)
-							messages.add(message, MessageQ::LOW);
+							game.messages.add(message, MessageQ::LOW);
 					}
 					else
-						messages.add("You win!", MessageQ::LOW);
+						game.messages.add("You win!", MessageQ::LOW);
 				}
 				else
 					for (auto message : mess)
-						messages.add(message, MessageQ::HIGH);
+						game.messages.add(message, MessageQ::HIGH);
 			}
 			else
-				messages.add("You have not used all of your letters.", MessageQ::HIGH);
+				game.messages.add("You have not used all of your letters.", MessageQ::HIGH);
 		}
 
 		// if backspace
@@ -662,7 +620,7 @@ int main()
 
 			auto tile = grid.remove(cursor.get_pos());
 			if (tile != nullptr)
-				hand.add_tile(tile);
+				game.hand.add_tile(tile);
 		}
 
 		// if letter key
@@ -674,12 +632,12 @@ int main()
 			// if space is empty or has a different letter
 			if (grid.get(cursor.get_pos()) == nullptr || grid.get(cursor.get_pos())->ch() != ch)
 			{
-				if (hand.has_any(ch))
+				if (game.hand.has_any(ch))
 				{
-					Tile* tile = grid.swap(cursor.get_pos(), hand.remove_tile(ch));
+					Tile* tile = grid.swap(cursor.get_pos(), game.hand.remove_tile(ch));
 
 					if (tile != nullptr)
-						hand.add_tile(tile);
+						game.hand.add_tile(tile);
 					placed = true;
 				}
 			}
@@ -706,7 +664,7 @@ int main()
 			{
 				stringstream letter;
 				letter << ch;
-				messages.add("You are out of " + letter.str() + "s!", MessageQ::HIGH);
+				game.messages.add("You are out of " + letter.str() + "s!", MessageQ::HIGH);
 			}
 		}
 
@@ -714,7 +672,7 @@ int main()
 		float time = clock.getElapsedTime().asSeconds();
 		clock.restart();
 
-		messages.age(time);
+		game.messages.age(time);
 
 		bool keep_cursor_on_screen = false;
 
@@ -822,13 +780,13 @@ int main()
 		grid.step(time);
 
 		if (controls["scramble_tiles"])
-			hand.set_scrambled();
+			game.hand.set_scrambled();
 		if (controls["sort_tiles"])
-			hand.set_sorted();
+			game.hand.set_sorted();
 		if (controls["count_tiles"])
-			hand.set_counts();
+			game.hand.set_counts();
 		if (controls["stack_tiles"])
-			hand.set_stacked();
+			game.hand.set_stacked();
 
 		if (controls["menu"])
 		{
@@ -850,16 +808,16 @@ int main()
 
 		window.setView(grid_view);
 		grid.draw_on(window);
-		if (selecting || selected)
+		if (game.selecting || game.selected)
 			selection.draw_on(window);
-		if (buffer != nullptr)
-			buffer->draw_on(window);
+		if (game.buffer != nullptr)
+			game.buffer->draw_on(window);
 		cursor.draw_on(window);
 		mcursor.draw_on(window);
 
 		window.setView(gui_view);
-		messages.draw_on(window);
-		hand.draw_on(window);
+		game.messages.draw_on(window);
+		game.hand.draw_on(window);
 
 		if (!current.is_finished())
 			current.menu().draw_on(window);
@@ -868,10 +826,6 @@ int main()
 	}
 
 	// TODO save game if player hasn't won
-
-	// delete unused tiles
-	for (auto tile: bunch)
-		delete tile;
 
 	// TODO only do this if controls changed
 	controls.write_to_file("config.yaml");

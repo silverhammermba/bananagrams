@@ -46,6 +46,7 @@ public:
 
 	void add(const std::string& message, severity_t severity);
 	void age(float time); // TODO inefficient?
+	void clear();
 
 	void draw_on(sf::RenderWindow& window) const;
 };
