@@ -72,9 +72,21 @@ void SolitaireEntry::select()
 TextEntry::TextEntry(const std::string& txt, const std::string& def_display, const std::string& def)
 	: Entry(txt), box(), input(def_display, font, PPB), str(def), default_display(def_display), default_str(def)
 {
+	// get heights and shifts
+	text.setString("A");
+	b_height = text.getGlobalBounds().height;
+	text.setString(txt);
+	input.setString("A");
+	auto i_bounds = input.getGlobalBounds();
+	i_height = i_bounds.height;
+	shift = input.getPosition().y - i_bounds.top;
+	input.setString(def_display);
+
+	// set up input box
 	box.setFillColor(sf::Color::Transparent);
 	box.setOutlineColor(INACTIVE);
 	box.setOutlineThickness(2);
+
 	input.setColor(INACTIVE);
 	selected = false;
 }
@@ -85,18 +97,23 @@ float TextEntry::get_width()
 	return text.getGlobalBounds().width + PPB * 0.5 + PPB * 4;
 }
 
-void TextEntry::set_menu_pos(float center, float width, float top)
+// center input in box
+void TextEntry::set_input_pos()
 {
-	text.setPosition(center - width / 2, top);
-	auto bounds = text.getGlobalBounds();
-	box.setSize({(float)(width - bounds.width - PPB * 0.5), bounds.height});
-	box.setPosition(center - width / 2 + bounds.width + PPB * 0.5, bounds.top);
-	// center input in box
 	auto i_pos = input.getPosition();
 	auto i_bounds = input.getGlobalBounds();
 	auto b_pos = box.getPosition();
 	auto b_size = box.getSize();
-	input.setPosition(b_pos.x + (b_size.x - i_bounds.width) / 2 - (i_bounds.left - i_pos.x), b_pos.y + (b_size.y - i_bounds.height) / 2 - (i_bounds.top - i_pos.y));
+	input.setPosition(b_pos.x + (b_size.x - i_bounds.width) / 2 - (i_bounds.left - i_pos.x), b_pos.y + (b_height - i_height) / 2 + shift);
+}
+
+void TextEntry::set_menu_pos(float center, float width, float top)
+{
+	text.setPosition(center - width / 2, top);
+	auto bounds = text.getGlobalBounds();
+	box.setSize({(float)(width - bounds.width - PPB * 0.5), b_height});
+	box.setPosition(center - width / 2 + bounds.width + PPB * 0.5, bounds.top + bounds.height - b_height);
+	set_input_pos();
 }
 
 void TextEntry::highlight()
@@ -133,6 +150,7 @@ void TextEntry::select()
 		{
 			str = default_str;
 			input.setString(default_display);
+			set_input_pos();
 		}
 	}
 }
@@ -145,6 +163,7 @@ bool TextEntry::process_event(sf::Event& event)
 		{
 			str = str.substr(0, str.size() - 1); // TODO better way to remove last?
 			input.setString(str);
+			set_input_pos();
 		}
 		else if (event.type == sf::Event::TextEntered)
 		{
@@ -156,6 +175,7 @@ bool TextEntry::process_event(sf::Event& event)
 				fuck << ch;
 				str += fuck.str();
 				input.setString(str);
+				set_input_pos();
 			}
 		}
 	}

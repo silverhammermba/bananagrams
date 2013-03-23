@@ -115,7 +115,10 @@ class TextEntry : public Entry
 	std::string str;
 	std::string default_display;
 	std::string default_str;
+	float b_height, i_height, shift;
 	bool selected;
+
+	void set_input_pos();
 public:
 	TextEntry(const std::string& txt, const std::string& def_display, const std::string& def);
 
