@@ -51,9 +51,30 @@ void Game::end()
 	messages.clear();
 }
 
-void Game::restart(const std::string& dict, int multiplier, int divider)
+bool Game::restart(const std::string& dict, int multiplier, int divider)
 {
+	// TODO validate somehow
+	// TODO cache so we don't have to reload every time
+	std::ifstream words(dict);
+	if (!words.is_open())
+	{
+		std::cerr << "Couldn't find " << dict << "!\n";
+		return false;
+	}
+
 	end();
+
+	// parse dictionary
+	string line;
+	while (std::getline(words, line))
+	{
+		auto pos = line.find_first_of(' ');
+		if (pos == string::npos)
+			dictionary[line] = "";
+		else
+			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
+	}
+	words.close();
 
 	// create tiles for the bunch
 	for (char ch = 'A'; ch <= 'Z'; ++ch)
@@ -68,27 +89,8 @@ void Game::restart(const std::string& dict, int multiplier, int divider)
 		hand.add_tile(tile);
 	}
 
-	// TODO validate somehow
-	// TODO cache so we don't have to reload every time
-	std::ifstream words(dict);
-	if (!words.is_open())
-	{
-		std::cerr << "Couldn't find " << dict << "!\n";
-		// TODO throw something?
-	}
-
-	// parse dictionary
-	string line;
-	while (std::getline(words, line))
-	{
-		auto pos = line.find_first_of(' ');
-		if (pos == string::npos)
-			dictionary[line] = "";
-		else
-			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
-	}
-	words.close();
-
 	selected = false;
 	selecting = false;
+
+	return true;
 }

@@ -20,5 +20,5 @@ public:
 	bool load(const std::string& filename);
 	void save(const std::string& filename);
 
-	void restart(const std::string& dict, int multiplier = 1, int divider = 1);
+	bool restart(const std::string& dict, int multiplier = 1, int divider = 1);
 };

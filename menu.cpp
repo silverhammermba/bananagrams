@@ -74,7 +74,8 @@ void SolitaireEntry::select()
 		div = 2;
 	else
 		mul = multiplier.get_choice();
-	game.restart(dict_entry.get_string(), mul, div);
+	if (!game.restart(dict_entry.get_string(), mul, div))
+		system.open();
 }
 
 TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, const std::string& def_display)
