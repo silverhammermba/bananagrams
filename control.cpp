@@ -201,8 +201,11 @@ void KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 {
 	if (commands.find(command) == commands.end())
 		throw NotFound(command);
-	// TODO clear other binds?
+	for (auto pair = binds.begin(); pair != binds.end(); ++pair)
+		if (pair->second == command)
+			binds.erase(pair);
 	binds[key] = command;
+
 	commands[command].pressed = false;
 	commands[command].ready = true;
 }
