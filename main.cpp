@@ -265,6 +265,12 @@ int main()
 	solitaire_opts.append_entry(&dict_entry);
 	solitaire_opts.append_entry(&multiplier);
 
+	Menu control_opts(current, &main, "CONTROLS");
+	customize.submenu = &control_opts;
+
+	for (auto& pair : controls.get_binds())
+		control_opts.append_entry(new ControlEntry(pair.second, pair.first));
+
 	Menu confirm_quit(current, &main, "Really quit?");
 	quit.submenu = &confirm_quit;
 	QuitEntry yes("YES", window);

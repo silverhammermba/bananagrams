@@ -212,7 +212,7 @@ void TextEntry::draw_on(sf::RenderWindow& window) const
 MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& ch, unsigned int def)
 	: Entry(txt), choices(ch), chooser("", font, PPB * 1.5)
 {
-	// TODO throw something if def is bad
+	// TODO make sure default is good
 	choice = def;
 	max_width = 0;
 
@@ -225,6 +225,7 @@ MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& c
 			max_width = w;
 	}
 
+	// TODO make these arrows nice. maybe use unicode?
 	chooser.setString("< " + choices[0] + " >");
 	lowlight();
 }
@@ -287,6 +288,130 @@ void MultiEntry::draw_on(sf::RenderWindow& window) const
 	window.draw(chooser);
 	Entry::draw_on(window);
 }
+
+std::string cmd2menu(const std::string& cmd)
+{
+	std::string menu(cmd);
+
+	for (unsigned int i = 0; i < menu.length(); i++)
+	{
+		menu[i] = std::toupper(menu[i]);
+		if (menu[i] == '_')
+			menu[i] = ' ';
+	}
+
+	return menu;
+}
+
+ControlEntry::ControlEntry(const std::string& cmd, const sf::Event::KeyEvent& k)
+	: Entry(cmd2menu(cmd)), command(cmd), key(k), box(), key_text(key2str(k), font, PPB)
+{
+	// get heights and shifts
+	text.setString("A");
+	b_height = text.getGlobalBounds().height;
+	text.setString(cmd2menu(cmd));
+	key_text.setString("A");
+	auto i_bounds = key_text.getGlobalBounds();
+	i_height = i_bounds.height;
+	shift = key_text.getPosition().y - i_bounds.top;
+	key_text.setString(key2str(key));
+
+	// set up key_text box
+	box.setFillColor(sf::Color::Transparent);
+	box.setOutlineColor(INACTIVE);
+	box.setOutlineThickness(2);
+
+	key_text.setColor(INACTIVE);
+	selected = false;
+}
+
+float ControlEntry::get_width() const
+{
+	// TODO how to make these align and shit?
+	return text.getGlobalBounds().width + PPB * 0.5 + PPB * 5;
+}
+
+sf::FloatRect ControlEntry::bounds() const
+{
+	auto tb = text.getGlobalBounds();
+	auto bb = box.getGlobalBounds();
+	sf::FloatRect b(tb.left, bb.top, bb.left + bb.width - tb.left, bb.height);
+	return b;
+}
+
+// center key_text in box
+void ControlEntry::set_input_pos()
+{
+	auto i_pos = key_text.getPosition();
+	auto i_bounds = key_text.getGlobalBounds();
+	auto b_pos = box.getPosition();
+	auto b_size = box.getSize();
+	key_text.setPosition(b_pos.x + (b_size.x - i_bounds.width) / 2 - (i_bounds.left - i_pos.x), b_pos.y + (b_height - i_height) / 2 + shift);
+}
+
+void ControlEntry::set_menu_pos(float center, float width, float top)
+{
+	text.setPosition(center - width / 2, top);
+	auto tb = text.getGlobalBounds();
+	box.setSize({(float)(width - tb.width - PPB * 0.5), b_height});
+	box.setPosition(center - width / 2 + tb.width + PPB * 0.5, tb.top + tb.height - b_height);
+	set_input_pos();
+}
+
+void ControlEntry::highlight()
+{
+	box.setOutlineColor(ACTIVE);
+	Entry::highlight();
+}
+
+void ControlEntry::lowlight()
+{
+	selected = false;
+	box.setOutlineColor(INACTIVE);
+	key_text.setColor(INACTIVE);
+	Entry::lowlight();
+}
+
+void ControlEntry::select()
+{
+	selected = !selected;
+	if (selected)
+	{
+		key_text.setColor(ACTIVE);
+		key_text.setString("");
+	}
+	else
+	{
+		key_text.setColor(INACTIVE);
+		// TODO don't allow certain events?
+		key_text.setString(key2str(key));
+		set_input_pos();
+	}
+}
+
+bool ControlEntry::process_event(sf::Event& event)
+{
+	if (selected)
+	{
+		if (event.type == sf::Event::KeyReleased)
+		{
+			key = event.key;
+			key_text.setString(key2str(key));
+			set_input_pos();
+			selected = false;
+		}
+	}
+
+	return true;
+}
+
+void ControlEntry::draw_on(sf::RenderWindow& window) const
+{
+	window.draw(text);
+	window.draw(box);
+	window.draw(key_text);
+}
+
 
 QuitEntry::QuitEntry(const std::string& txt, sf::RenderWindow& win)
 	: Entry(txt), window(win)

@@ -97,6 +97,11 @@ public:
 
 	KeyControls();
 
+	inline const std::map<sf::Event::KeyEvent, std::string>& get_binds()
+	{
+		return binds;
+	}
+
 	void set_defaults();
 	// create a key binding for an existing command
 	void rebind(const sf::Event::KeyEvent& key, const std::string& command);
@@ -109,3 +114,5 @@ public:
 
 	virtual bool process_event(sf::Event& event);
 };
+
+std::string key2str(const sf::Event::KeyEvent& key);

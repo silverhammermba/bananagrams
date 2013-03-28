@@ -175,7 +175,7 @@ public:
 	virtual void draw_on(sf::RenderWindow& window) const;
 };
 
-// TODO start a solitaire game
+// TODO modularize better? how to get settings for starting game?
 class SolitaireEntry : public Entry
 {
 	MenuSystem& system;
@@ -186,6 +186,41 @@ public:
 	SolitaireEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict_entry, MultiEntry& multiplier, Game& game);
 
 	virtual void select();
+};
+
+class ControlEntry : public Entry
+{
+	std::string command;
+	sf::Event::KeyEvent key;
+	sf::RectangleShape box;
+	sf::Text key_text;
+
+	float b_height, i_height, shift;
+	float min_box_width;
+	bool selected; // if input is being handled
+public:
+	ControlEntry(const std::string& cmd, const sf::Event::KeyEvent& k);
+
+	inline const std::string& get_command()
+	{
+		return command;
+	}
+	inline const sf::Event::KeyEvent& get_key()
+	{
+		return key;
+	}
+
+	void set_input_pos();
+
+	virtual float get_width() const;
+	virtual sf::FloatRect bounds() const;
+	// left align text, fill remaining space with box, center input text in box
+	virtual void set_menu_pos(float center, float width, float top);
+	virtual void highlight();
+	virtual void lowlight();
+	virtual void select();
+	virtual bool process_event(sf::Event& event);
+	virtual void draw_on(sf::RenderWindow& window) const;
 };
 
 // close the window
