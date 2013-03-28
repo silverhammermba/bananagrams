@@ -268,6 +268,7 @@ int main()
 	Menu control_opts(current, &main, "CONTROLS");
 	customize.submenu = &control_opts;
 
+	// TODO need scrolling menus for this to work...
 	for (auto& pair : controls.get_binds())
 		control_opts.append_entry(new ControlEntry(pair.second, pair.first));
 

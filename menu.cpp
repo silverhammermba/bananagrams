@@ -5,7 +5,7 @@ static const sf::Color ACTIVE(255, 255, 255);
 static const sf::Color INACTIVE(150, 150, 150);
 
 Entry::Entry(const std::string& txt)
-	: text(txt, font, PPB * 1.5)
+	: text(txt, font, PPB)
 {
 	lowlight();
 }
@@ -17,7 +17,7 @@ float Entry::get_width() const
 
 float Entry::get_height() const
 {
-	return PPB * 1.5;
+	return PPB;
 }
 
 sf::FloatRect Entry::bounds() const
@@ -79,7 +79,7 @@ void SolitaireEntry::select()
 }
 
 TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, const std::string& def_display)
-	: Entry(txt), box(), input(def_display, font, PPB), str(def), default_display(def_display), default_str(def)
+	: Entry(txt), box(), input(def_display, font, (PPB * 2) / 3.0), str(def), default_display(def_display), default_str(def)
 {
 	min_box_width = mbw;
 
@@ -210,7 +210,7 @@ void TextEntry::draw_on(sf::RenderWindow& window) const
 }
 
 MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& ch, unsigned int def)
-	: Entry(txt), choices(ch), chooser("", font, PPB * 1.5)
+	: Entry(txt), choices(ch), chooser("", font, PPB)
 {
 	// TODO make sure default is good
 	choice = def;
@@ -304,7 +304,7 @@ std::string cmd2menu(const std::string& cmd)
 }
 
 ControlEntry::ControlEntry(const std::string& cmd, const sf::Event::KeyEvent& k)
-	: Entry(cmd2menu(cmd)), command(cmd), key(k), box(), key_text(key2str(k), font, PPB)
+	: Entry(cmd2menu(cmd)), command(cmd), key(k), box(), key_text(key2str(k), font, (PPB * 2) / 3.0)
 {
 	// get heights and shifts
 	text.setString("A");
@@ -436,7 +436,7 @@ void QuitEntry::select()
 
 // TODO react to changing view
 Menu::Menu(MenuSystem& sys, Menu* p, const std::string& ttl)
-	: system(sys), parent(p), title(ttl, font, PPB * 2.0)
+	: system(sys), parent(p), title(ttl, font, PPB * 1.5)
 {
 	title.setColor(ACTIVE);
 
@@ -459,14 +459,14 @@ void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 			max_width = width;
 	}
 
-	float height = PPB * 2.5 + (entries.size() - 1) * PPB * 1.5 + entries.back()->get_height();
+	float height = PPB * 2.0 + (entries.size() - 1) * PPB + entries.back()->get_height();
 	float shift = (gui_view.getSize().y - height) / 2;
 
 	title.setPosition(gui_view.getCenter().x + title.getGlobalBounds().width / -2, shift);
 
 	unsigned int i = 0;
 	for (auto entry : entries)
-		entry->set_menu_pos(gui_view.getCenter().x, max_width, shift + PPB * 2.5 + i++ * PPB * 1.5);
+		entry->set_menu_pos(gui_view.getCenter().x, max_width, shift + PPB * 2.0 + i++ * PPB);
 
 	background.setSize({max_width + PPB, gui_view.getSize().y + PPB});
 	background.setPosition(gui_view.getCenter().x + background.getSize().x / -2, PPB / -2.0);
