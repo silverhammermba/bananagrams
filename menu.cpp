@@ -400,6 +400,8 @@ bool ControlEntry::process_event(sf::Event& event)
 			set_input_pos();
 			selected = false;
 		}
+
+		return false;
 	}
 
 	return true;
@@ -509,9 +511,26 @@ void Menu::draw_on(sf::RenderWindow& window) const
 
 bool Menu::process_event(sf::Event& event)
 {
+	// only handle event if the highlighted entry tells you to
+	if (!(*highlighted)->process_event(event))
+		return false;
+
 	switch (event.type)
 	{
 		case sf::Event::KeyPressed:
+			switch (event.key.code)
+			{
+				case sf::Keyboard::Up:
+					highlight_prev();
+					break;
+				case sf::Keyboard::Down:
+					highlight_next();
+					break;
+				default:
+					break;
+			}
+			break;
+		case sf::Event::KeyReleased:
 			switch (event.key.code)
 			{
 				case sf::Keyboard::Escape:
@@ -520,35 +539,23 @@ bool Menu::process_event(sf::Event& event)
 					else
 						system.close();
 					break;
-				case sf::Keyboard::Up:
-					highlight_prev();
-					break;
-				case sf::Keyboard::Down:
-					highlight_next();
-					break;
 				case sf::Keyboard::Return:
 					(*highlighted)->select();
 					break;
 				default:
-					(*highlighted)->process_event(event);
 					break;
 			}
 			break;
 		case sf::Event::MouseMoved:
-		{
 			highlight_coords(event.mouseMove.x, event.mouseMove.y);
 			break;
-		}
 		case sf::Event::MouseButtonPressed:
-		{
 			highlight_coords(event.mouseButton.x, event.mouseButton.y);
 			break;
-		}
 		case sf::Event::MouseButtonReleased:
 			(*highlighted)->select();
 			break;
 		default:
-			(*highlighted)->process_event(event);
 			break;
 	}
 
