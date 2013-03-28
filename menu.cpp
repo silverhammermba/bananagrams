@@ -369,6 +369,8 @@ void ControlEntry::lowlight()
 	selected = false;
 	box.setOutlineColor(INACTIVE);
 	key_text.setColor(INACTIVE);
+	key_text.setString(key2str(key));
+	set_input_pos();
 	Entry::lowlight();
 }
 
@@ -395,10 +397,18 @@ bool ControlEntry::process_event(sf::Event& event)
 	{
 		if (event.type == sf::Event::KeyReleased)
 		{
-			key = event.key;
-			key_text.setString(key2str(key));
-			set_input_pos();
-			selected = false;
+			if (event.key.code == sf::Keyboard::Key::Escape)
+			{
+				lowlight();
+				highlight();
+			}
+			else
+			{
+				key = event.key;
+				key_text.setString(key2str(key));
+				set_input_pos();
+				selected = false;
+			}
 		}
 
 		return false;
@@ -520,6 +530,12 @@ bool Menu::process_event(sf::Event& event)
 		case sf::Event::KeyPressed:
 			switch (event.key.code)
 			{
+				case sf::Keyboard::Escape:
+					if (parent != nullptr)
+						system.set_menu(*parent);
+					else
+						system.close();
+					break;
 				case sf::Keyboard::Up:
 					highlight_prev();
 					break;
@@ -533,12 +549,6 @@ bool Menu::process_event(sf::Event& event)
 		case sf::Event::KeyReleased:
 			switch (event.key.code)
 			{
-				case sf::Keyboard::Escape:
-					if (parent != nullptr)
-						system.set_menu(*parent);
-					else
-						system.close();
-					break;
 				case sf::Keyboard::Return:
 					(*highlighted)->select();
 					break;
