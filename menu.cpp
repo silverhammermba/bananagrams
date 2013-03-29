@@ -381,15 +381,14 @@ void ControlEntry::select()
 	if (selected)
 	{
 		key_text.setColor(ACTIVE);
-		key_text.setString("");
+		key_text.setString("press a key...");
 	}
 	else
 	{
 		key_text.setColor(INACTIVE);
-		// TODO don't allow certain events?
 		key_text.setString(key2str(key));
-		set_input_pos();
 	}
+	set_input_pos();
 }
 
 bool ControlEntry::process_event(sf::Event& event)
@@ -398,19 +397,17 @@ bool ControlEntry::process_event(sf::Event& event)
 	{
 		if (event.type == sf::Event::KeyReleased)
 		{
-			if (event.key.code == sf::Keyboard::Key::Escape)
-			{
-				lowlight();
-				highlight();
-			}
-			else
-			{
+			if (event.key.code == sf::Keyboard::Key::LAlt || event.key.code == sf::Keyboard::Key::RShift)
+				event.key.alt = false;
+			if (event.key.code == sf::Keyboard::Key::LControl || event.key.code == sf::Keyboard::Key::RShift)
+				event.key.control = false;
+			if (event.key.code == sf::Keyboard::Key::LShift || event.key.code == sf::Keyboard::Key::RShift)
+				event.key.shift = false;
+			// TODO don't allow certain events?
+			if (event.key.code != sf::Keyboard::Key::Escape)
 				key = event.key;
-				key_text.setString(key2str(key));
-				set_input_pos();
-				selected = false;
-				// TODO lowlight/highlight or something?
-			}
+			lowlight();
+			highlight();
 		}
 
 		return false;
