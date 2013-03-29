@@ -195,7 +195,7 @@ class ControlEntry : public Entry
 	sf::RectangleShape box;
 	sf::Text key_text;
 
-	float b_height, i_height, shift;
+	float b_shift, b_height, i_height, shift;
 	float min_box_width;
 	bool selected; // if input is being handled
 public:

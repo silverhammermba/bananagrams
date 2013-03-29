@@ -308,6 +308,7 @@ ControlEntry::ControlEntry(const std::string& cmd, const sf::Event::KeyEvent& k)
 {
 	// get heights and shifts
 	text.setString("A");
+	b_shift = text.getGlobalBounds().top;
 	b_height = text.getGlobalBounds().height;
 	text.setString(cmd2menu(cmd));
 	key_text.setString("A");
@@ -353,8 +354,8 @@ void ControlEntry::set_menu_pos(float center, float width, float top)
 {
 	text.setPosition(center - width / 2, top);
 	auto tb = text.getGlobalBounds();
-	box.setSize({(float)(width - tb.width - PPB * 0.5), b_height});
-	box.setPosition(center - width / 2 + tb.width + PPB * 0.5, tb.top + tb.height - b_height);
+	box.setSize({(float)(PPB * 5), b_height});
+	box.setPosition(center + width / 2 - PPB * 5, top + b_shift);
 	set_input_pos();
 }
 
@@ -408,6 +409,7 @@ bool ControlEntry::process_event(sf::Event& event)
 				key_text.setString(key2str(key));
 				set_input_pos();
 				selected = false;
+				// TODO lowlight/highlight or something?
 			}
 		}
 
