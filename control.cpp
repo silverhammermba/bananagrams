@@ -142,6 +142,7 @@ sf::Event::KeyEvent str2key(const string& strn)
 
 string key2str(const sf::Event::KeyEvent& key)
 {
+	// TODO there is an issue with SFML and modifiers with some non-character keys (e.g. ?)
 	string str = keys[key.code];
 	if (key.system)
 		str = "system " + str;
@@ -154,11 +155,12 @@ string key2str(const sf::Event::KeyEvent& key)
 	return str;
 }
 
-KeyControls::Command::Command(repeat_t rep)
+KeyControls::Command::Command(repeat_t rep, bool rebind)
 {
+	repeat = rep;
+	rebindable = rebind;
 	pressed = false;
 	ready = true;
-	repeat = rep;
 }
 
 KeyControls::KeyControls()

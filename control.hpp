@@ -68,10 +68,16 @@ class KeyControls : public InputReader
 	class Command
 	{
 		repeat_t repeat;
+		bool rebindable;
 	public:
 		bool pressed;
 		bool ready;
-		Command(repeat_t rep = REPEAT);
+		Command(repeat_t rep = REPEAT, bool rebind = true);
+
+		inline bool is_rebindable() const
+		{
+			return rebindable;
+		}
 
 		inline repeat_t get_repeat() const
 		{
@@ -97,9 +103,14 @@ public:
 
 	KeyControls();
 
-	inline const std::map<sf::Event::KeyEvent, std::string>& get_binds()
+	inline const std::map<sf::Event::KeyEvent, std::string>& get_binds() const
 	{
 		return binds;
+	}
+
+	inline bool is_rebindable(const std::string& command) const
+	{
+		return commands.at(command).is_rebindable();
 	}
 
 	void set_defaults();

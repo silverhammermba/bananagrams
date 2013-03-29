@@ -353,7 +353,6 @@ void ControlEntry::set_input_pos()
 void ControlEntry::set_menu_pos(float center, float width, float top)
 {
 	text.setPosition(center - width / 2, top);
-	auto tb = text.getGlobalBounds();
 	box.setSize({(float)(PPB * 5), b_height});
 	box.setPosition(center + width / 2 - PPB * 5, top + b_shift);
 	set_input_pos();

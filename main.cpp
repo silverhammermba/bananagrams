@@ -270,7 +270,8 @@ int main()
 
 	// TODO need scrolling menus for this to work...
 	for (auto& pair : controls.get_binds())
-		control_opts.append_entry(new ControlEntry(pair.second, pair.first));
+		if (controls.is_rebindable(pair.second))
+			control_opts.append_entry(new ControlEntry(pair.second, pair.first));
 
 	Menu confirm_quit(current, &main, "Really quit?");
 	quit.submenu = &confirm_quit;
