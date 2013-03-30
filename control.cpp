@@ -142,8 +142,7 @@ sf::Event::KeyEvent str2key(const string& strn)
 
 string key2str(const sf::Event::KeyEvent& key)
 {
-	// TODO there is an issue with SFML and modifiers with some non-character keys (e.g. ?)
-	string str = keys[key.code];
+	string str = (key.code == sf::Keyboard::Key::Unknown ? "unknown" : keys[key.code]);
 	if (key.system)
 		str = "system " + str;
 	if (key.shift)
