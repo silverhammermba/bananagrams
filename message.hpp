@@ -3,6 +3,8 @@ class Message
 	sf::Text message;
 	float lifetime = 0;
 public:
+	enum class Severity {LOW, HIGH};
+
 	Message(const std::string& mes, const sf::Font& font, unsigned int size = 20, const sf::Color& color = sf::Color::Black);
 
 	inline void age(float time)
@@ -39,12 +41,10 @@ class MessageQ
 	float bottom;
 	static constexpr float padding = 10;
 public:
-	enum severity_t {LOW, HIGH};
-
 	MessageQ(const sf::Font& f);
 	~MessageQ();
 
-	void add(const std::string& message, severity_t severity);
+	void add(const std::string& message, Message::Severity severity);
 	void age(float time); // TODO inefficient?
 	void clear();
 

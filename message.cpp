@@ -17,17 +17,17 @@ MessageQ::~MessageQ()
 	clear();
 }
 
-void MessageQ::add(const string& message, severity_t severity)
+void MessageQ::add(const string& message, Message::Severity severity)
 {
 	sf::Color color;
 	unsigned int size;
 	switch (severity)
 	{
-		case LOW:
+		case Message::Severity::LOW:
 			color = sf::Color::White;
 			size = 12;
 			break;
-		case HIGH:
+		case Message::Severity::HIGH:
 			color = sf::Color::Red;
 			size = 18;
 			break;

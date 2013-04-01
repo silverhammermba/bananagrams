@@ -411,9 +411,9 @@ int main()
 					}
 
 					if (last < 'A')
-						game.messages.add("You do not have any tiles.", MessageQ::LOW);
+						game.messages.add("You do not have any tiles.", Message::Severity::LOW);
 					else if (last > 'Z')
-						game.messages.add("You have too many letters to place using the mouse.", MessageQ::HIGH);
+						game.messages.add("You have too many letters to place using the mouse.", Message::Severity::HIGH);
 					else
 					{
 						Tile* tile = game.grid.swap(cursor.get_pos(), game.hand.remove_tile(last));
@@ -436,12 +436,12 @@ int main()
 
 					if (game.buffer->is_empty())
 					{
-						game.messages.add("Nothing selected.", MessageQ::LOW);
+						game.messages.add("Nothing selected.", Message::Severity::LOW);
 						game.clear_buffer();
 					}
 				}
 				else
-					game.messages.add("Nothing selected.", MessageQ::LOW);
+					game.messages.add("Nothing selected.", Message::Severity::LOW);
 
 				game.selected = false;
 			}
@@ -449,7 +449,7 @@ int main()
 			{
 				game.buffer->clear(game.hand);
 				game.clear_buffer();
-				game.messages.add("Added cut tiles back to your hand.", MessageQ::LOW);
+				game.messages.add("Added cut tiles back to your hand.", Message::Severity::LOW);
 			}
 		}
 
@@ -467,7 +467,7 @@ int main()
 				game.clear_buffer();
 			}
 			else
-				game.messages.add("Cannot paste: no tiles were cut.", MessageQ::LOW);
+				game.messages.add("Cannot paste: no tiles were cut.", Message::Severity::LOW);
 		}
 
 		if (state.mremove)
@@ -484,7 +484,7 @@ int main()
 			{
 				auto dumped = game.grid.remove(cursor.get_pos());
 				if (dumped == nullptr)
-					game.messages.add("You need to select a tile to dump.", MessageQ::LOW);
+					game.messages.add("You need to select a tile to dump.", Message::Severity::LOW);
 				else
 				{
 					// take three
@@ -503,7 +503,7 @@ int main()
 				}
 			}
 			else
-				game.messages.add("There are not enough tiles left to dump!", MessageQ::HIGH);
+				game.messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
 
 		}
 
@@ -527,17 +527,17 @@ int main()
 						game.bunch.pop_back();
 						game.hand.add_tile(tile);
 						for (auto message : mess)
-							game.messages.add(message, MessageQ::LOW);
+							game.messages.add(message, Message::Severity::LOW);
 					}
 					else
-						game.messages.add("You win!", MessageQ::LOW);
+						game.messages.add("You win!", Message::Severity::LOW);
 				}
 				else
 					for (auto message : mess)
-						game.messages.add(message, MessageQ::HIGH);
+						game.messages.add(message, Message::Severity::HIGH);
 			}
 			else
-				game.messages.add("You have not used all of your letters.", MessageQ::HIGH);
+				game.messages.add("You have not used all of your letters.", Message::Severity::HIGH);
 		}
 
 		// if backspace
@@ -670,7 +670,7 @@ int main()
 			{
 				stringstream letter;
 				letter << ch;
-				game.messages.add("You are out of " + letter.str() + "s!", MessageQ::HIGH);
+				game.messages.add("You are out of " + letter.str() + "s!", Message::Severity::HIGH);
 			}
 		}
 
