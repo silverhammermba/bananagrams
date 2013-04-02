@@ -1,13 +1,13 @@
 #include "bananagrams.hpp"
 
-CutBuffer::CutBuffer(Grid& grid, int left, int top, int width, int height)
+CutBuffer::CutBuffer(Grid& grid, int left, int top, const sf::Vector2u& sz)
 {
-	sf::Vector2i min(left + width - 1, top + height - 1);
-	sf::Vector2i max(left, top);
+	sf::Vector2i min {left + (int)sz.x - 1, top + (int)sz.y - 1};
+	sf::Vector2i max {left, top};
 
 	// try to shrink selection
-	for (int i = left; i < left + width; i++)
-		for (int j = top; j < top + height; j++)
+	for (int i = left; i < left + (int)sz.x; i++)
+		for (int j = top; j < top + (int)sz.y; j++)
 		{
 			auto tile = grid.get(i, j);
 			if (tile != nullptr)
@@ -49,19 +49,18 @@ CutBuffer::~CutBuffer()
 
 void CutBuffer::transpose()
 {
-	std::vector<Tile*> temp(tiles.size(), nullptr);
+	std::vector<Tile*> temp {tiles.size(), nullptr};
 	for (unsigned int i = 0; i < tiles.size(); i++)
 		temp[(i % size.y) * size.x + i / size.y] = tiles[i];
 	for (unsigned int i = 0; i < tiles.size(); i++)
 		tiles[i] = temp[i];
-	unsigned int tmp = size.x;
+	int tmp {size.x};
 	size.x = size.y;
 	size.y = tmp;
 
 	set_pos(pos);
 }
 
-// TODO segfault
 // put tiles back in grid, returning displaced tiles to hand
 void CutBuffer::paste(Grid& grid, Hand& hand)
 {
@@ -104,4 +103,11 @@ void CutBuffer::set_pos(const sf::Vector2i& p)
 			if (tile != nullptr)
 				tile->set_grid_pos(sf::Vector2i(i, j) + pos - size / 2);
 		}
+}
+
+void CutBuffer::draw_on(sf::RenderWindow & window) const
+{
+	for (auto tile: tiles)
+		if (tile != nullptr)
+			tile->draw_on(window);
 }

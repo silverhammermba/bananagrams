@@ -7,6 +7,13 @@ unless File.exist? 'dictionary.txt'
 	FileUtils.copy('words.txt', 'dictionary.txt')
 end
 
+begin
+	`wn`
+rescue Errno::ENOENT
+	STDOUT.puts $!, "WordNet not found - no definitions added"
+	exit 1
+end
+
 STDOUT.puts "Reading words..."
 dictionary = {}
 File.open("dictionary.txt") do |list|

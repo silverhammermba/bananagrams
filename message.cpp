@@ -2,27 +2,33 @@
 
 using std::string;
 
-Message::Message(const string& mes, const sf::Font& font, unsigned int size, const sf::Color& color) : message(mes, font, size)
+Message::Message(const string& mes, const sf::Font& font, unsigned int size, const sf::Color& color)
+	: message {mes, font, size}
 {
 	message.setColor(color);
 }
 
-MessageQ::MessageQ(const sf::Font& f) : font(f)
+MessageQ::MessageQ(const sf::Font& f)
+	: font {f}
 {
-	bottom = 0;
 }
 
-void MessageQ::add(const string& message, severity_t severity)
+MessageQ::~MessageQ()
+{
+	clear();
+}
+
+void MessageQ::add(const string& message, Message::Severity severity)
 {
 	sf::Color color;
 	unsigned int size;
 	switch (severity)
 	{
-		case LOW:
+		case Message::Severity::LOW:
 			color = sf::Color::White;
 			size = 12;
 			break;
-		case HIGH:
+		case Message::Severity::HIGH:
 			color = sf::Color::Red;
 			size = 18;
 			break;
@@ -38,12 +44,13 @@ void MessageQ::add(const string& message, severity_t severity)
 // TODO inefficient?
 void MessageQ::age(float time)
 {
-	bool change = false;
+	bool change {false};
 	for (auto mess = messages.begin(); mess != messages.end();)
 	{
 		(*mess)->age(time);
 		if ((*mess)->age() > 5)
 		{
+			delete *mess;
 			mess = messages.erase(mess);
 			change = true;
 		}
@@ -59,6 +66,15 @@ void MessageQ::age(float time)
 			bottom += padding + message->get_height();
 		}
 	}
+}
+
+void MessageQ::clear()
+{
+	for (auto message : messages)
+		delete message;
+	messages.clear();
+
+	bottom = 0;
 }
 
 void MessageQ::draw_on(sf::RenderWindow& window) const

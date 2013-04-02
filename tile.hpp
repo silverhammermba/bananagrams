@@ -2,6 +2,7 @@ class Tile
 {
 	char character;
 	sf::Sprite sprite;
+	sf::Vector2i gpos {0, 0}; // position on grid (not always meaningful)
 public:
 	bool marked; // for checking grid connectedness
 
@@ -20,12 +21,15 @@ public:
 
 	inline void set_grid_pos(int x, int y)
 	{
-		sprite.setPosition(x * PPB, y * PPB);
+		gpos.x = x;
+		gpos.y = y;
+		sprite.setPosition(x * (int)PPB, y * (int)PPB);
 	}
 
 	inline void set_grid_pos(const sf::Vector2i& pos)
 	{
-		sprite.setPosition(pos.x * PPB, pos.y * PPB);
+		gpos = pos;
+		sprite.setPosition(pos.x * (int)PPB, pos.y * (int)PPB);
 	}
 
 	inline const sf::Color& get_color() const
@@ -41,6 +45,11 @@ public:
 	inline const sf::Vector2f& get_pos() const
 	{
 		return sprite.getPosition();
+	}
+
+	inline const sf::Vector2i& get_grid_pos() const
+	{
+		return gpos;
 	}
 
 	inline void draw_on(sf::RenderWindow & window) const

@@ -4,7 +4,7 @@ class CutBuffer
 	sf::Vector2i size;
 	std::vector<Tile*> tiles;
 public:
-	CutBuffer(Grid& grid, int left, int top, int width, int height);
+	CutBuffer(Grid& grid, int left, int top, const sf::Vector2u& size);
 	~CutBuffer();
 
 	inline bool is_empty() const
@@ -22,10 +22,5 @@ public:
 	// set center to p
 	void set_pos(const sf::Vector2i& p);
 
-	inline void draw_on(sf::RenderWindow & window) const
-	{
-		for (auto tile: tiles)
-			if (tile != nullptr)
-				tile->draw_on(window);
-	}
+	void draw_on(sf::RenderWindow & window) const;
 };

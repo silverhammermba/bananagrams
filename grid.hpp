@@ -13,8 +13,10 @@ namespace std
 class Grid
 {
 	std::vector<Tile*> grid;
-	unsigned int tiles;
-	sf::Vector2f center;
+	unsigned int tiles {0};
+	sf::Vector2i min {0, 0};
+	sf::Vector2i max {0, 0};
+	sf::Vector2i last;
 	std::vector<std::string> defined;
 	std::map<sf::Vector2i, bool> hwords;
 	std::map<sf::Vector2i, bool> vwords;
@@ -29,10 +31,9 @@ class Grid
 	// for checking connectedness of grid
 	void traverse(int x, int y);
 public:
-	Grid();
 	~Grid();
 
-	// get average tile position (not reall center)
+	// return center of bounding box
 	sf::Vector2f get_center() const;
 
 	// return tile at x, y
@@ -57,11 +58,24 @@ public:
 		return swap(pos.x, pos.y, tile);
 	}
 
+	inline const sf::Vector2i& get_min() const
+	{
+		return min;
+	}
+
+	inline const sf::Vector2i& get_max() const
+	{
+		return max;
+	}
+
+	// remove all tiles
+	void clear();
+
 	// animate tiles
 	void step(float time);
 
-	// check for connectedness and valid words
-	bool is_valid(std::vector<std::string>& messages);
+	// check for connectedness and valid words, chance of displaying definitions of valid words
+	bool is_valid(std::map<std::string, std::string>& dictionary, std::vector<std::string>& messages, unsigned int chance = 100);
 
 	void draw_on(sf::RenderWindow& window) const;
 };

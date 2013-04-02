@@ -1,8 +1,7 @@
 // TODO inefficient
-class Hand : public InputReader
+class Hand
 {
 	std::vector<Tile*> tiles[26];
-	sf::View* gui_view;
 	std::list<Tile*> scram; // for shuffle
 	std::list<Tile*> sort; // for ordered
 	std::list<Tile*> single; // for counts
@@ -16,11 +15,11 @@ class Hand : public InputReader
 	void ordered(sf::RenderWindow& window);
 	void scrambled(sf::RenderWindow& window);
 
-	void (Hand::*draw_func)(sf::RenderWindow&) = &Hand::scrambled;
+	void (Hand::*draw_func)(sf::RenderWindow&) {&Hand::scrambled};
 
 	void reshuffle();
 public:
-	Hand(sf::View* v, const sf::Font& font);
+	Hand(const sf::Font& font);
 	~Hand();
 
 	inline bool has_any(char ch) const
@@ -28,13 +27,19 @@ public:
 		return tiles[ch - 'A'].size() > 0;
 	}
 
+	void clear();
+
 	void add_tile(Tile* tile);
 	Tile* remove_tile(char ch);
 
-	virtual bool process_event(const sf::Event& event);
-
+	// TODO make this const
 	inline void draw_on(sf::RenderWindow& window)
 	{
 		(this->*draw_func)(window);
 	}
+
+	void set_scrambled();
+	void set_sorted();
+	void set_counts();
+	void set_stacked();
 };
