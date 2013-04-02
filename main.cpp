@@ -47,9 +47,9 @@ public:
 int main()
 {
 	// load resources
-	if (!font.loadFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf"))
+	if (!font.loadFromFile("DejaVuSans.ttf"))
 	{
-		cerr << "Couldn't find font /usr/share/fonts/TTF/DejaVuSans.ttf!\n";
+		cerr << "Couldn't find font DejaVuSans.ttf!\n";
 		return 1;
 	}
 
@@ -90,6 +90,7 @@ int main()
 	// dedication
 	while (window.isOpen())
 	{
+		bool skip {false};
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -103,6 +104,8 @@ int main()
 				if (!cont)
 					break;
 			}
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape)
+				skip = true;
 		}
 
 		float elapsed {clock.getElapsedTime().asSeconds()};
@@ -114,7 +117,7 @@ int main()
 		else
 			loading_text.setColor(sf::Color::White);
 
-		if (elapsed > 3)
+		if (skip || elapsed > 3)
 			break;
 
 		window.clear(background);
@@ -325,7 +328,6 @@ int main()
 
 		// TODO only redraw window if you need to? sleep when no events received maybe...
 
-		// TODO replace state with MouseControls
 		if (mouse.was_moved())
 			game.update_mouse_pos(window, grid_view, mouse.get_pos());
 
@@ -372,11 +374,9 @@ int main()
 		float time {clock.getElapsedTime().asSeconds()};
 		clock.restart();
 
-		game.messages.age(time);
-
 		if (controls["center"])
 		{
-			grid_view.setCenter(game.grid.get_center());
+			grid_view.setCenter(game.get_grid_center());
 			game.set_cursor_to_view();
 		}
 
@@ -445,16 +445,16 @@ int main()
 		game.set_zoom(state.zoom);
 
 		// animate tiles
-		game.grid.step(time);
+		game.step(time);
 
 		if (controls["scramble_tiles"])
-			game.hand.set_scrambled();
+			game.get_hand().set_scrambled();
 		if (controls["sort_tiles"])
-			game.hand.set_sorted();
+			game.get_hand().set_sorted();
 		if (controls["count_tiles"])
-			game.hand.set_counts();
+			game.get_hand().set_counts();
 		if (controls["stack_tiles"])
-			game.hand.set_stacked();
+			game.get_hand().set_stacked();
 
 		if (controls["menu"])
 		{

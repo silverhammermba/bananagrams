@@ -45,7 +45,7 @@ public:
 	~MessageQ();
 
 	void add(const std::string& message, Message::Severity severity);
-	void age(float time); // TODO inefficient?
+	void step(float time);
 	void clear();
 
 	void draw_on(sf::RenderWindow& window) const;
