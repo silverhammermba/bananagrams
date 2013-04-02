@@ -75,7 +75,6 @@ bool MouseControls::process_event(sf::Event& event)
 			held[event.mouseButton.button] = true;
 			return false;
 		case sf::Event::MouseButtonReleased:
-			moved = true; // TODO kinda hacky
 			held[event.mouseButton.button] = false;
 			released[event.mouseButton.button] = true;
 			return false;

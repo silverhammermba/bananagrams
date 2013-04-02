@@ -42,7 +42,7 @@ void MessageQ::add(const string& message, Message::Severity severity)
 }
 
 // TODO inefficient?
-void MessageQ::age(float time)
+void MessageQ::step(float time)
 {
 	bool change {false};
 	for (auto mess = messages.begin(); mess != messages.end();)

@@ -325,7 +325,6 @@ int main()
 
 		// TODO only redraw window if you need to? sleep when no events received maybe...
 
-		// TODO replace state with MouseControls
 		if (mouse.was_moved())
 			game.update_mouse_pos(window, grid_view, mouse.get_pos());
 
@@ -372,11 +371,9 @@ int main()
 		float time {clock.getElapsedTime().asSeconds()};
 		clock.restart();
 
-		game.messages.age(time);
-
 		if (controls["center"])
 		{
-			grid_view.setCenter(game.grid.get_center());
+			grid_view.setCenter(game.get_grid_center());
 			game.set_cursor_to_view();
 		}
 
@@ -445,16 +442,16 @@ int main()
 		game.set_zoom(state.zoom);
 
 		// animate tiles
-		game.grid.step(time);
+		game.step(time);
 
 		if (controls["scramble_tiles"])
-			game.hand.set_scrambled();
+			game.get_hand().set_scrambled();
 		if (controls["sort_tiles"])
-			game.hand.set_sorted();
+			game.get_hand().set_sorted();
 		if (controls["count_tiles"])
-			game.hand.set_counts();
+			game.get_hand().set_counts();
 		if (controls["stack_tiles"])
-			game.hand.set_stacked();
+			game.get_hand().set_stacked();
 
 		if (controls["menu"])
 		{

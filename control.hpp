@@ -67,7 +67,6 @@ namespace std
 	};
 }
 
-// TODO would be awesome if MouseControls could be combined
 // abstraction between keyboard and in-game commands
 class KeyControls : public InputReader
 {
@@ -78,7 +77,7 @@ class KeyControls : public InputReader
 	class Command
 	{
 		repeat_t repeat;
-		bool rebindable;
+		bool rebindable; // TODO protect non-rebindable commands
 	public:
 		bool pressed {false};
 		bool ready {true};
