@@ -7,7 +7,7 @@ struct State
 	float zoom; // zoom factor for grid view
 
 	// mouse
-	int pos[2]; // last position
+	sf::Vector2i pos; // last position
 	bool update; // signal to update cursor position
 	bool mremove; // signal to remove tiles
 	int wheel_delta; // amount to zoom

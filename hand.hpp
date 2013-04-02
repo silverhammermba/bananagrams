@@ -32,6 +32,7 @@ public:
 	void add_tile(Tile* tile);
 	Tile* remove_tile(char ch);
 
+	// TODO make this const
 	inline void draw_on(sf::RenderWindow& window)
 	{
 		(this->*draw_func)(window);

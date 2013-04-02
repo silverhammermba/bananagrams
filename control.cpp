@@ -48,8 +48,8 @@ bool MouseControls::process_event(sf::Event& event)
 		case sf::Event::MouseMoved:
 			{
 				state->update = true;
-				state->pos[0] = event.mouseMove.x;
-				state->pos[1] = event.mouseMove.y;
+				state->pos.x = event.mouseMove.x;
+				state->pos.y = event.mouseMove.y;
 			}
 			break;
 		case sf::Event::MouseWheelMoved:

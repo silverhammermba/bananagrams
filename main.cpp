@@ -291,20 +291,8 @@ int main()
 	window.display();
 
 	// stuff for game loop
-	Cursor cursor {{1, 1}, PPB / 16.f, sf::Color::Transparent, sf::Color {0, 200, 0}};
-	Cursor mcursor {{1, 1}, PPB / 16.0, sf::Color::Transparent, sf::Color {0, 200, 0, 80}};
-
-	sf::Vector2i last {-1, 0};
-	sf::Vector2i next {0, 0};
-
-	// mouse press and release positions
-	sf::Vector2i sel1;
-	sf::Vector2i sel2;
-	Cursor selection {{1, 1}, 1, sf::Color {255, 255, 255, 25}, sf::Color::White};
-
 	// mouse
-	state.pos[0] = 0;
-	state.pos[1] = 0;
+	state.pos = {0, 0};
 	state.update = false;
 	state.mremove = false;
 	state.wheel_delta = 0;
@@ -345,327 +333,60 @@ int main()
 
 		// TODO only redraw window if you need to? sleep when no events received maybe...
 
+		// TODO replace state with MouseControls
 		// mouse moved
 		if (state.update)
 		{
-			// TODO refactor
-			// update mouse cursor position
-			mcursor.set_pos({(int)std::floor(((state.pos[0] * gsize.x) / wsize.x + center.x - (gsize.x / 2)) / PPB), (int)std::floor(((state.pos[1] * gsize.y) / wsize.y + center.y - (gsize.y / 2)) / PPB)});
-
-			if (game.buffer != nullptr)
-				game.buffer->set_pos(mcursor.get_pos());
-
+			game.update_mouse_pos(window, grid_view, state.pos);
 			state.update = false;
 		}
 
 		// left click
 		if (state.start_selection)
 		{
-			game.selecting = true;
-			game.selected = false;
-			sel1 = mcursor.get_pos();
+			game.select();
 			state.start_selection = false;
 		}
 
 		// if left click held down
-		if (game.selecting)
-		{
-			sel2 = mcursor.get_pos();
-			// update selection rect
-			selection.set_size({(unsigned int)std::abs(sel1.x - sel2.x) + 1, (unsigned int)std::abs(sel1.y - sel2.y) + 1});
-			selection.set_pos({std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y)});
-		}
+		if (game.is_selecting())
+			game.resize_selection();
 
 		// if left click release
 		if (state.end_selection)
 		{
-			game.selecting = false;
-			game.selected = true;
+			if (game.complete_selection() == 1 && controls["quick_place"])
+				game.quick_place();
 
-			// if the selection was only 1 square, do something else
-			if (selection.get_size() == sf::Vector2u(1, 1))
-			{
-				game.selected = false;
-				// move cursor to mouse cursor
-				cursor.set_pos(mcursor.get_pos());
-
-				if (controls["quick_place"])
-				{
-					// look for remaining tiles
-					char last {'A' - 1};
-					for (char ch = 'A'; ch <= 'Z'; ch++)
-					{
-						if (game.hand.has_any(ch))
-						{
-							if (last < 'A')
-								last = ch;
-							else
-							{
-								last = 'Z' + 1;
-								break;
-							}
-						}
-					}
-
-					if (last < 'A')
-						game.messages.add("You do not have any tiles.", Message::Severity::LOW);
-					else if (last > 'Z')
-						game.messages.add("You have too many letters to place using the mouse.", Message::Severity::HIGH);
-					else
-					{
-						Tile* tile {game.grid.swap(cursor.get_pos(), game.hand.remove_tile(last))};
-
-						if (tile != nullptr)
-							game.hand.add_tile(tile);
-					}
-				}
-			}
 			state.end_selection = false;
 		}
 
 		if (controls["cut"])
-		{
-			if (game.buffer == nullptr)
-			{
-				if (game.selected)
-				{
-					game.buffer = new CutBuffer(game.grid, std::min(sel1.x, sel2.x), std::min(sel1.y, sel2.y), selection.get_size());
-
-					if (game.buffer->is_empty())
-					{
-						game.messages.add("Nothing selected.", Message::Severity::LOW);
-						game.clear_buffer();
-					}
-				}
-				else
-					game.messages.add("Nothing selected.", Message::Severity::LOW);
-
-				game.selected = false;
-			}
-			else
-			{
-				game.buffer->clear(game.hand);
-				game.clear_buffer();
-				game.messages.add("Added cut tiles back to your hand.", Message::Severity::LOW);
-			}
-		}
+			game.cut();
 
 		if (controls["flip"])
-		{
-			if (game.buffer != nullptr)
-				game.buffer->transpose();
-		}
+			game.flip_buffer();
 
 		if (controls["paste"])
-		{
-			if (game.buffer != nullptr)
-			{
-				game.buffer->paste(game.grid, game.hand);
-				game.clear_buffer();
-			}
-			else
-				game.messages.add("Cannot paste: no tiles were cut.", Message::Severity::LOW);
-		}
+			game.paste();
 
 		if (state.mremove)
-		{
-			// remove tile
-			Tile* tile {game.grid.remove(mcursor.get_pos())};
-			if (tile != nullptr)
-				game.hand.add_tile(tile);
-		}
+			game.remove_at_mouse();
 
 		if (controls["dump"])
-		{
-			if (game.bunch.size() >= 3)
-			{
-				Tile* dumped {game.grid.remove(cursor.get_pos())};
-				if (dumped == nullptr)
-					game.messages.add("You need to select a tile to dump.", Message::Severity::LOW);
-				else
-				{
-					// take three
-					for (unsigned int i = 0; i < 3; i++)
-					{
-						Tile* tile {game.bunch.back()};
-						game.bunch.pop_back();
-						game.hand.add_tile(tile);
-					}
-
-					random_insert<Tile*>(game.bunch, dumped);
-				}
-			}
-			else
-				game.messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
-
-		}
+			game.dump();
 
 		if (controls["peel"])
-		{
-			bool spent {true};
-			for (char ch = 'A'; ch <= 'Z'; ch++)
-				if (game.hand.has_any(ch))
-				{
-					spent = false;
-					break;
-				}
-			if (spent)
-			{
-				vector<string> mess;
-				if (game.grid.is_valid(game.dictionary, mess))
-				{
-					if (game.bunch.size() > 0)
-					{
-						Tile* tile {game.bunch.back()};
-						game.bunch.pop_back();
-						game.hand.add_tile(tile);
-						for (auto message : mess)
-							game.messages.add(message, Message::Severity::LOW);
-					}
-					else
-						game.messages.add("You win!", Message::Severity::LOW);
-				}
-				else
-					for (auto message : mess)
-						game.messages.add(message, Message::Severity::HIGH);
-			}
-			else
-				game.messages.add("You have not used all of your letters.", Message::Severity::HIGH);
-		}
+			game.peel();
 
 		// if backspace
 		if (controls["remove"])
-		{
-			const sf::Vector2i& pos = cursor.get_pos();
-			// TODO DRY off autoadvancing
-			// if the cursor is ahead of the last added character, autoadvance
-			if (pos == last + next)
-			{
-				cursor.set_pos(last);
-				last -= next;
-			}
-			// TODO guess based on cursor movement first?
-			// else if you are not near the last character and the space is empty, try to autoadvance
-			else if (game.grid.get(pos) == nullptr)
-			{
-				// TODO last case covers these first ones
-				// if right of a tile
-				if (game.grid.get(pos - X) != nullptr)
-				{
-					next = X;
-					cursor.move(-next);
-					last = cursor.get_pos() - next;
-				}
-				// if below a tile
-				else if (game.grid.get(pos - Y) != nullptr)
-				{
-					next = Y;
-					cursor.move(-next);
-					last = cursor.get_pos() - next;
-				}
-				else // try to find nearest tile
-				{
-					// TODO use sf::IntRect for this?
-					// TODO could probably refactor
-					int xd {pos.x - 1};
-					bool foundx {false};
-					if (pos.y >= game.grid.get_min().y && pos.y <= game.grid.get_max().y)
-						for (; xd >= game.grid.get_min().x; --xd)
-							if (game.grid.get(xd, pos.y) != nullptr)
-							{
-								foundx = true;
-								break;
-							}
-
-					int yd {pos.y - 1};
-					bool foundy = false;
-					if (pos.x >= game.grid.get_min().x && pos.x <= game.grid.get_max().x)
-						for (; yd >= game.grid.get_min().y; --yd)
-							if (game.grid.get(pos.x, yd) != nullptr)
-							{
-								foundy = true;
-								break;
-							}
-
-					if (foundx)
-					{
-						if (!foundy || pos.x - xd <= pos.y - yd)
-							next = X;
-						else
-							next = Y;
-					}
-					else if (foundy)
-						next = Y;
-					else // just do something
-						next = X;
-
-					cursor.move(-next);
-					last = cursor.get_pos() - next;
-				}
-			}
-			else // not near last character, position not empty, try to set autoadvance for next time
-			{
-				if (game.grid.get(pos - X) != nullptr)
-				{
-					next = X;
-					last = cursor.get_pos() - next;
-				}
-				else if (game.grid.get(pos - Y) != nullptr)
-				{
-					next = Y;
-					last = cursor.get_pos() - next;
-				}
-			}
-
-			Tile* tile {game.grid.remove(cursor.get_pos())};
-			if (tile != nullptr)
-				game.hand.add_tile(tile);
-		}
+			game.remove();
 
 		// if letter key
 		char ch;
 		if (typer.get_ch(&ch))
-		{
-			bool placed {false};
-
-			// if space is empty or has a different letter
-			if (game.grid.get(cursor.get_pos()) == nullptr || game.grid.get(cursor.get_pos())->ch() != ch)
-			{
-				if (game.hand.has_any(ch))
-				{
-					Tile* tile {game.grid.swap(cursor.get_pos(), game.hand.remove_tile(ch))};
-
-					if (tile != nullptr)
-						game.hand.add_tile(tile);
-					placed = true;
-				}
-			}
-			else // space already has the letter to be placed
-				placed = true;
-
-			// if we placed a letter, try to autoadvance
-			// TODO make autoadvancing smarter when not near last
-			if (placed)
-			{
-				next = {0, 0};
-				if (cursor.get_pos() == last + X)
-					next.x = 1;
-				else if (cursor.get_pos() == last + Y)
-					next.y = 1;
-				else if (game.grid.get(cursor.get_pos() - X) != nullptr)
-					next.x = 1;
-				else if (game.grid.get(cursor.get_pos() - Y) != nullptr)
-					next.y = 1;
-				last = cursor.get_pos();
-				cursor.move(next);
-			}
-			else
-			{
-				stringstream letter;
-				letter << ch;
-				game.messages.add("You are out of " + letter.str() + "s!", Message::Severity::HIGH);
-			}
-		}
+			game.place(ch);
 
 		// frame-time-dependent stuff
 		float time {clock.getElapsedTime().asSeconds()};
@@ -673,58 +394,27 @@ int main()
 
 		game.messages.age(time);
 
-		bool keep_cursor_on_screen {false};
-
 		if (controls["center"])
 		{
 			grid_view.setCenter(game.grid.get_center());
-			keep_cursor_on_screen = true;
+			game.set_cursor_to_view();
 		}
 
 		// zoom with mouse wheel
 		if (state.wheel_delta < 0 || (state.wheel_delta > 0 && state.zoom > 1))
 		{
-			sf::Vector2f before {(state.pos[0] * gsize.x) / wsize.x + center.x - gsize.x / 2, (state.pos[1] * gsize.y) / wsize.y + center.y - gsize.y / 2};
+			sf::Vector2f before {(state.pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (state.pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
 			grid_view.zoom(1 - state.wheel_delta * time * 2);
 			gsize = grid_view.getSize();
-			sf::Vector2f after {(state.pos[0] * gsize.x) / wsize.x + center.x - gsize.x / 2, (state.pos[1] * gsize.y) / wsize.y + center.y - gsize.y / 2};
+			sf::Vector2f after {(state.pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (state.pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
 			grid_view.move(before - after);
 
 			state.wheel_delta = 0;
-			keep_cursor_on_screen = true;
-
+			game.set_cursor_to_view();
 		}
 
-		if (keep_cursor_on_screen)
-		{
-			// move cursor if zooming in moves it off screen
-			center = grid_view.getCenter();
-			gsize = grid_view.getSize();
-			sf::Vector2f spos = cursor.get_center();
-			while (spos.x - center.x > gsize.x / 4)
-			{
-				cursor.move(-X);
-				spos.x -= PPB;
-			}
+		game.update_cursor(grid_view);
 
-			while (spos.x - center.x < gsize.x / -4)
-			{
-				cursor.move(X);
-				spos.x += PPB;
-			}
-
-			while (spos.y - center.y > gsize.y / 4)
-			{
-				cursor.move(-Y);
-				spos.y -= PPB;
-			}
-
-			while (spos.y - center.y < gsize.y / -4)
-			{
-				cursor.move(Y);
-				spos.y += PPB;
-			}
-		}
 		int zoom {0};
 		if (controls["zoom_in"])
 			zoom += -1;
@@ -753,12 +443,12 @@ int main()
 			delta += -Y * 2;
 		if (controls["down_fast"])
 			delta += Y * 2;
-		cursor.move(delta);
+		game.move_cursor(delta);
 
 		// these might have changed due to zooming
 		center = grid_view.getCenter();
 		gsize = grid_view.getSize();
-		sf::Vector2f spos = cursor.get_center();
+		sf::Vector2f spos = game.get_cursor_center();
 		// TODO refactor
 		// measure difference from a box in the center of the screen
 		sf::Vector2f diff {(std::abs(spos.x - center.x) > gsize.x / 4 ? spos.x - center.x - (spos.x >= center.x ? gsize.x / 4 : gsize.x / -4) : 0), (std::abs(spos.y - center.y) > gsize.y / 4 ? spos.y  - center.y - (spos.y >= center.y ? gsize.y / 4 : gsize.y / -4) : 0)};
@@ -771,9 +461,7 @@ int main()
 			grid_view.setSize(wsize.x, wsize.y);
 		state.zoom = grid_view.getSize().x / wsize.x;
 
-		cursor.set_zoom(state.zoom);
-		mcursor.set_zoom(state.zoom);
-		selection.set_zoom(state.zoom);
+		game.set_zoom(state.zoom);
 
 		// animate tiles
 		game.grid.step(time);
@@ -805,19 +493,9 @@ int main()
 		// draw
 		window.clear(background);
 
-		window.setView(grid_view);
-		game.grid.draw_on(window);
-		if (game.selecting || game.selected)
-			selection.draw_on(window);
-		if (game.buffer != nullptr)
-			game.buffer->draw_on(window);
-		cursor.draw_on(window);
-		mcursor.draw_on(window);
+		game.draw_on(window, grid_view, gui_view);
 
 		window.setView(gui_view);
-		game.messages.draw_on(window);
-		game.hand.draw_on(window);
-
 		if (!current.is_finished())
 			current.menu().draw_on(window);
 
