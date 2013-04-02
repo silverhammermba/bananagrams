@@ -5,14 +5,6 @@ struct State
 	sf::RenderWindow* window;
 	sf::View* grid_view;
 	float zoom; // zoom factor for grid view
-
-	// mouse
-	sf::Vector2i pos; // last position
-	bool update; // signal to update cursor position
-	bool mremove; // signal to remove tiles
-	int wheel_delta; // amount to zoom
-	bool start_selection;
-	bool end_selection;
 };
 
 // for placing tiles
@@ -27,9 +19,26 @@ public:
 
 class MouseControls : public InputReader
 {
-	State* state;
+	bool pressed[5] {false, false, false, false, false};
+	bool released[5] {false, false, false, false, false};
+	bool ready[5] {true, true, true, true, true};
+	bool held[5] {false, false, false, false, false};
+	bool moved {false};
+	int wheel_delta {0};
+	sf::Vector2i pos;
 public:
-	MouseControls(State* m);
+	bool was_pressed(unsigned int button);
+	bool was_released(unsigned int button);
+	inline bool is_held(unsigned int button) const
+	{
+		return held[button];
+	}
+	bool was_moved();
+	int get_wheel_delta();
+	inline const sf::Vector2i& get_pos() const
+	{
+		return pos;
+	}
 
 	virtual bool process_event(sf::Event& event);
 };

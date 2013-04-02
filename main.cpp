@@ -291,15 +291,7 @@ int main()
 	window.display();
 
 	// stuff for game loop
-	// mouse
-	state.pos = {0, 0};
-	state.update = false;
-	state.mremove = false;
-	state.wheel_delta = 0;
-	state.start_selection = false;
-	state.end_selection = false;
-
-	MouseControls mouse {&state};
+	MouseControls mouse;
 	input_readers.push_back(&mouse);
 
 	input_readers.push_back(&controls);
@@ -334,31 +326,19 @@ int main()
 		// TODO only redraw window if you need to? sleep when no events received maybe...
 
 		// TODO replace state with MouseControls
-		// mouse moved
-		if (state.update)
-		{
-			game.update_mouse_pos(window, grid_view, state.pos);
-			state.update = false;
-		}
+		if (mouse.was_moved())
+			game.update_mouse_pos(window, grid_view, mouse.get_pos());
 
-		// left click
-		if (state.start_selection)
-		{
+		if (mouse.was_pressed(0))
 			game.select();
-			state.start_selection = false;
-		}
 
-		// if left click held down
 		if (game.is_selecting())
 			game.resize_selection();
 
-		// if left click release
-		if (state.end_selection)
+		if (mouse.was_released(0))
 		{
 			if (game.complete_selection() == 1 && controls["quick_place"])
 				game.quick_place();
-
-			state.end_selection = false;
 		}
 
 		if (controls["cut"])
@@ -370,7 +350,7 @@ int main()
 		if (controls["paste"])
 			game.paste();
 
-		if (state.mremove)
+		if (mouse.is_held(1))
 			game.remove_at_mouse();
 
 		if (controls["dump"])
@@ -401,15 +381,16 @@ int main()
 		}
 
 		// zoom with mouse wheel
-		if (state.wheel_delta < 0 || (state.wheel_delta > 0 && state.zoom > 1))
+		int wheel_delta = mouse.get_wheel_delta();
+		if (wheel_delta < 0 || (wheel_delta > 0 && state.zoom > 1))
 		{
-			sf::Vector2f before {(state.pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (state.pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
-			grid_view.zoom(1 - state.wheel_delta * time * 2);
+			sf::Vector2i pos = mouse.get_pos();
+			sf::Vector2f before {(pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
+			grid_view.zoom(1 - wheel_delta * time * 2);
 			gsize = grid_view.getSize();
-			sf::Vector2f after {(state.pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (state.pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
+			sf::Vector2f after {(pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
 			grid_view.move(before - after);
 
-			state.wheel_delta = 0;
 			game.set_cursor_to_view();
 		}
 

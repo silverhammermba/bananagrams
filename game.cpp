@@ -170,7 +170,6 @@ void Game::paste()
 
 void Game::remove_at_mouse()
 {
-	remove_at_mouse();
 	// remove tile
 	Tile* tile {grid.remove(mcursor.get_pos())};
 	if (tile != nullptr)

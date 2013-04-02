@@ -23,9 +23,42 @@ bool Typer::process_event(sf::Event& event)
 	return true;
 }
 
-MouseControls::MouseControls(State* m)
-	: state {m}
+bool MouseControls::was_moved()
 {
+	if (moved)
+	{
+		moved = false;
+		return true;
+	}
+	return false;
+}
+
+bool MouseControls::was_pressed(unsigned int button)
+{
+	if (pressed[button])
+	{
+		pressed[button] = false;
+		ready[button] = true;
+		return true;
+	}
+	return false;
+}
+
+bool MouseControls::was_released(unsigned int button)
+{
+	if (released[button])
+	{
+		released[button] = false;
+		return true;
+	}
+	return false;
+}
+
+int MouseControls::get_wheel_delta()
+{
+	int d {wheel_delta};
+	wheel_delta = 0;
+	return d;
 }
 
 bool MouseControls::process_event(sf::Event& event)
@@ -33,28 +66,27 @@ bool MouseControls::process_event(sf::Event& event)
 	switch(event.type)
 	{
 		case sf::Event::MouseButtonPressed:
-			if (event.mouseButton.button == sf::Mouse::Left)
-				state->start_selection = true;
-			else if (event.mouseButton.button == sf::Mouse::Right)
-				state->mremove = true;
-			break;
-		case sf::Event::MouseButtonReleased:
-			state->update = true;
-			if (event.mouseButton.button == sf::Mouse::Left)
-				state->end_selection = true;
-			else if (event.mouseButton.button == sf::Mouse::Right)
-				state->mremove = false;
-			break;
-		case sf::Event::MouseMoved:
+			if (ready[event.mouseButton.button])
 			{
-				state->update = true;
-				state->pos.x = event.mouseMove.x;
-				state->pos.y = event.mouseMove.y;
+				ready[event.mouseButton.button] = false;
+				pressed[event.mouseButton.button] = true;
 			}
-			break;
+			released[event.mouseButton.button] = false;
+			held[event.mouseButton.button] = true;
+			return false;
+		case sf::Event::MouseButtonReleased:
+			moved = true; // TODO kinda hacky
+			held[event.mouseButton.button] = false;
+			released[event.mouseButton.button] = true;
+			return false;
+		case sf::Event::MouseMoved:
+			moved = true;
+			pos.x = event.mouseMove.x;
+			pos.y = event.mouseMove.y;
+			return false;
 		case sf::Event::MouseWheelMoved:
-			state->wheel_delta = event.mouseWheel.delta;
-			break;
+			wheel_delta += event.mouseWheel.delta;
+			return false;
 		default:
 			break;
 	}
