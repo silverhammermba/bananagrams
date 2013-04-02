@@ -13,9 +13,9 @@ namespace std
 class Grid
 {
 	std::vector<Tile*> grid;
-	unsigned int tiles;
-	sf::Vector2i min;
-	sf::Vector2i max;
+	unsigned int tiles {0};
+	sf::Vector2i min {0, 0};
+	sf::Vector2i max {0, 0};
 	sf::Vector2i last;
 	std::vector<std::string> defined;
 	std::map<sf::Vector2i, bool> hwords;
@@ -31,7 +31,6 @@ class Grid
 	// for checking connectedness of grid
 	void traverse(int x, int y);
 public:
-	Grid();
 	~Grid();
 
 	// return center of bounding box

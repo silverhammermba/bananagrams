@@ -2,14 +2,15 @@
 
 using std::string;
 
-Message::Message(const string& mes, const sf::Font& font, unsigned int size, const sf::Color& color) : message(mes, font, size)
+Message::Message(const string& mes, const sf::Font& font, unsigned int size, const sf::Color& color)
+	: message {mes, font, size}
 {
 	message.setColor(color);
 }
 
-MessageQ::MessageQ(const sf::Font& f) : font(f)
+MessageQ::MessageQ(const sf::Font& f)
+	: font {f}
 {
-	bottom = 0;
 }
 
 MessageQ::~MessageQ()
@@ -43,7 +44,7 @@ void MessageQ::add(const string& message, Message::Severity severity)
 // TODO inefficient?
 void MessageQ::age(float time)
 {
-	bool change = false;
+	bool change {false};
 	for (auto mess = messages.begin(); mess != messages.end();)
 	{
 		(*mess)->age(time);

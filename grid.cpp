@@ -4,11 +4,6 @@ using std::array;
 using std::string;
 using std::vector;
 
-Grid::Grid() : grid(), min(0, 0), max(0, 0)
-{
-	tiles = 0;
-}
-
 Grid::~Grid()
 {
 	for (auto tile : grid)
@@ -31,7 +26,7 @@ unsigned int Grid::convert(int x, int y) const
 // for checking connectedness of grid
 void Grid::traverse(int x, int y)
 {
-	Tile* tile = get(x, y);
+	Tile* tile {get(x, y)};
 	if (tile == nullptr || tile->marked)
 		return;
 
@@ -50,7 +45,7 @@ sf::Vector2f Grid::get_center() const
 // return the tile at the coords
 Tile* Grid::get(int x, int y) const
 {
-	unsigned int n = convert(x, y);
+	unsigned int n {convert(x, y)};
 	if (n >= grid.size())
 		return nullptr;
 	return grid[n];
@@ -59,11 +54,11 @@ Tile* Grid::get(int x, int y) const
 // remove the tile at the coords and return it
 Tile* Grid::remove(int x, int y)
 {
-	unsigned int n = convert(x, y);
+	unsigned int n {convert(x, y)};
 	// if in bounds
 	if (n < grid.size())
 	{
-		Tile* tile = grid[n];
+		Tile* tile {grid[n]};
 
 		// return if nothing was changed
 		if (tile == nullptr)
@@ -89,12 +84,12 @@ Tile* Grid::remove(int x, int y)
 		else if (x == max.x || x == min.x || y == max.y || y == min.y)
 		{
 			// completely recalculate center :/
-			bool first = true;
+			bool first {true};
 			for (auto tl : grid)
 			{
 				if (tl != nullptr)
 				{
-					const sf::Vector2i& pos = tl->get_grid_pos();
+					const sf::Vector2i& pos {tl->get_grid_pos()};
 					if (first)
 						min = max = pos;
 					else
@@ -139,10 +134,10 @@ Tile* Grid::swap(int x, int y, Tile* tile)
 {
 	if (tile == nullptr)
 		throw std::runtime_error("attempt to place NULL tile");
-	unsigned int n = convert(x, y);
+	unsigned int n {convert(x, y)};
 	if (n >= grid.size())
 		grid.resize(n + 1, nullptr);
-	Tile* swp = grid[n];
+	Tile* swp {grid[n]};
 	tile->set_grid_pos(x, y);
 	grid[n] = tile;
 
@@ -239,7 +234,7 @@ bool Grid::is_valid(std::map<string, string>& dictionary, vector<string>& messag
 	// starting points guaranteed to be non-null
 	traverse(start->first.x, start->first.y);
 
-	bool valid = true;
+	bool valid {true};
 	for (auto tile: grid)
 		if (tile != nullptr && !tile->marked)
 		{
@@ -317,7 +312,7 @@ bool Grid::is_valid(std::map<string, string>& dictionary, vector<string>& messag
 		for (auto word : defns)
 		{
 			// check if we have already displayed the definition
-			bool defd = false;
+			bool defd {false};
 			for (string& wd : defined)
 				if (word == wd)
 				{

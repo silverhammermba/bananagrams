@@ -1,7 +1,7 @@
 class Message
 {
 	sf::Text message;
-	float lifetime = 0;
+	float lifetime {0};
 public:
 	enum class Severity {LOW, HIGH};
 
@@ -38,7 +38,7 @@ class MessageQ
 {
 	std::list<Message*> messages;
 	sf::Font font;
-	float bottom;
+	float bottom {0};
 	static constexpr float padding = 10;
 public:
 	MessageQ(const sf::Font& f);

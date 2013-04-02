@@ -15,7 +15,7 @@ class Hand
 	void ordered(sf::RenderWindow& window);
 	void scrambled(sf::RenderWindow& window);
 
-	void (Hand::*draw_func)(sf::RenderWindow&) = &Hand::scrambled;
+	void (Hand::*draw_func)(sf::RenderWindow&) {&Hand::scrambled};
 
 	void reshuffle();
 public:

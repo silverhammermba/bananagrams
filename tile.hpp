@@ -2,7 +2,7 @@ class Tile
 {
 	char character;
 	sf::Sprite sprite;
-	sf::Vector2i gpos; // position on grid (not always meaningful)
+	sf::Vector2i gpos {0, 0}; // position on grid (not always meaningful)
 public:
 	bool marked; // for checking grid connectedness
 

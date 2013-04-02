@@ -3,12 +3,8 @@
 using std::string;
 
 Game::Game()
-	: hand(font), messages(font)
+	: hand {font}, messages {font}
 {
-	buffer = nullptr;
-	clear_buffer();
-	selected = false;
-	selecting = false;
 }
 
 Game::~Game()

@@ -2,8 +2,8 @@
 
 CutBuffer::CutBuffer(Grid& grid, int left, int top, const sf::Vector2u& sz)
 {
-	sf::Vector2i min(left + sz.x - 1, top + sz.y - 1);
-	sf::Vector2i max(left, top);
+	sf::Vector2i min {left + (int)sz.x - 1, top + (int)sz.y - 1};
+	sf::Vector2i max {left, top};
 
 	// try to shrink selection
 	for (int i = left; i < left + (int)sz.x; i++)
@@ -49,12 +49,12 @@ CutBuffer::~CutBuffer()
 
 void CutBuffer::transpose()
 {
-	std::vector<Tile*> temp(tiles.size(), nullptr);
+	std::vector<Tile*> temp {tiles.size(), nullptr};
 	for (unsigned int i = 0; i < tiles.size(); i++)
 		temp[(i % size.y) * size.x + i / size.y] = tiles[i];
 	for (unsigned int i = 0; i < tiles.size(); i++)
 		tiles[i] = temp[i];
-	unsigned int tmp = size.x;
+	int tmp {size.x};
 	size.x = size.y;
 	size.y = tmp;
 

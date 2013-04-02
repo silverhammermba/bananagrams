@@ -4,8 +4,6 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-Typer::Typer() {}
-
 bool Typer::get_ch(char* ch)
 {
 	if (!chars.empty())
@@ -26,8 +24,8 @@ bool Typer::process_event(sf::Event& event)
 }
 
 MouseControls::MouseControls(State* m)
+	: state {m}
 {
-	state = m;
 }
 
 bool MouseControls::process_event(sf::Event& event)
@@ -91,12 +89,12 @@ sf::Event::KeyEvent str2key(const string& strn)
 	key.shift = false;
 	key.system = false;
 
-	string str = strn;
+	string str {strn};
 	for (unsigned int i = 0; i < str.size(); i++)
 		str[i] = std::tolower(str[i]);
 
 	// split into substrings
-	unsigned int i = 0;
+	unsigned int i {0};
 	for (; i < str.size() && std::isspace(str[i]); ++i);
 
 	if (i == str.size())
@@ -142,7 +140,7 @@ sf::Event::KeyEvent str2key(const string& strn)
 
 string key2str(const sf::Event::KeyEvent& key)
 {
-	string str = (key.code == sf::Keyboard::Key::Unknown ? "unknown" : keys[key.code]);
+	string str {key.code == sf::Keyboard::Key::Unknown ? "unknown" : keys[key.code]};
 	if (key.system)
 		str = "system " + str;
 	if (key.shift)
@@ -155,11 +153,13 @@ string key2str(const sf::Event::KeyEvent& key)
 }
 
 KeyControls::Command::Command(repeat_t rep, bool rebind)
+	: repeat {rep}, rebindable {rebind}
 {
-	repeat = rep;
-	rebindable = rebind;
-	pressed = false;
-	ready = true;
+}
+
+KeyControls::NotFound::NotFound(const std::string& str)
+	: std::runtime_error {str}
+{
 }
 
 KeyControls::KeyControls()
@@ -290,7 +290,7 @@ void KeyControls::write_to_file(const string& filename)
 bool KeyControls::operator[](const string& command)
 {
 	Command& c = commands[command];
-	bool press = c.pressed;
+	bool press {c.pressed};
 
 	if (c.get_repeat() != HOLD)
 		c.pressed = false;

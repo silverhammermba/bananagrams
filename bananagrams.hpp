@@ -14,19 +14,19 @@
 #include <yaml-cpp/yaml.h>
 #include <SFML/Graphics.hpp>
 
-static const unsigned int PPB = 48;
-static const sf::Vector2i X(1, 0);
-static const sf::Vector2i Y(0, 1);
-static const sf::Vector2i XY(1, 1);
+static const unsigned int PPB {48};
+static const sf::Vector2i X {1, 0};
+static const sf::Vector2i Y {0, 1};
+static const sf::Vector2i XY {1, 1};
 
 extern sf::Font font;
 extern sf::RenderTexture tile_texture[26];
 extern sf::View gui_view;
 
-static const unsigned int letter_count[26] =
+static const unsigned int letter_count[26]
 {
 	13, 3, 3, 6, 18, 3, 4, 3, 12, 2, 2, 5, 3, 8, 11, 3, 2, 9, 6, 9, 6, 3, 3, 2, 3, 2
-//  A   B  C  D  E   F  G  H   I  J  K  L  M  N   O  P  Q  R  S  T  U  V  W  X  Y  Z
+//   A  B  C  D   E  F  G  H   I  J  K  L  M  N   O  P  Q  R  S  T  U  V  W  X  Y  Z
 };
 
 // insert x into list l at a random position
@@ -44,9 +44,8 @@ void random_insert(std::list<T>& l, T x)
 class InputReader
 {
 protected:
-	bool finished;
+	bool finished {false};
 public:
-	InputReader() { finished = false; }
 	virtual ~InputReader() {}
 
 	inline bool is_finished() const

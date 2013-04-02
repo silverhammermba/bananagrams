@@ -20,7 +20,6 @@ class Typer : public InputReader
 {
 	std::queue<char> chars;
 public:
-	Typer();
 	// get next tile to place
 	bool get_ch(char* ch);
 	virtual bool process_event(sf::Event& event);
@@ -34,6 +33,8 @@ public:
 
 	virtual bool process_event(sf::Event& event);
 };
+
+std::string key2str(const sf::Event::KeyEvent& key);
 
 namespace std
 {
@@ -70,8 +71,9 @@ class KeyControls : public InputReader
 		repeat_t repeat;
 		bool rebindable;
 	public:
-		bool pressed;
-		bool ready;
+		bool pressed {false};
+		bool ready {true};
+
 		Command(repeat_t rep = REPEAT, bool rebind = true);
 
 		inline bool is_rebindable() const
@@ -98,7 +100,7 @@ public:
 	class NotFound : public std::runtime_error
 	{
 	public:
-		NotFound(const std::string& str) : std::runtime_error(str) {}
+		NotFound(const std::string& str);
 	};
 
 	KeyControls();
@@ -125,5 +127,3 @@ public:
 
 	virtual bool process_event(sf::Event& event);
 };
-
-std::string key2str(const sf::Event::KeyEvent& key);

@@ -123,7 +123,7 @@ class TextEntry : public Entry
 	// for setting input position
 	float b_height, i_height, shift;
 	float min_box_width;
-	bool selected; // if input is being handled
+	bool selected {false}; // if input is being handled
 
 	void set_input_pos(); // update position of input Text
 public:
@@ -153,7 +153,7 @@ class MultiEntry : public Entry
 	std::vector<std::string> choices; // strings to display for choices
 	sf::Text chooser; // display of choice
 	// for layout
-	float max_width;
+	float max_width {0};
 	float set_width;
 public:
 	// create multiple choice entry with choices ch, defaulting to def
@@ -197,7 +197,7 @@ class ControlEntry : public Entry
 
 	float b_shift, b_height, i_height, shift;
 	float min_box_width;
-	bool selected; // if input is being handled
+	bool selected {false}; // if input is being handled
 public:
 	ControlEntry(const std::string& cmd, const sf::Event::KeyEvent& k);
 

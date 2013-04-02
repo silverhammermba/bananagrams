@@ -6,9 +6,9 @@ public:
 	Grid grid;
 	Hand hand;
 	MessageQ messages;
-	CutBuffer* buffer;
-	bool selected;
-	bool selecting;
+	CutBuffer* buffer {nullptr};
+	bool selected {false};
+	bool selecting {false};
 
 	void end();
 // TODO decide visibility
