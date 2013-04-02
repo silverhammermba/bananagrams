@@ -47,9 +47,9 @@ public:
 int main()
 {
 	// load resources
-	if (!font.loadFromFile("/usr/share/fonts/TTF/DejaVuSans.ttf"))
+	if (!font.loadFromFile("DejaVuSans.ttf"))
 	{
-		cerr << "Couldn't find font /usr/share/fonts/TTF/DejaVuSans.ttf!\n";
+		cerr << "Couldn't find font DejaVuSans.ttf!\n";
 		return 1;
 	}
 
@@ -90,6 +90,7 @@ int main()
 	// dedication
 	while (window.isOpen())
 	{
+		bool skip {false};
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -103,6 +104,8 @@ int main()
 				if (!cont)
 					break;
 			}
+			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape)
+				skip = true;
 		}
 
 		float elapsed {clock.getElapsedTime().asSeconds()};
@@ -114,7 +117,7 @@ int main()
 		else
 			loading_text.setColor(sf::Color::White);
 
-		if (elapsed > 3)
+		if (skip || elapsed > 3)
 			break;
 
 		window.clear(background);
