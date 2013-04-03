@@ -96,7 +96,7 @@ class KeyControls : public InputReader
 	class Command
 	{
 		repeat_t repeat;
-		bool rebindable; // TODO protect non-rebindable commands
+		bool rebindable;
 	public:
 		bool pressed {false};
 		bool ready {true};
