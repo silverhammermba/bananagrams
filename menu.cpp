@@ -283,6 +283,7 @@ void MultiEntry::draw_on(sf::RenderWindow& window) const
 	Entry::draw_on(window);
 }
 
+// given a_string, return A STRING
 std::string cmd2menu(const std::string& cmd)
 {
 	std::string menu(cmd);
@@ -297,8 +298,8 @@ std::string cmd2menu(const std::string& cmd)
 	return menu;
 }
 
-ControlEntry::ControlEntry(const std::string& cmd, const sf::Event::KeyEvent& k)
-	: Entry {cmd2menu(cmd)}, command {cmd}, key(k), key_text {key2str(k), font, (unsigned int)((PPB * 2) / 3.0)} // XXX GCC bug!
+ControlEntry::ControlEntry(Menu& cmenu, KeyControls& ctrls, const std::string& cmd, const sf::Event::KeyEvent& k)
+	: Entry {cmd2menu(cmd)}, control_menu(cmenu), controls(ctrls), command {cmd}, key(k), key_text {key2str(k), font, (unsigned int)((PPB * 2) / 3.0)} // XXX GCC bug!
 {
 	// get heights and shifts
 	text.setString("A");
@@ -381,6 +382,20 @@ void ControlEntry::select()
 	set_input_pos();
 }
 
+void ControlEntry::update()
+{
+	for (auto bind : controls.get_binds())
+		if (bind.second == command)
+			return;
+	key.alt = false;
+	key.control = false;
+	key.shift = false;
+	key.system = false;
+	key.code = sf::Keyboard::Key::Unknown;
+	key_text.setString(key2str(key));
+	set_input_pos();
+}
+
 bool ControlEntry::process_event(sf::Event& event)
 {
 	if (selected)
@@ -393,9 +408,11 @@ bool ControlEntry::process_event(sf::Event& event)
 				event.key.control = false;
 			if (event.key.code == sf::Keyboard::Key::LShift || event.key.code == sf::Keyboard::Key::RShift)
 				event.key.shift = false;
-			// TODO don't allow certain events?
-			if (event.key.code != sf::Keyboard::Key::Escape)
+			if (event.key.code != sf::Keyboard::Key::Escape && controls.rebind(event.key, command))
+			{
+				control_menu.update_entries();
 				key = event.key;
+			}
 			lowlight();
 			highlight();
 		}

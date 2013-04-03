@@ -209,7 +209,7 @@ KeyControls::KeyControls()
 	bind("zoom_in_fast"   , "ctrl shift up"  , HOLD  );
 	bind("zoom_out_fast"  , "ctrl shift down", HOLD  );
 	bind("quick_place"    , "lcontrol"       , HOLD  );
-	bind("menu"           , "escape"         , PRESS );
+	bind("menu"           , "escape"         , PRESS, false);
 	bind("peel"           , "space"          , PRESS );
 	bind("center"         , "ctrl c"         , PRESS );
 	bind("dump"           , "ctrl d"         , PRESS );
@@ -223,23 +223,36 @@ KeyControls::KeyControls()
 	set_defaults();
 }
 
-void KeyControls::bind(const string& command, const string& key, repeat_t rep)
+void KeyControls::bind(const string& command, const string& key, repeat_t rep, bool rebindable)
 {
-	commands[command] = Command(rep);
+	commands[command] = Command(rep, rebindable);
 	defaults[command] = str2key(key);
 }
 
-void KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
+bool KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 {
+	// check if command exists
 	if (commands.find(command) == commands.end())
 		throw NotFound(command);
+	// check if command is rebindable
+	if (!is_rebindable(command))
+		return false;
+	// check if key is already bound to an unrebindable command
+	for (auto pair = binds.begin(); pair != binds.end(); ++pair)
+		if (std::equal_to<sf::Event::KeyEvent>()(pair->first, key) && !is_rebindable(pair->second))
+			return false;
+
+	// remove other binds using this key
 	for (auto pair = binds.begin(); pair != binds.end(); ++pair)
 		if (pair->second == command)
 			binds.erase(pair);
+
 	binds[key] = command;
 
 	commands[command].pressed = false;
 	commands[command].ready = true;
+
+	return true;
 }
 
 void KeyControls::set_defaults()

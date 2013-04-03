@@ -65,6 +65,25 @@ namespace std
 			return false;
 		}
 	};
+
+	template<> struct equal_to<sf::Event::KeyEvent>
+	{
+		// for the binds map in KeyControls
+		bool operator() (const sf::Event::KeyEvent& lhs, const sf::Event::KeyEvent& rhs)
+		{
+			if (lhs.code != rhs.code)
+				return false;
+			if (lhs.alt != rhs.alt)
+				return false;
+			if (lhs.control != rhs.control)
+				return false;
+			if (lhs.shift != rhs.shift)
+				return false;
+			if (lhs.system != rhs.system)
+				return false;
+			return true;
+		}
+	};
 }
 
 // abstraction between keyboard and in-game commands
@@ -102,7 +121,7 @@ class KeyControls : public InputReader
 	// maps command names to default binds
 	std::map<std::string, sf::Event::KeyEvent> defaults;
 	// easily create a command and its default
-	void bind(const std::string& command, const std::string& key, repeat_t rep);
+	void bind(const std::string& command, const std::string& key, repeat_t rep, bool rebindable = true);
 public:
 	// thrown when rebinding a nonexistant action
 	class NotFound : public std::runtime_error
@@ -124,8 +143,8 @@ public:
 	}
 
 	void set_defaults();
-	// create a key binding for an existing command
-	void rebind(const sf::Event::KeyEvent& key, const std::string& command);
+	// create a key binding for an existing command, return if rebind was successful
+	bool rebind(const sf::Event::KeyEvent& key, const std::string& command);
 	// load from YAML file
 	void load_from_file(const std::string& filename);
 	// write (non-default) binds to YAML file
