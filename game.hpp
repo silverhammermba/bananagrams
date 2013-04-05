@@ -7,8 +7,8 @@ class Game
 	Hand hand {font};
 	MessageQ messages {font};
 	CutBuffer* buffer {nullptr};
-	sf::Vector2i last {-1, 0};
-	sf::Vector2i next {0, 0};
+	sf::Vector2i last_place {-1, 0};
+	sf::Vector2i last_move {0, 0};
 	// mouse press and release positions
 	sf::Vector2i sel1;
 	sf::Vector2i sel2;
@@ -61,6 +61,10 @@ public:
 	void place(char ch);
 	inline void move_cursor(const sf::Vector2i& delta)
 	{
+		if (delta.y == 0 && delta.x != 0)
+			last_move = X;
+		else if (delta.x == 0 && delta.y != 0)
+			last_move = Y;
 		cursor.move(delta);
 	}
 	inline void set_cursor_to_view()

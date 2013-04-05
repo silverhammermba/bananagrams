@@ -18,6 +18,7 @@ static const unsigned int PPB {48};
 static const sf::Vector2i X {1, 0};
 static const sf::Vector2i Y {0, 1};
 static const sf::Vector2i XY {1, 1};
+static const sf::Vector2i ZERO {0, 0};
 
 extern sf::Font font;
 extern sf::RenderTexture tile_texture[26];

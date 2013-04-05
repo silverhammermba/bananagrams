@@ -48,7 +48,6 @@ void Game::update_mouse_pos(const sf::RenderWindow& window, const sf::View& view
 	sf::Vector2f size = view.getSize();
 	sf::Vector2f center = view.getCenter();
 
-	// TODO refactor
 	// update mouse cursor position
 	mcursor.set_pos({(int)std::floor(((pos.x * size.x) / w_size.x + center.x - (size.x / 2)) / PPB), (int)std::floor(((pos.y * size.y) / w_size.y + center.y - (size.y / 2)) / PPB)});
 
@@ -87,6 +86,7 @@ unsigned int Game::complete_selection()
 	{
 		selected = false;
 		cursor.set_pos(mcursor.get_pos());
+		last_move = ZERO;
 	}
 
 	return tiles;
@@ -236,85 +236,39 @@ void Game::peel()
 void Game::remove()
 {
 	const sf::Vector2i& pos = cursor.get_pos();
-	// TODO DRY off autoadvancing
 	// if the cursor is ahead of the last added character, autoadvance
-	if (pos == last + next)
+	if (pos == last_place + X)
 	{
-		cursor.set_pos(last);
-		last -= next;
+		cursor.set_pos(last_place);
+		last_place -= X;
 	}
-	// TODO guess based on cursor movement first?
+	else if (pos == last_place + Y)
+	{
+		cursor.set_pos(last_place);
+		last_place -= Y;
+	}
 	// else if you are not near the last character and the space is empty, try to autoadvance
 	else if (grid.get(pos) == nullptr)
 	{
-		// TODO last case covers these first ones
+		sf::Vector2i next {0, 0};
+
 		// if right of a tile
 		if (grid.get(pos - X) != nullptr)
-		{
 			next = X;
-			cursor.move(-next);
-			last = cursor.get_pos() - next;
-		}
 		// if below a tile
 		else if (grid.get(pos - Y) != nullptr)
-		{
 			next = Y;
-			cursor.move(-next);
-			last = cursor.get_pos() - next;
-		}
-		else // try to find nearest tile
-		{
-			// TODO use sf::IntRect for this?
-			// TODO could probably refactor
-			int xd {pos.x - 1};
-			bool foundx {false};
-			if (pos.y >= grid.get_min().y && pos.y <= grid.get_max().y)
-				for (; xd >= grid.get_min().x; --xd)
-					if (grid.get(xd, pos.y) != nullptr)
-					{
-						foundx = true;
-						break;
-					}
+		else
+			next = last_move;
 
-			int yd {pos.y - 1};
-			bool foundy {false};
-			if (pos.x >= grid.get_min().x && pos.x <= grid.get_max().x)
-				for (; yd >= grid.get_min().y; --yd)
-					if (grid.get(pos.x, yd) != nullptr)
-					{
-						foundy = true;
-						break;
-					}
-
-			if (foundx)
-			{
-				if (!foundy || pos.x - xd <= pos.y - yd)
-					next = X;
-				else
-					next = Y;
-			}
-			else if (foundy)
-				next = Y;
-			else // just do something
-				next = X;
-
-			cursor.move(-next);
-			last = cursor.get_pos() - next;
-		}
-	}
-	else // not near last character, position not empty, try to set autoadvance for next time
-	{
-		if (grid.get(pos - X) != nullptr)
-		{
+		// if all else fails
+		if (next == ZERO)
 			next = X;
-			last = cursor.get_pos() - next;
-		}
-		else if (grid.get(pos - Y) != nullptr)
-		{
-			next = Y;
-			last = cursor.get_pos() - next;
-		}
+
+		cursor.move(-next);
+		last_place = cursor.get_pos() - next;
 	}
+	// else just remove the current character, figure out autoadvance next time
 
 	Tile* tile {grid.remove(cursor.get_pos())};
 	if (tile != nullptr)
@@ -341,28 +295,29 @@ void Game::place(char ch)
 		placed = true;
 
 	// if we placed a letter, try to autoadvance
-	// TODO make autoadvancing smarter when not near last
 	if (placed)
 	{
-		next = {0, 0};
-		if (cursor.get_pos() == last + X)
+		sf::Vector2i next {0, 0};
+		if (cursor.get_pos() == last_place + X)
 			next.x = 1;
-		else if (cursor.get_pos() == last + Y)
+		else if (cursor.get_pos() == last_place + Y)
 			next.y = 1;
 		else if (grid.get(cursor.get_pos() - X) != nullptr)
 			next.x = 1;
 		else if (grid.get(cursor.get_pos() - Y) != nullptr)
 			next.y = 1;
-		last = cursor.get_pos();
+		else
+			next = last_move;
+
+		// if all else fails
+		if (next == ZERO)
+			next = X;
+
+		last_place = cursor.get_pos();
 		cursor.move(next);
 	}
 	else
-	{
-		// TODO can do without stringstream?
-		std::stringstream letter;
-		letter << ch;
-		messages.add("You are out of " + letter.str() + "s!", Message::Severity::HIGH);
-	}
+		messages.add("You are out of " + string(1, ch) + "s!", Message::Severity::HIGH);
 }
 
 void Game::update_cursor(const sf::View& view)
@@ -377,24 +332,28 @@ void Game::update_cursor(const sf::View& view)
 		{
 			cursor.move(-X);
 			spos.x -= PPB;
+			last_move = ZERO;
 		}
 
 		while (spos.x - center.x < gsize.x / -4)
 		{
 			cursor.move(X);
 			spos.x += PPB;
+			last_move = ZERO;
 		}
 
 		while (spos.y - center.y > gsize.y / 4)
 		{
 			cursor.move(-Y);
 			spos.y -= PPB;
+			last_move = ZERO;
 		}
 
 		while (spos.y - center.y < gsize.y / -4)
 		{
 			cursor.move(Y);
 			spos.y += PPB;
+			last_move = ZERO;
 		}
 
 		set_view_to_cursor = true;

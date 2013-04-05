@@ -3,6 +3,8 @@
 // embedded resources
 #include "icon.hpp"
 
+// TODO sound
+
 using std::cerr;
 using std::endl;
 using std::string;
@@ -57,7 +59,7 @@ int main()
 	// TODO store last dictionary name, last resolution settings, etc.
 	controls.load_from_file("config.yaml");
 
-	std::srand((unsigned int)std::time(nullptr));
+	std::srand(std::time(nullptr));
 
 	sf::RenderWindow window {sf::VideoMode(1280, 720), "Bananagrams"};
 	window.setIcon(32, 32, icon);
@@ -160,8 +162,7 @@ int main()
 				}
 			}
 
-			// TODO some kind of depth would help for stack appearance
-			// TODO antialiase these
+			// TODO make tiles prettier
 			if (!tile_texture[load_char - 'A'].create(PPB, PPB))
 			{
 				cerr << "Failed to allocate tile texture!\n";
@@ -272,9 +273,10 @@ int main()
 	customize.submenu = &control_opts;
 
 	// TODO need scrolling menus for this to work...
+	// TODO order these
 	for (auto& pair : controls.get_binds())
 		if (controls.is_rebindable(pair.second))
-			control_opts.append_entry(new ControlEntry(pair.second, pair.first));
+			control_opts.append_entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
 
 	Menu confirm_quit {current, &main, "Really quit?"};
 	quit.submenu = &confirm_quit;
@@ -325,8 +327,6 @@ int main()
 					break;
 			}
 		}
-
-		// TODO only redraw window if you need to? sleep when no events received maybe...
 
 		if (mouse.was_moved())
 			game.update_mouse_pos(window, grid_view, mouse.get_pos());

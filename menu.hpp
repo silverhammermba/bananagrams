@@ -3,8 +3,9 @@ class Entry : public InputReader
 {
 protected:
 	sf::Text text;
+	float scale;
 public:
-	Entry(const std::string& txt);
+	Entry(const std::string& txt, float sz=1.f);
 
 	// get minimum width occupied by this entry
 	virtual float get_width() const;
@@ -15,6 +16,10 @@ public:
 	virtual sf::FloatRect bounds() const;
 	// position entry given menu center, width, and entry top
 	virtual void set_menu_pos(float center, float width, float top);
+	virtual float get_scale() const;
+
+	// called by Menu#update_entries
+	virtual void update() {}
 
 	// indicate that entry is current
 	virtual void highlight();
@@ -54,6 +59,12 @@ public:
 		add_entry(entries.end(), entry);
 	}
 	void remove_entry(Entry* entry);
+
+	void update_entries()
+	{
+		for (auto& entry : entries)
+			entry->update();
+	}
 
 	// highlight entry
 	void highlight(std::list<Entry*>::iterator it);
@@ -190,6 +201,8 @@ public:
 
 class ControlEntry : public Entry
 {
+	Menu& control_menu;
+	KeyControls& controls;
 	std::string command;
 	sf::Event::KeyEvent key;
 	sf::RectangleShape box;
@@ -199,7 +212,7 @@ class ControlEntry : public Entry
 	float min_box_width;
 	bool selected {false}; // if input is being handled
 public:
-	ControlEntry(const std::string& cmd, const sf::Event::KeyEvent& k);
+	ControlEntry(Menu& cmenu, KeyControls& ctrls, const std::string& cmd, const sf::Event::KeyEvent& k);
 
 	inline const std::string& get_command()
 	{
@@ -211,6 +224,9 @@ public:
 	}
 
 	void set_input_pos();
+
+	// check if command was unbound
+	void update();
 
 	virtual float get_width() const;
 	virtual sf::FloatRect bounds() const;
