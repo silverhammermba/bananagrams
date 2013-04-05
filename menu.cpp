@@ -5,7 +5,7 @@ static const sf::Color ACTIVE {255, 255, 255};
 static const sf::Color INACTIVE {150, 150, 150};
 
 Entry::Entry(const std::string& txt, float sc)
-	: text {txt, font, PPB * sc}, scale {sc}
+	: text {txt, font, (unsigned int)(PPB * sc)}, scale {sc}
 {
 	lowlight();
 }
