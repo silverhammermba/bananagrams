@@ -4,8 +4,8 @@
 static const sf::Color ACTIVE {255, 255, 255};
 static const sf::Color INACTIVE {150, 150, 150};
 
-Entry::Entry(const std::string& txt)
-	: text {txt, font, PPB}
+Entry::Entry(const std::string& txt, float sc)
+	: text {txt, font, PPB * sc}, scale {sc}
 {
 	lowlight();
 }
@@ -28,6 +28,11 @@ sf::FloatRect Entry::bounds() const
 void Entry::set_menu_pos(float center, float width, float top)
 {
 	text.setPosition(center + text.getGlobalBounds().width / -2, top);
+}
+
+float Entry::get_scale() const
+{
+	return scale;
 }
 
 void Entry::highlight()
@@ -299,7 +304,7 @@ std::string cmd2menu(const std::string& cmd)
 }
 
 ControlEntry::ControlEntry(Menu& cmenu, KeyControls& ctrls, const std::string& cmd, const sf::Event::KeyEvent& k)
-	: Entry {cmd2menu(cmd)}, control_menu(cmenu), controls(ctrls), command {cmd}, key(k), key_text {key2str(k), font, (unsigned int)((PPB * 2) / 3.0)} // XXX GCC bug!
+	: Entry {cmd2menu(cmd), 0.5}, control_menu(cmenu), controls(ctrls), command {cmd}, key(k), key_text {key2str(k), font, (unsigned int)((PPB) / 4.0)} // XXX GCC bug!
 {
 	// get heights and shifts
 	text.setString("A");
@@ -466,14 +471,20 @@ void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 			max_width = width;
 	}
 
-	float height {PPB * 2.f + ((int)entries.size() - 1) * PPB + entries.back()->get_height()};
+	float height {PPB * 2.f};
+	for (auto entry : entries)
+		height += PPB * entry->get_scale();
+	height += entries.back()->get_height() - entries.back()->get_scale();
 	float shift {(gui_view.getSize().y - height) / 2};
 
 	title.setPosition(gui_view.getCenter().x + title.getGlobalBounds().width / -2, shift);
 
-	unsigned int i {0};
+	float cur_height {0};
 	for (auto entry : entries)
-		entry->set_menu_pos(gui_view.getCenter().x, max_width, shift + PPB * 2.0 + i++ * PPB);
+	{
+		entry->set_menu_pos(gui_view.getCenter().x, max_width, shift + PPB * 2.0 + cur_height);
+		cur_height += PPB * entry->get_scale();
+	}
 
 	background.setSize({max_width + PPB, gui_view.getSize().y + PPB});
 	background.setPosition(gui_view.getCenter().x + background.getSize().x / -2, PPB / -2.0);

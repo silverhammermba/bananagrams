@@ -162,8 +162,7 @@ int main()
 				}
 			}
 
-			// TODO some kind of depth would help for stack appearance
-			// TODO antialiase these
+			// TODO make tiles prettier
 			if (!tile_texture[load_char - 'A'].create(PPB, PPB))
 			{
 				cerr << "Failed to allocate tile texture!\n";

@@ -3,8 +3,9 @@ class Entry : public InputReader
 {
 protected:
 	sf::Text text;
+	float scale;
 public:
-	Entry(const std::string& txt);
+	Entry(const std::string& txt, float sz=1.f);
 
 	// get minimum width occupied by this entry
 	virtual float get_width() const;
@@ -15,6 +16,7 @@ public:
 	virtual sf::FloatRect bounds() const;
 	// position entry given menu center, width, and entry top
 	virtual void set_menu_pos(float center, float width, float top);
+	virtual float get_scale() const;
 
 	// called by Menu#update_entries
 	virtual void update() {}
