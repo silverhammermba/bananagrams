@@ -18,32 +18,35 @@ Controls
 --------
 
 The game is controlled using the keyboard and mouse. The keyboard controls can
-be modified by editing config.yaml
-
-DEFAULT CONTROLS
- * arrow keys move cursor
- * hold Ctrl and press up/down to zoom
- * hold Shift to move/zoom faster
- * typing places tiles
- * Spacebar peels
- * Backspace removes tiles
- * hold Ctrl to place your last tile by clicking with the mouse
- * Ctrl-c moves the view to the center of your grid
- * Ctrl-d dumps the tile under the cursor
- * Ctrl-x cuts the selected tiles (Ctrl-x again to return tiles to your hand)
- * Ctrl-p places cut tiles on the grid (displaced tiles return to your hand)
- * Ctrl-f flips the cut tiles (words are switched between horizontal/vertical)
- * F1-F4 switch between the four tile displays:
-   1. scrambled (press F1 again to rescramble)
-   2. sorted (alphabetical order)
-   3. counts (number indicates how many you have)
-   4. stacks (size of stack indicates how many you have)
+be changed in-game or by editing config.yaml.
 
 MOUSE CONTROLS
- * left click moves the cursor
- * left click and drag selects tiles
- * right click (and drag) removes tiles
- * mouse wheel zooms
+ * Left Click: move the cursor
+ * Left Click + Drag: select tiles
+ * Right Click (+ Drag): remove tiles
+ * Mouse Wheel: zoom
+
+CONTROLS
+* Left, Right, Up, down: move cursor
+* Left Fast, Right Fast, etc.: move cursor two tiles at a time
+* Zoom In, Zoom Out: zoom the view of your grid
+* Zoom In Fast, Zoom Out Fast: pretty self-explanatory
+* Quick Place: if you have one letter left, hold this button and left click to
+  place a tile
+* Peel: when you have used up your tiles, press this to check your grid and get
+  a new tile
+* Center: move the view back to the center of your grid
+* Dump: exchange the tile under the cursor for three new tiles
+* Cut: if tiles are selected, lets you move them to a new location. Press it
+  twice to return the cut tiles to your hand
+* Paste: place cut tiles back on the grid
+* Flip: when you have cut tiles, switch horizontal words to vertical and vice
+  versa
+* Scramble Tiles: randomize the order of tiles in your hand (press repeatedly to
+  keep scrambling)
+* Sort Tiles: order the tiles in your hand alphabetically
+* Count Tiles: display the count of tiles with each letter in your hand
+* Stack Tiles: stack tiles in your hand by letter
 
 Bugs
 ----
@@ -64,7 +67,6 @@ This program is licensed under the MIT License. See LICENSE.txt
 
 TODO
 ----
- * menu
  * multiplayer
  * sounds
  * tutorial
