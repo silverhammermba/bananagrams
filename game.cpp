@@ -306,6 +306,10 @@ void Game::place(char ch)
 			next.x = 1;
 		else if (grid.get(cursor.get_pos() - Y) != nullptr)
 			next.y = 1;
+		else if (grid.get(cursor.get_pos() + X) != nullptr)
+			next.x = 1;
+		else if (grid.get(cursor.get_pos() + Y) != nullptr)
+			next.y = 1;
 		else
 			next = last_move;
 
