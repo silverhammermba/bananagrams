@@ -66,6 +66,9 @@ public:
 			entry->update();
 	}
 
+	// call when Menu or View changes
+	void update_position();
+
 	// highlight entry
 	void highlight(std::list<Entry*>::iterator it);
 	void highlight_prev();
@@ -102,6 +105,7 @@ public:
 	inline void set_menu(Menu& m)
 	{
 		menu_p = &m;
+		menu_p->update_position();
 	}
 
 	inline Menu& menu() const

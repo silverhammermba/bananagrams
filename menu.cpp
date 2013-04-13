@@ -460,10 +460,19 @@ Menu::Menu(MenuSystem& sys, Menu* p, const std::string& ttl)
 
 void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 {
-	float max_width {title.getGlobalBounds().width};
-
 	entries.insert(it, entry);
 
+	if (entries.size() == 1)
+		highlight(entries.begin());
+
+	update_position();
+}
+
+void Menu::update_position()
+{
+	float max_width {title.getGlobalBounds().width};
+
+	// find widest entry
 	for (auto entry : entries)
 	{
 		float width {entry->get_width()};
@@ -471,12 +480,14 @@ void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 			max_width = width;
 	}
 
+	// find total height of menu entries
 	float height {PPB * 2.f};
 	for (auto entry : entries)
 		height += PPB * entry->get_scale();
 	height += entries.back()->get_height() - entries.back()->get_scale();
 	float shift {(gui_view.getSize().y - height) / 2};
 
+	// center menu vertically
 	title.setPosition(gui_view.getCenter().x + title.getGlobalBounds().width / -2, shift);
 
 	float cur_height {0};
@@ -486,11 +497,9 @@ void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
 		cur_height += PPB * entry->get_scale();
 	}
 
+	// update background rect
 	background.setSize({max_width + PPB, gui_view.getSize().y + PPB});
 	background.setPosition(gui_view.getCenter().x + background.getSize().x / -2, PPB / -2.0);
-
-	if (entries.size() == 1)
-		highlight(entries.begin());
 }
 
 void Menu::highlight(std::list<Entry*>::iterator it)

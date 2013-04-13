@@ -19,10 +19,11 @@ sf::View gui_view;
 // class for handling game-related events
 class WindowEvents : public InputReader
 {
-	State* state;
+	State& state;
+	MenuSystem& system;
 public:
-	WindowEvents(State* s)
-		: state {s}
+	WindowEvents(State& s, MenuSystem& sys)
+		: state(s), system(sys)
 	{
 	}
 
@@ -30,7 +31,7 @@ public:
 	{
 		if (event.type == sf::Event::Closed)
 		{
-			state->window->close();
+			state.window->close();
 
 			finished = true;
 			return false;
@@ -39,8 +40,9 @@ public:
 		{
 			gui_view.setSize(event.size.width, event.size.height);
 			gui_view.setCenter(event.size.width / 2.0, event.size.height / 2.0);
-			state->grid_view->setSize(event.size.width, event.size.height);
-			state->grid_view->zoom(state->zoom);
+			state.grid_view->setSize(event.size.width, event.size.height);
+			state.grid_view->zoom(state.zoom);
+			system.menu().update_position();
 		}
 		return true;
 	}
@@ -76,7 +78,50 @@ int main()
 	state.grid_view = &grid_view;
 	state.zoom = 1;
 
-	WindowEvents win_events {&state};
+	// initialize menu system
+	MenuSystem current;
+	Menu main {current, nullptr, "BANANAGRAMS"};
+	MenuEntry solitaire {"SOLITAIRE", current};
+	MenuEntry customize {"CONTROLS", current};
+	MenuEntry quit {"QUIT", current};
+	main.append_entry(&solitaire);
+	main.append_entry(&customize);
+	main.append_entry(&quit);
+
+	// create solitaire menu
+	Menu solitaire_opts {current, &main, "SOLITAIRE"};
+	solitaire.submenu = &solitaire_opts;
+
+	Game game;
+	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt"};
+	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
+	SolitaireEntry start {"START GAME", current, dict_entry, multiplier, game};
+
+	solitaire_opts.append_entry(&start);
+	solitaire_opts.append_entry(&dict_entry);
+	solitaire_opts.append_entry(&multiplier);
+
+	// create control menu
+	Menu control_opts {current, &main, "CONTROLS"};
+	customize.submenu = &control_opts;
+
+	// TODO scrolling menus?
+	// TODO order these
+	for (auto& pair : controls.get_binds())
+		if (controls.is_rebindable(pair.second))
+			control_opts.append_entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
+
+	// create quite menu
+	Menu confirm_quit {current, &main, "Really quit?"};
+	quit.submenu = &confirm_quit;
+	QuitEntry yes {"YES", window};
+	MenuEntry no {"NO", current, &main};
+	confirm_quit.append_entry(&yes);
+	confirm_quit.append_entry(&no);
+
+	current.set_menu(main);
+
+	WindowEvents win_events {state, current};
 	input_readers.push_back(&win_events);
 
 	sf::Color background {22, 22, 22};
@@ -248,44 +293,6 @@ int main()
 	if (!window.isOpen())
 		return 0;
 
-	MenuSystem current;
-	Menu main {current, nullptr, "BANANAGRAMS"};
-	MenuEntry solitaire {"SOLITAIRE", current};
-	MenuEntry customize {"CONTROLS", current};
-	MenuEntry quit {"QUIT", current};
-	main.append_entry(&solitaire);
-	main.append_entry(&customize);
-	main.append_entry(&quit);
-
-	Menu solitaire_opts {current, &main, "SOLITAIRE"};
-	solitaire.submenu = &solitaire_opts;
-
-	Game game;
-	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt"};
-	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
-	SolitaireEntry start {"START GAME", current, dict_entry, multiplier, game};
-
-	solitaire_opts.append_entry(&start);
-	solitaire_opts.append_entry(&dict_entry);
-	solitaire_opts.append_entry(&multiplier);
-
-	Menu control_opts {current, &main, "CONTROLS"};
-	customize.submenu = &control_opts;
-
-	// TODO need scrolling menus for this to work...
-	// TODO order these
-	for (auto& pair : controls.get_binds())
-		if (controls.is_rebindable(pair.second))
-			control_opts.append_entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
-
-	Menu confirm_quit {current, &main, "Really quit?"};
-	quit.submenu = &confirm_quit;
-	QuitEntry yes {"YES", window};
-	MenuEntry no {"NO", current, &main};
-	confirm_quit.append_entry(&yes);
-	confirm_quit.append_entry(&no);
-
-	current.set_menu(main);
 	input_readers.push_back(&current);
 
 	loading_text.setString("Loading dictionary...");
