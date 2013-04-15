@@ -388,7 +388,7 @@ void Game::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf
 	hand.draw_on(window);
 }
 
-bool Game::restart(const std::string& dict, int multiplier, int divider)
+bool Game::start_singleplayer(const std::string& dict, int multiplier, int divider)
 {
 	// TODO validate somehow
 	// TODO cache so we don't have to reload every time
@@ -430,4 +430,10 @@ bool Game::restart(const std::string& dict, int multiplier, int divider)
 	selecting = false;
 
 	return true;
+}
+
+bool Game::start_multiplayer(const std::string& ip, unsigned int port, const std::string& name)
+{
+	// TODO
+	return false;
 }

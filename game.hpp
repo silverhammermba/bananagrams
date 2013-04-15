@@ -79,5 +79,6 @@ public:
 	void set_zoom(float zoom);
 	void draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view);
 
-	bool restart(const std::string& dict, int multiplier = 1, int divider = 1);
+	bool start_singleplayer(const std::string& dict, int multiplier = 1, int divider = 1);
+	bool start_multiplayer(const std::string& ip, unsigned int port, const std::string& name);
 };

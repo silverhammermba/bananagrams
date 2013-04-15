@@ -203,6 +203,19 @@ public:
 	virtual void select();
 };
 
+// TODO modularize better? how to get settings for starting game?
+class MultiplayerEntry : public Entry
+{
+	MenuSystem& system;
+	TextEntry& server;
+	TextEntry& name;
+	Game& game;
+public:
+	MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game& g);
+
+	virtual void select();
+};
+
 class ControlEntry : public Entry
 {
 	Menu& control_menu;

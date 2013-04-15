@@ -78,7 +78,27 @@ void SolitaireEntry::select()
 		div = 2;
 	else
 		mul = multiplier.get_choice();
-	if (!game.restart(dict_entry.get_string(), mul, div))
+	if (!game.start_singleplayer(dict_entry.get_string(), mul, div))
+		system.open();
+}
+
+MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game& g)
+	: Entry {txt}, system(sys), server(srv), name(nm), game(g) // XXX GCC bug!
+{
+}
+
+void MultiplayerEntry::select()
+{
+	system.close();
+	// TODO process server string
+	size_t port_p {server.get_string().find(':')};
+	if (port != std::string::npos)
+	{
+	}
+	// TODO process name string
+	std::string player_name = name.get_string();
+	// TODO display connecting text
+	if (!game.start_multiplayer(ip, port, player_name));
 		system.open();
 }
 
