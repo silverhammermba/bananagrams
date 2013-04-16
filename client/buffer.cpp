@@ -1,4 +1,4 @@
-#include "bananagrams.hpp"
+#include "client.hpp"
 
 CutBuffer::CutBuffer(Grid& grid, int left, int top, const sf::Vector2u& sz)
 {

@@ -1,4 +1,4 @@
-#include "bananagrams.hpp"
+#include "client.hpp"
 
 // embedded resources
 #include "icon.hpp"
@@ -106,7 +106,9 @@ int main()
 	Menu multiplayer_menu {current, &main, "MULTIPLAYER"};
 	multiplayer.submenu = &multiplayer_menu;
 
-	TextEntry server {"SERVER", PPB * 8, "127.0.0.1:57198"};
+	std::string def_ip = "127.0.0.1:";
+	std::string def_pt = std::to_string(default_port);
+	TextEntry server {"SERVER", PPB * 8, def_ip + def_pt};
 	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain"};
 	MultiplayerEntry join {"JOIN", current, server, name, game};
 	multiplayer_menu.append_entry(&server);

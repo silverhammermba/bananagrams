@@ -1,4 +1,4 @@
-#include "bananagrams.hpp"
+#include "client.hpp"
 
 Cursor::Cursor(const sf::Vector2u& sz, float thick, sf::Color fill, sf::Color outline)
 	: size {sz}, cursor {sf::Vector2f(PPB * sz.x - thick * 2, PPB * sz.y - thick * 2)}

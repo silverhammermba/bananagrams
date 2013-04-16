@@ -1,4 +1,4 @@
-#include "bananagrams.hpp"
+#include "client.hpp"
 
 Hand::Hand(const sf::Font& font)
 {

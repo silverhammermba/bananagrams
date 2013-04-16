@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
 	desc.add_options()
 		("help", "show options")
 		("dict", po::value<std::string>(), "dictionary file")
-		("port", po::value<unsigned int>()->default_value(57198), "TCP/UDP listening port")
+		("port", po::value<unsigned int>()->default_value(default_port), "TCP/UDP listening port")
 	;
 
 	// TODO usage string
@@ -63,6 +63,8 @@ int main(int argc, char* argv[])
 	}
 	words.close();
 	cout << dictionary.size() << " words found\n";
+
+	std::list<char> bunch;
 
 	while (true)
 	{
