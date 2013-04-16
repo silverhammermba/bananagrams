@@ -11,9 +11,11 @@ int main(int argc, char* argv[])
 	desc.add_options()
 		("help", "show options")
 		("dict", po::value<std::string>(), "dictionary file")
-		("port", po::value<unsigned int>(), "TCP/UDP listening port (default 57198)")
+		("port", po::value<unsigned int>()->default_value(57198), "TCP/UDP listening port")
 	;
 
+	// TODO usage string
+	// TODO print help on unrecognized options
 	po::variables_map opts;
 	po::store(po::parse_command_line(argc, argv, desc), opts);
 	po::notify(opts);
@@ -24,16 +26,11 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	unsigned int port {57198};
-
-	if (opts.count("port"))
+	unsigned int port {opts["port"].as<unsigned int>()};
+	if (port == 0 || port > 65535)
 	{
-		port = opts["port"].as<unsigned int>();
-		if (port == 0 || port > 65535)
-		{
-			cerr << "Invalid listening port: " << port << "!\n";
-			return 1;
-		}
+		cerr << "Invalid listening port: " << port << "!\n";
+		return 1;
 	}
 
 	if (!opts.count("dict"))
