@@ -86,6 +86,7 @@ int main()
 	MenuEntry customize {"CONTROLS", current};
 	MenuEntry quit {"QUIT", current};
 	main.append_entry(&solitaire);
+	main.append_entry(&multiplayer);
 	main.append_entry(&customize);
 	main.append_entry(&quit);
 
