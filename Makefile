@@ -6,6 +6,8 @@ SERVER_SOURCE:=$(wildcard server/*.cpp)
 
 # TODO have switch to toggle between debug/optimized builds
 
+all: bananagrams dedicated_server
+
 bananagrams: $(patsubst %.cpp,%.o,$(CLIENT_SOURCE))
 	$(CXX) $(CXXFLAGS) -o bananagrams $+ -lyaml-cpp -lsfml-graphics -lsfml-window -lsfml-system
 

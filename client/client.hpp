@@ -24,16 +24,6 @@ extern sf::Font font;
 extern sf::RenderTexture tile_texture[26];
 extern sf::View gui_view;
 
-// insert x into list l at a random position
-template <class T>
-void random_insert(std::list<T>& l, T x)
-{
-	auto it = l.begin();
-	auto pos = std::rand() % (l.size() + 1);
-	for (unsigned int i = 0; i != pos && it != l.end(); it++, i++);
-	l.insert(it, x);
-}
-
 // TODO better place for this?
 // for classes that handle sf::Events
 class InputReader

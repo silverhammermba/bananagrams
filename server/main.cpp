@@ -12,6 +12,7 @@ int main(int argc, char* argv[])
 		("help", "show options")
 		("dict", po::value<std::string>(), "dictionary file")
 		("port", po::value<unsigned int>()->default_value(default_port), "TCP/UDP listening port")
+		("bunch", po::value<std::string>()->default_value("1"), "bunch multiplier (0.5, inf, or an integer)")
 	;
 
 	// TODO usage string
@@ -26,6 +27,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	// check port option
 	unsigned int port {opts["port"].as<unsigned int>()};
 	if (port == 0 || port > 65535)
 	{
@@ -33,6 +35,25 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	// check bunch multiplier option
+	std::stringstream multi_s;
+	multi_s << opts["bunch"].as<std::string>();
+	unsigned int b_num {1};
+	unsigned int b_den {1};
+	if (multi_s.str() == "0.5")
+	{
+		b_den = 2;
+	}
+	else if (multi_s.str() == "inf")
+	{
+		// TODO
+	}
+	else
+	{
+		multi_s >> b_num;
+	}
+
+	// check dictionary option
 	if (!opts.count("dict"))
 	{
 		cerr << "No dictionary file specified!\n";
@@ -64,7 +85,11 @@ int main(int argc, char* argv[])
 	words.close();
 	cout << dictionary.size() << " words found\n";
 
+	// LET'S GO!!!
 	std::list<char> bunch;
+	for (char ch = 'A'; ch <= 'Z'; ++ch)
+		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * b_num) / b_den); ++i)
+			random_insert(bunch, ch);
 
 	while (true)
 	{

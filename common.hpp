@@ -5,3 +5,13 @@ static const unsigned int letter_count[26]
 };
 
 static const unsigned int default_port {57198};
+
+// insert x into list l at a random position
+template <class T>
+void random_insert(std::list<T>& l, T x)
+{
+	auto it = l.begin();
+	auto pos = std::rand() % (l.size() + 1);
+	for (unsigned int i = 0; i != pos && it != l.end(); it++, i++);
+	l.insert(it, x);
+}
