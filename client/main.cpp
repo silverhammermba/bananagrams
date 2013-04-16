@@ -106,7 +106,7 @@ int main()
 	Menu multiplayer_menu {current, &main, "MULTIPLAYER"};
 	multiplayer.submenu = &multiplayer_menu;
 
-	TextEntry server {"SERVER", PPB * 8, "127.0.0.1:9085"};
+	TextEntry server {"SERVER", PPB * 8, "127.0.0.1:57198"};
 	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain"};
 	MultiplayerEntry join {"JOIN", current, server, name, game};
 	multiplayer_menu.append_entry(&server);
