@@ -103,10 +103,10 @@ int main()
 	solitaire_opts.append_entry(&multiplier);
 
 	Menu multiplayer_menu {current, &main, "MULTIPLAYER"};
-	multiplayer.submenu = multiplayer_menu;
+	multiplayer.submenu = &multiplayer_menu;
 
-	TexEntry server {"SERVER", PPB * 8, "127.0.0.1:9085"};
-	TexEntry name {"PLAYER NAME", PPB * 8, "Banana Brain"};
+	TextEntry server {"SERVER", PPB * 8, "127.0.0.1:9085"};
+	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain"};
 	MultiplayerEntry join {"JOIN", current, server, name, game};
 	multiplayer_menu.append_entry(&server);
 	multiplayer_menu.append_entry(&name);
