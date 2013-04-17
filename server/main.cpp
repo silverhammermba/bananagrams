@@ -4,15 +4,16 @@ namespace po = boost::program_options;
 using std::cout;
 using std::cerr;
 using std::endl;
+using std::string;
 
 int main(int argc, char* argv[])
 {
 	po::options_description desc("Bananagrams multiplayer dedicated server");
 	desc.add_options()
 		("help", "show options")
-		("dict", po::value<std::string>(), "dictionary file")
+		("dict", po::value<string>(), "dictionary file")
 		("port", po::value<unsigned int>()->default_value(default_port), "TCP/UDP listening port")
-		("bunch", po::value<std::string>()->default_value("1"), "bunch multiplier (0.5, inf, or an integer)")
+		("bunch", po::value<string>()->default_value("1"), "bunch multiplier (0.5, inf, or a positive integer)")
 	;
 
 	// TODO usage string
@@ -37,7 +38,7 @@ int main(int argc, char* argv[])
 
 	// check bunch multiplier option
 	std::stringstream multi_s;
-	multi_s << opts["bunch"].as<std::string>();
+	multi_s << opts["bunch"].as<string>();
 	unsigned int b_num {1};
 	unsigned int b_den {1};
 	if (multi_s.str() == "0.5")
@@ -60,8 +61,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	std::string dict = opts["dict"].as<std::string>();
-	std::map<std::string, std::string> dictionary;
+	string dict = opts["dict"].as<string>();
+	std::map<string, string> dictionary;
 
 	cout << "Loading dictionary... ";
 	cout.flush();
@@ -73,14 +74,14 @@ int main(int argc, char* argv[])
 	}
 
 	// parse dictionary
-	std::string line;
+	string line;
 	while (std::getline(words, line))
 	{
 		auto pos = line.find_first_of(' ');
-		if (pos == std::string::npos)
+		if (pos == string::npos)
 			dictionary[line] = "";
 		else
-			dictionary[line.substr(0, pos)] = line.substr(pos + 1, std::string::npos);
+			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
 	}
 	words.close();
 	cout << dictionary.size() << " words found\n";
@@ -90,6 +91,9 @@ int main(int argc, char* argv[])
 	for (char ch = 'A'; ch <= 'Z'; ++ch)
 		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * b_num) / b_den); ++i)
 			random_insert(bunch, ch);
+
+	sf::UdpSocket socket;
+	socket.bind(port);
 
 	while (true)
 	{
