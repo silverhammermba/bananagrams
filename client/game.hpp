@@ -1,3 +1,4 @@
+// TODO use inheritance to make single/multiplayer
 class Game
 {
 	sf::UdpSocket socket;

@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
 	}
 	words.close();
 	cout << dictionary.size() << " words found";
+	cout.flush();
 
 	// LET'S GO!!!
 	std::list<char> bunch;
@@ -93,9 +94,11 @@ int main(int argc, char* argv[])
 			random_insert(bunch, ch);
 
 	sf::UdpSocket socket;
+	// TODO catch failure
 	socket.bind(server_port);
 
 	cout << "\nWaiting for player connections...";
+	cout.flush();
 	while (true)
 	{
 		sf::Packet packet;
@@ -103,6 +106,7 @@ int main(int argc, char* argv[])
 		unsigned short client_port;
 		socket.receive(packet, client_ip, client_port);
 		cout << "\nReceived packet from " << client_ip << ":" << client_port;
+		cout.flush();
 		sf::Uint8 type;
 		packet >> type;
 		switch(type)
@@ -112,10 +116,12 @@ int main(int argc, char* argv[])
 				std::string name;
 				packet >> name;
 				cout << "\n" << name << " is attempting to join";
+				cout.flush();
 				break;
 			}
 			default:
 				cout << "\nUnrecognized packet type: " << type;
+				cout.flush();
 		}
 	}
 
