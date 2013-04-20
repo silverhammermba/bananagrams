@@ -1,5 +1,6 @@
 class Game
 {
+	sf::UdpSocket socket;
 	std::string dict_str {""};
 	std::map<std::string, std::string> dictionary;
 	std::list<Tile*> bunch;
@@ -80,5 +81,5 @@ public:
 	void draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view);
 
 	bool start_singleplayer(const std::string& dict, int multiplier = 1, int divider = 1);
-	bool start_multiplayer(const std::string& ip, unsigned int port, const std::string& name);
+	bool start_multiplayer(const std::string& ip, unsigned short port, const std::string& name);
 };

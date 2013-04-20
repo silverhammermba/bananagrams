@@ -13,6 +13,7 @@
 
 #include <yaml-cpp/yaml.h>
 #include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
 
 static const unsigned int PPB {48};
 static const sf::Vector2i X {1, 0};

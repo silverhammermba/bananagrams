@@ -106,7 +106,7 @@ int main()
 	Menu multiplayer_menu {current, &main, "MULTIPLAYER"};
 	multiplayer.submenu = &multiplayer_menu;
 
-	std::string def_ip = "127.0.0.1:";
+	std::string def_ip = sf::IpAddress::getLocalAddress().toString();
 	std::string def_pt = std::to_string(default_port);
 	TextEntry server {"SERVER", PPB * 8, def_ip + def_pt};
 	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain"};

@@ -432,8 +432,17 @@ bool Game::start_singleplayer(const std::string& dict, int multiplier, int divid
 	return true;
 }
 
-bool Game::start_multiplayer(const std::string& ip, unsigned int port, const std::string& name)
+bool Game::start_multiplayer(const std::string& ip, unsigned short server_port, const std::string& name)
 {
-	// TODO
+	unsigned short client_port = server_port + 1;
+	// TODO catch errors here
+	sf::IpAddress server_ip {ip};
+	socket.bind(client_port);
+
+	sf::Packet join;
+	join << sf::Uint8(0) << name;
+
+	socket.send(join, server_ip, server_port);
+	socket.unbind();
 	return false;
 }

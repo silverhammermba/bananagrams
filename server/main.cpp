@@ -29,10 +29,10 @@ int main(int argc, char* argv[])
 	}
 
 	// check port option
-	unsigned int port {opts["port"].as<unsigned int>()};
-	if (port == 0 || port > 65535)
+	unsigned int server_port {opts["port"].as<unsigned int>()};
+	if (server_port == 0 || server_port > 65535)
 	{
-		cerr << "Invalid listening port: " << port << "!\n";
+		cerr << "Invalid listening port: " << server_port << "!\n";
 		return 1;
 	}
 
@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
 			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
 	}
 	words.close();
-	cout << dictionary.size() << " words found\n";
+	cout << dictionary.size() << " words found";
 
 	// LET'S GO!!!
 	std::list<char> bunch;
@@ -93,10 +93,30 @@ int main(int argc, char* argv[])
 			random_insert(bunch, ch);
 
 	sf::UdpSocket socket;
-	socket.bind(port);
+	socket.bind(server_port);
 
+	cout << "\nWaiting for player connections...";
 	while (true)
 	{
+		sf::Packet packet;
+		sf::IpAddress client_ip;
+		unsigned short client_port;
+		socket.receive(packet, client_ip, client_port);
+		cout << "\nReceived packet from " << client_ip << ":" << client_port;
+		sf::Uint8 type;
+		packet >> type;
+		switch(type)
+		{
+			case 0:
+			{
+				std::string name;
+				packet >> name;
+				cout << "\n" << name << " is attempting to join";
+				break;
+			}
+			default:
+				cout << "\nUnrecognized packet type: " << type;
+		}
 	}
 
 	return 0;
