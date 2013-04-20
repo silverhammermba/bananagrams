@@ -9,7 +9,7 @@ SERVER_SOURCE:=$(wildcard server/*.cpp)
 all: bananagrams dedicated_server
 
 bananagrams: $(patsubst %.cpp,%.o,$(CLIENT_SOURCE))
-	$(CXX) $(CXXFLAGS) -o bananagrams $+ -lyaml-cpp -lsfml-graphics -lsfml-window -lsfml-system
+	$(CXX) $(CXXFLAGS) -o bananagrams $+ -lyaml-cpp -lsfml-graphics -lsfml-window -lsfml-network -lsfml-system
 
 client/client.hpp: client/*.hpp common.hpp
 	touch client/client.hpp
@@ -18,7 +18,7 @@ client/%.o: client/%.cpp client/client.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 dedicated_server: $(patsubst %.cpp,%.o,$(SERVER_SOURCE))
-	$(CXX) $(CXXFLAGS) -o dedicated_server $+ -lboost_program_options
+	$(CXX) $(CXXFLAGS) -o dedicated_server $+ -lboost_program_options -lsfml-network
 
 server/server.hpp: server/*.hpp common.hpp
 	touch server/server.hpp
