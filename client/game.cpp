@@ -309,6 +309,49 @@ void Game::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf
 	hand.draw_on(window);
 }
 
+bool Game::peel()
+{
+	bool spent {true};
+	for (char ch = 'A'; ch <= 'Z'; ch++)
+		if (hand.has_any(ch))
+		{
+			spent = false;
+			break;
+		}
+	if (!spent)
+	{
+		messages.add("You have not used all of your letters.", Message::Severity::HIGH);
+		return false;
+	}
+
+	if (!grid.is_continuous())
+	{
+		messages.add("Your tiles are not all connected.", Message::Severity::HIGH);
+		return false;
+	}
+
+	auto words = grid.get_words();
+	bool valid {true};
+
+	// check words
+	for (auto word : words)
+	{
+		if (!word_is_valid(word.first))
+		{
+			valid = false;
+			messages.add(word.first + " is not a word.", Message::Severity::HIGH);
+			// color incorrect tiles
+			for (auto& pos: word.second)
+				grid.bad_word(pos[0], pos[1], pos[2]);
+		}
+	}
+
+	if (!valid)
+		return false;
+
+	return true;
+}
+
 SingleplayerGame::SingleplayerGame(const std::string& dict, int multiplier, int divider)
 {
 	// TODO validate somehow
@@ -356,47 +399,10 @@ SingleplayerGame::~SingleplayerGame()
 	dictionary.clear();
 }
 
-bool Game::peel()
+// test if game was successfully created
+bool SingleplayerGame::is_started() const
 {
-	bool spent {true};
-	for (char ch = 'A'; ch <= 'Z'; ch++)
-		if (hand.has_any(ch))
-		{
-			spent = false;
-			break;
-		}
-	if (!spent)
-	{
-		messages.add("You have not used all of your letters.", Message::Severity::HIGH);
-		return false;
-	}
-
-	if (!grid.is_continuous())
-	{
-		messages.add("Your tiles are not all connected.", Message::Severity::HIGH);
-		return false;
-	}
-
-	auto words = grid.get_words();
-	bool valid {true};
-
-	// check words
-	for (auto word : words)
-	{
-		if (!word_is_valid(word.first))
-		{
-			valid = false;
-			messages.add(word.first + " is not a word.", Message::Severity::HIGH);
-			// color incorrect tiles
-			for (auto& pos: word.second)
-				grid.bad_word(pos[0], pos[1], pos[2]);
-		}
-	}
-
-	if (!valid)
-		return false;
-
-	return true;
+	return dictionary.size() > 0;
 }
 
 bool SingleplayerGame::load(const std::string& filename)
@@ -467,5 +473,32 @@ MultiplayerGame::MultiplayerGame(const std::string& ip, unsigned short server_po
 	join << sf::Uint8(0) << name;
 
 	socket.send(join, server_ip, server_port);
+}
+
+MultiplayerGame::~MultiplayerGame()
+{
 	socket.unbind();
+}
+
+bool MultiplayerGame::is_started() const
+{
+	return false; // TODO
+}
+
+void MultiplayerGame::dump()
+{
+	// TODO
+}
+
+bool MultiplayerGame::word_is_valid(const std::string& word) const
+{
+	return false; // TODO
+}
+
+bool MultiplayerGame::peel()
+{
+	if (!Game::peel())
+		return false;
+
+	return false; // TODO
 }

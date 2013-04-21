@@ -63,8 +63,8 @@ void MenuEntry::select()
 		system.set_menu(*submenu);
 }
 
-SolitaireEntry::SolitaireEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict, MultiEntry& mult, Game& g)
-	: Entry {txt}, system(sys), dict_entry(dict), multiplier(mult), game(g) // XXX GCC bug!
+SolitaireEntry::SolitaireEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict, MultiEntry& mult, Game** g)
+	: Entry {txt}, system(sys), dict_entry(dict), multiplier(mult), game {g} // XXX GCC bug!
 {
 }
 
@@ -78,12 +78,15 @@ void SolitaireEntry::select()
 		div = 2;
 	else
 		mul = multiplier.get_choice();
-	if (!game.start_singleplayer(dict_entry.get_string(), mul, div))
+	if (*game != nullptr)
+		delete *game;
+	*game = new SingleplayerGame(dict_entry.get_string(), mul, div);
+	if (!((*game)->is_started()))
 		system.open();
 }
 
-MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game& g)
-	: Entry {txt}, system(sys), server(srv), name(nm), game(g) // XXX GCC bug!
+MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game** g)
+	: Entry {txt}, system(sys), server(srv), name(nm), game {g} // XXX GCC bug!
 {
 }
 
@@ -102,7 +105,10 @@ void MultiplayerEntry::select()
 	// TODO process name string
 	std::string player_name = name.get_string();
 	// TODO display connecting text
-	if (!game.start_multiplayer(server.get_string().substr(0, port_p), port, player_name))
+	if (*game != nullptr)
+		delete *game;
+	*game = new MultiplayerGame(server.get_string().substr(0, port_p), port, player_name);
+	if (!(*game)->is_started())
 		system.open();
 }
 

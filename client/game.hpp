@@ -18,7 +18,9 @@ protected:
 	MessageQ messages {font};
 	Cursor cursor {{1, 1}, PPB / 16.f, sf::Color::Transparent, sf::Color {0, 200, 0}};
 public:
-	~Game();
+	virtual ~Game();
+
+	virtual bool is_started() const = 0;
 
 	inline Hand& get_hand()
 	{
@@ -83,7 +85,9 @@ class SingleplayerGame : public Game
 	std::list<Tile*> bunch;
 public:
 	SingleplayerGame(const std::string& dict, int multiplier = 1, int divider = 1);
-	~SingleplayerGame();
+	virtual ~SingleplayerGame();
+
+	virtual bool is_started() const;
 
 	bool load(const std::string& filename);
 	void save(const std::string& filename);
@@ -98,4 +102,11 @@ class MultiplayerGame : public Game
 	sf::UdpSocket socket;
 public:
 	MultiplayerGame(const std::string& ip, unsigned short port, const std::string& name);
+	virtual ~MultiplayerGame();
+
+	virtual bool is_started() const;
+
+	virtual void dump();
+	virtual bool word_is_valid(const std::string& word) const;
+	virtual bool peel();
 };

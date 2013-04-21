@@ -94,10 +94,10 @@ int main()
 	Menu solitaire_opts {current, &main, "SOLITAIRE"};
 	solitaire.submenu = &solitaire_opts;
 
-	Game game;
+	Game* game;
 	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt"};
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
-	SolitaireEntry start {"START GAME", current, dict_entry, multiplier, game};
+	SolitaireEntry start {"START GAME", current, dict_entry, multiplier, &game};
 
 	solitaire_opts.append_entry(&start);
 	solitaire_opts.append_entry(&dict_entry);
@@ -110,7 +110,7 @@ int main()
 	std::string def_pt = std::to_string(default_port);
 	TextEntry server {"SERVER", PPB * 8, def_ip + def_pt};
 	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain"};
-	MultiplayerEntry join {"JOIN", current, server, name, game};
+	MultiplayerEntry join {"JOIN", current, server, name, &game};
 	multiplayer_menu.append_entry(&server);
 	multiplayer_menu.append_entry(&name);
 	multiplayer_menu.append_entry(&join);
@@ -349,133 +349,136 @@ int main()
 			}
 		}
 
-		if (mouse.was_moved())
-			game.update_mouse_pos(window, grid_view, mouse.get_pos());
-
-		if (mouse.was_pressed(0))
-			game.select();
-
-		if (game.is_selecting())
-			game.resize_selection();
-
-		if (mouse.was_released(0))
+		if (game != nullptr)
 		{
-			if (game.complete_selection() == 1 && controls["quick_place"])
-				game.quick_place();
-		}
+			if (mouse.was_moved())
+				game->update_mouse_pos(window, grid_view, mouse.get_pos());
 
-		if (controls["cut"])
-			game.cut();
+			if (mouse.was_pressed(0))
+				game->select();
 
-		if (controls["flip"])
-			game.flip_buffer();
+			if (game->is_selecting())
+				game->resize_selection();
 
-		if (controls["paste"])
-			game.paste();
+			if (mouse.was_released(0))
+			{
+				if (game->complete_selection() == 1 && controls["quick_place"])
+					game->quick_place();
+			}
 
-		if (mouse.is_held(1))
-			game.remove_at_mouse();
+			if (controls["cut"])
+				game->cut();
 
-		if (controls["dump"])
-			game.dump();
+			if (controls["flip"])
+				game->flip_buffer();
 
-		if (controls["peel"])
-			game.peel();
+			if (controls["paste"])
+				game->paste();
 
-		// if backspace
-		if (controls["remove"])
-			game.remove();
+			if (mouse.is_held(1))
+				game->remove_at_mouse();
 
-		// if letter key
-		char ch;
-		if (typer.get_ch(&ch))
-			game.place(ch);
+			if (controls["dump"])
+				game->dump();
 
-		// frame-time-dependent stuff
-		float time {clock.getElapsedTime().asSeconds()};
-		clock.restart();
+			if (controls["peel"])
+				game->peel();
 
-		if (controls["center"])
-		{
-			grid_view.setCenter(game.get_grid_center());
-			game.set_cursor_to_view();
-		}
+			// if backspace
+			if (controls["remove"])
+				game->remove();
 
-		// zoom with mouse wheel
-		int wheel_delta = mouse.get_wheel_delta();
-		if (wheel_delta < 0 || (wheel_delta > 0 && state.zoom > 1))
-		{
-			sf::Vector2i pos = mouse.get_pos();
-			sf::Vector2f before {(pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
-			grid_view.zoom(1 - wheel_delta * time * 2);
+			// if letter key
+			char ch;
+			if (typer.get_ch(&ch))
+				game->place(ch);
+
+			// frame-time-dependent stuff
+			float time {clock.getElapsedTime().asSeconds()};
+			clock.restart();
+
+			if (controls["center"])
+			{
+				grid_view.setCenter(game->get_grid_center());
+				game->set_cursor_to_view();
+			}
+
+			// zoom with mouse wheel
+			int wheel_delta = mouse.get_wheel_delta();
+			if (wheel_delta < 0 || (wheel_delta > 0 && state.zoom > 1))
+			{
+				sf::Vector2i pos = mouse.get_pos();
+				sf::Vector2f before {(pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
+				grid_view.zoom(1 - wheel_delta * time * 2);
+				gsize = grid_view.getSize();
+				sf::Vector2f after {(pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
+				grid_view.move(before - after);
+
+				game->set_cursor_to_view();
+			}
+
+			game->update_cursor(grid_view);
+
+			int zoom {0};
+			if (controls["zoom_in"])
+				zoom += -1;
+			if (controls["zoom_out"])
+				zoom += 1;
+			if (controls["zoom_in_fast"])
+				zoom += -2;
+			if (controls["zoom_out_fast"])
+				zoom += 2;
+			grid_view.zoom(1 + zoom * time);
+
+			sf::Vector2i delta {0, 0};
+			if (controls["left"])
+				delta += -X;
+			if (controls["right"])
+				delta += X;
+			if (controls["up"])
+				delta += -Y;
+			if (controls["down"])
+				delta += Y;
+			if (controls["left_fast"])
+				delta += -X * 2;
+			if (controls["right_fast"])
+				delta += X * 2;
+			if (controls["up_fast"])
+				delta += -Y * 2;
+			if (controls["down_fast"])
+				delta += Y * 2;
+			game->move_cursor(delta);
+
+			// these might have changed due to zooming
+			center = grid_view.getCenter();
 			gsize = grid_view.getSize();
-			sf::Vector2f after {(pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
-			grid_view.move(before - after);
+			sf::Vector2f spos = game->get_cursor_center();
+			// TODO refactor
+			// measure difference from a box in the center of the screen
+			sf::Vector2f diff {(std::abs(spos.x - center.x) > gsize.x / 4 ? spos.x - center.x - (spos.x >= center.x ? gsize.x / 4 : gsize.x / -4) : 0), (std::abs(spos.y - center.y) > gsize.y / 4 ? spos.y  - center.y - (spos.y >= center.y ? gsize.y / 4 : gsize.y / -4) : 0)};
+			// TODO is there a better movement function?
+			diff /= (float)(1.0 + time * 400);
+			grid_view.move(diff.x, diff.y);
 
-			game.set_cursor_to_view();
+			// don't allow zooming in past 1x
+			if (gsize.x < wsize.x || gsize.y < wsize.y)
+				grid_view.setSize(wsize.x, wsize.y);
+			state.zoom = grid_view.getSize().x / wsize.x;
+
+			game->set_zoom(state.zoom);
+
+			// animate tiles
+			game->step(time);
+
+			if (controls["scramble_tiles"])
+				game->get_hand().set_scrambled();
+			if (controls["sort_tiles"])
+				game->get_hand().set_sorted();
+			if (controls["count_tiles"])
+				game->get_hand().set_counts();
+			if (controls["stack_tiles"])
+				game->get_hand().set_stacked();
 		}
-
-		game.update_cursor(grid_view);
-
-		int zoom {0};
-		if (controls["zoom_in"])
-			zoom += -1;
-		if (controls["zoom_out"])
-			zoom += 1;
-		if (controls["zoom_in_fast"])
-			zoom += -2;
-		if (controls["zoom_out_fast"])
-			zoom += 2;
-		grid_view.zoom(1 + zoom * time);
-
-		sf::Vector2i delta {0, 0};
-		if (controls["left"])
-			delta += -X;
-		if (controls["right"])
-			delta += X;
-		if (controls["up"])
-			delta += -Y;
-		if (controls["down"])
-			delta += Y;
-		if (controls["left_fast"])
-			delta += -X * 2;
-		if (controls["right_fast"])
-			delta += X * 2;
-		if (controls["up_fast"])
-			delta += -Y * 2;
-		if (controls["down_fast"])
-			delta += Y * 2;
-		game.move_cursor(delta);
-
-		// these might have changed due to zooming
-		center = grid_view.getCenter();
-		gsize = grid_view.getSize();
-		sf::Vector2f spos = game.get_cursor_center();
-		// TODO refactor
-		// measure difference from a box in the center of the screen
-		sf::Vector2f diff {(std::abs(spos.x - center.x) > gsize.x / 4 ? spos.x - center.x - (spos.x >= center.x ? gsize.x / 4 : gsize.x / -4) : 0), (std::abs(spos.y - center.y) > gsize.y / 4 ? spos.y  - center.y - (spos.y >= center.y ? gsize.y / 4 : gsize.y / -4) : 0)};
-		// TODO is there a better movement function?
-		diff /= (float)(1.0 + time * 400);
-		grid_view.move(diff.x, diff.y);
-
-		// don't allow zooming in past 1x
-		if (gsize.x < wsize.x || gsize.y < wsize.y)
-			grid_view.setSize(wsize.x, wsize.y);
-		state.zoom = grid_view.getSize().x / wsize.x;
-
-		game.set_zoom(state.zoom);
-
-		// animate tiles
-		game.step(time);
-
-		if (controls["scramble_tiles"])
-			game.get_hand().set_scrambled();
-		if (controls["sort_tiles"])
-			game.get_hand().set_sorted();
-		if (controls["count_tiles"])
-			game.get_hand().set_counts();
-		if (controls["stack_tiles"])
-			game.get_hand().set_stacked();
 
 		if (controls["menu"])
 		{
@@ -495,7 +498,8 @@ int main()
 		// draw
 		window.clear(background);
 
-		game.draw_on(window, grid_view, gui_view);
+		if (game != nullptr)
+			game->draw_on(window, grid_view, gui_view);
 
 		window.setView(gui_view);
 		if (!current.is_finished())

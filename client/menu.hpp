@@ -191,14 +191,15 @@ public:
 };
 
 // TODO modularize better? how to get settings for starting game?
+// TODO change name to SingleplayerEntry for consistency
 class SolitaireEntry : public Entry
 {
 	MenuSystem& system;
 	TextEntry& dict_entry;
 	MultiEntry& multiplier;
-	Game& game;
+	Game** game;
 public:
-	SolitaireEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict_entry, MultiEntry& multiplier, Game& game);
+	SolitaireEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict_entry, MultiEntry& multiplier, Game** game);
 
 	virtual void select();
 };
@@ -209,9 +210,9 @@ class MultiplayerEntry : public Entry
 	MenuSystem& system;
 	TextEntry& server;
 	TextEntry& name;
-	Game& game;
+	Game** game;
 public:
-	MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game& g);
+	MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game** g);
 
 	virtual void select();
 };
