@@ -442,7 +442,7 @@ void SingleplayerGame::dump()
 
 bool SingleplayerGame::word_is_valid(const std::string& word) const
 {
-	return dictionary.find(word) == dictionary.end();
+	return dictionary.find(word) != dictionary.end();
 }
 
 bool SingleplayerGame::peel()
