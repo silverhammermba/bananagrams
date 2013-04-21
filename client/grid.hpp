@@ -12,6 +12,7 @@ namespace std
 
 class Grid
 {
+	std::map<std::string, std::vector<std::array<int, 3>>> words; // for checking grid
 	std::vector<Tile*> grid;
 	unsigned int tiles {0};
 	sf::Vector2i min {0, 0};
@@ -74,8 +75,12 @@ public:
 	// animate tiles
 	void step(float time);
 
-	// check for connectedness and valid words, chance of displaying definitions of valid words
-	bool is_valid(std::map<std::string, std::string>& dictionary, std::vector<std::string>& messages, unsigned int chance = 100);
+	// check if topology of grid is valid
+	bool is_continuous();
+	// get map of words to vector of position/direction triplets
+	std::map<std::string, std::vector<std::array<int, 3>>>& get_words();
+	// mark a bad word starting at x, y, oriented in dir
+	void bad_word(int x, int y, int dir);
 
 	void draw_on(sf::RenderWindow& window) const;
 };

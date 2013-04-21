@@ -215,10 +215,10 @@ void Grid::step(float time)
 	}
 }
 
-// check for connectedness and valid words, chance of displaying definitions of valid words
-bool Grid::is_valid(std::map<string, string>& dictionary, vector<string>& messages, unsigned int chance)
+// test if grid has at least one word and is continuous
+bool Grid::is_continuous()
 {
-	// need at least one word to be valid
+	// need at least one word to be valid (also we should never get here if grid is empty)
 	if (hwords.size() == 0 && vwords.size() == 0)
 		return false;
 
@@ -236,22 +236,23 @@ bool Grid::is_valid(std::map<string, string>& dictionary, vector<string>& messag
 
 	bool valid {true};
 	for (auto tile: grid)
+	{
 		if (tile != nullptr && !tile->marked)
 		{
 			valid = false;
 			tile->set_color(sf::Color(255, 50, 50));
 		}
-
-	if (!valid)
-	{
-		messages.push_back("Your tiles are not all connected.");
-		return false;
 	}
 
+	return valid;
+}
+
+std::map<string, vector<array<int, 3>>>& Grid::get_words()
+{
 	std::stringstream temp;
-	std::map<string, vector<array<int, 3>>> words;
 	vector<string> defns;
 	Tile* tile;
+	words.clear();
 
 	// get words
 	bool define; // whether we should define this word
@@ -288,50 +289,15 @@ bool Grid::is_valid(std::map<string, string>& dictionary, vector<string>& messag
 		words[temp.str()].push_back(array<int, 3>{{pair.first.x, pair.first.y, 1}});
 	}
 
-	// check words
-	for (auto& word : words)
-	{
-		auto it = dictionary.find(word.first);
+	return words;
+}
 
-		// if invalid
-		if (it == dictionary.end())
-		{
-			valid = false;
-			messages.push_back(word.first + " is not a word.");
-			int coord[2];
-			// color incorrect tiles
-			for (auto& pos: word.second)
-				for (coord[0] = pos[0], coord[1] = pos[1]; (tile = get(coord[0], coord[1])) != nullptr; coord[pos[2]]++)
-					tile->set_color(sf::Color(255, 50, 50));
-		}
-	}
-
-	// if error-free, (maybe) display definitions
-	if (valid && std::rand() % chance == 0)
-	{
-		for (auto word : defns)
-		{
-			// check if we have already displayed the definition
-			bool defd {false};
-			for (string& wd : defined)
-				if (word == wd)
-				{
-					defd = true;
-					break;
-				}
-
-			if (!defd)
-			{
-				defined.push_back(word);
-
-				auto it = dictionary.find(word);
-				if (it->second.length() > 0)
-					messages.push_back(word + ": " + it->second);
-			}
-		}
-	}
-
-	return valid;
+void Grid::bad_word(int x, int y, int dir)
+{
+	Tile* tile;
+	int coord[2];
+	for (coord[0] = x, coord[1] = y; (tile = get(coord[0], coord[1])) != nullptr; coord[dir]++)
+		tile->set_color(sf::Color(255, 50, 50));
 }
 
 void Grid::draw_on(sf::RenderWindow& window) const

@@ -1,13 +1,6 @@
 // TODO use inheritance to make single/multiplayer
 class Game
 {
-	sf::UdpSocket socket;
-	std::string dict_str {""};
-	std::map<std::string, std::string> dictionary;
-	std::list<Tile*> bunch;
-	Grid grid;
-	Hand hand {font};
-	MessageQ messages {font};
 	CutBuffer* buffer {nullptr};
 	sf::Vector2i last_place {-1, 0};
 	sf::Vector2i last_move {0, 0};
@@ -17,9 +10,13 @@ class Game
 	bool selecting {false};
 	bool selected {false};
 	bool set_view_to_cursor {true};
-	Cursor cursor {{1, 1}, PPB / 16.f, sf::Color::Transparent, sf::Color {0, 200, 0}};
 	Cursor mcursor {{1, 1}, PPB / 16.0, sf::Color::Transparent, sf::Color {0, 200, 0, 80}};
 	Cursor selection {{1, 1}, 1, sf::Color {255, 255, 255, 25}, sf::Color::White};
+protected:
+	Grid grid;
+	Hand hand {font};
+	MessageQ messages {font};
+	Cursor cursor {{1, 1}, PPB / 16.f, sf::Color::Transparent, sf::Color {0, 200, 0}};
 public:
 	~Game();
 
@@ -39,11 +36,7 @@ public:
 		return grid.get_center();
 	}
 
-	bool load(const std::string& filename);
-	void save(const std::string& filename);
-
 	void clear_buffer();
-	void end();
 	void update_mouse_pos(const sf::RenderWindow& window, const sf::View& view, const sf::Vector2i& pos);
 	void select();
 	inline bool is_selecting() const
@@ -57,8 +50,9 @@ public:
 	void flip_buffer();
 	void paste();
 	void remove_at_mouse();
-	void dump();
-	void peel();
+	virtual void dump() = 0;
+	virtual bool word_is_valid(const std::string& word) const = 0;
+	virtual bool peel();
 	void remove();
 	void place(char ch);
 	inline void move_cursor(const sf::Vector2i& delta)
@@ -80,7 +74,28 @@ public:
 	}
 	void set_zoom(float zoom);
 	void draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view);
+};
 
-	bool start_singleplayer(const std::string& dict, int multiplier = 1, int divider = 1);
-	bool start_multiplayer(const std::string& ip, unsigned short port, const std::string& name);
+class SingleplayerGame : public Game
+{
+	std::string dict_str {""};
+	std::map<std::string, std::string> dictionary;
+	std::list<Tile*> bunch;
+public:
+	SingleplayerGame(const std::string& dict, int multiplier = 1, int divider = 1);
+	~SingleplayerGame();
+
+	bool load(const std::string& filename);
+	void save(const std::string& filename);
+
+	virtual void dump();
+	virtual bool word_is_valid(const std::string& word) const;
+	virtual bool peel();
+};
+
+class MultiplayerGame : public Game
+{
+	sf::UdpSocket socket;
+public:
+	MultiplayerGame(const std::string& ip, unsigned short port, const std::string& name);
 };

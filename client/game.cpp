@@ -4,18 +4,13 @@ using std::string;
 
 Game::~Game()
 {
-	end();
-}
+	grid.clear();
 
-bool Game::load(const std::string& filename)
-{
-	// TODO
-	return false;
-}
+	hand.clear();
 
-void Game::save(const std::string& filename)
-{
-	// TODO
+	clear_buffer();
+
+	messages.clear();
 }
 
 void Game::clear_buffer()
@@ -23,23 +18,6 @@ void Game::clear_buffer()
 	if (buffer != nullptr)
 		delete buffer;
 	buffer = nullptr;
-}
-
-void Game::end()
-{
-	for (auto tile : bunch)
-		delete tile;
-	bunch.clear();
-
-	grid.clear();
-
-	hand.clear();
-
-	dictionary.clear();
-
-	clear_buffer();
-
-	messages.clear();
 }
 
 void Game::update_mouse_pos(const sf::RenderWindow& window, const sf::View& view, const sf::Vector2i& pos)
@@ -174,63 +152,6 @@ void Game::remove_at_mouse()
 	Tile* tile {grid.remove(mcursor.get_pos())};
 	if (tile != nullptr)
 		hand.add_tile(tile);
-}
-
-void Game::dump()
-{
-	if (bunch.size() >= 3)
-	{
-		Tile* dumped {grid.remove(cursor.get_pos())};
-		if (dumped == nullptr)
-			messages.add("You need to select a tile to dump.", Message::Severity::LOW);
-		else
-		{
-			// take three
-			for (unsigned int i = 0; i < 3; i++)
-			{
-				Tile* tile {bunch.back()};
-				bunch.pop_back();
-				hand.add_tile(tile);
-			}
-
-			random_insert<Tile*>(bunch, dumped);
-		}
-	}
-	else
-		messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
-}
-
-void Game::peel()
-{
-	bool spent {true};
-	for (char ch = 'A'; ch <= 'Z'; ch++)
-		if (hand.has_any(ch))
-		{
-			spent = false;
-			break;
-		}
-	if (spent)
-	{
-		std::vector<string> mess;
-		if (grid.is_valid(dictionary, mess))
-		{
-			if (bunch.size() > 0)
-			{
-				Tile* tile {bunch.back()};
-				bunch.pop_back();
-				hand.add_tile(tile);
-				for (auto message : mess)
-					messages.add(message, Message::Severity::LOW);
-			}
-			else
-				messages.add("You win!", Message::Severity::LOW);
-		}
-		else
-			for (auto message : mess)
-				messages.add(message, Message::Severity::HIGH);
-	}
-	else
-		messages.add("You have not used all of your letters.", Message::Severity::HIGH);
 }
 
 void Game::remove()
@@ -388,51 +309,154 @@ void Game::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf
 	hand.draw_on(window);
 }
 
-bool Game::start_singleplayer(const std::string& dict, int multiplier, int divider)
+SingleplayerGame::SingleplayerGame(const std::string& dict, int multiplier, int divider)
 {
 	// TODO validate somehow
 	// TODO cache so we don't have to reload every time
 	std::ifstream words(dict);
-	if (!words.is_open())
+
+	if (words.is_open())
 	{
+		// parse dictionary
+		string line;
+		while (std::getline(words, line))
+		{
+			auto pos = line.find_first_of(' ');
+			if (pos == string::npos)
+				dictionary[line] = "";
+			else
+				dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
+		}
+		words.close();
+
+		// create tiles for the bunch
+		for (char ch = 'A'; ch <= 'Z'; ++ch)
+			for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * multiplier) / divider); ++i)
+				random_insert(bunch, new Tile(ch));
+
+		// take tiles from the bunch for player
+		for (unsigned int i = 0; i < 21; i++)
+		{
+			auto tile = bunch.back();
+			bunch.pop_back();
+			hand.add_tile(tile);
+		}
+	}
+	else
 		std::cerr << "Couldn't find " << dict << "!\n";
+		// TODO handle this elsewhere too
+}
+
+SingleplayerGame::~SingleplayerGame()
+{
+	for (auto tile : bunch)
+		delete tile;
+	bunch.clear();
+
+	dictionary.clear();
+}
+
+bool Game::peel()
+{
+	bool spent {true};
+	for (char ch = 'A'; ch <= 'Z'; ch++)
+		if (hand.has_any(ch))
+		{
+			spent = false;
+			break;
+		}
+	if (!spent)
+	{
+		messages.add("You have not used all of your letters.", Message::Severity::HIGH);
 		return false;
 	}
 
-	end();
-
-	// parse dictionary
-	string line;
-	while (std::getline(words, line))
+	if (!grid.is_continuous())
 	{
-		auto pos = line.find_first_of(' ');
-		if (pos == string::npos)
-			dictionary[line] = "";
-		else
-			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
-	}
-	words.close();
-
-	// create tiles for the bunch
-	for (char ch = 'A'; ch <= 'Z'; ++ch)
-		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * multiplier) / divider); ++i)
-			random_insert(bunch, new Tile(ch));
-
-	// take tiles from the bunch for player
-	for (unsigned int i = 0; i < 21; i++)
-	{
-		auto tile = bunch.back();
-		bunch.pop_back();
-		hand.add_tile(tile);
+		messages.add("Your tiles are not all connected.", Message::Severity::HIGH);
+		return false;
 	}
 
-	selected = false;
-	selecting = false;
+	auto words = grid.get_words();
+	bool valid {true};
+
+	// check words
+	for (auto word : words)
+	{
+		if (!word_is_valid(word.first))
+		{
+			valid = false;
+			messages.add(word.first + " is not a word.", Message::Severity::HIGH);
+			// color incorrect tiles
+			for (auto& pos: word.second)
+				grid.bad_word(pos[0], pos[1], pos[2]);
+		}
+	}
+
+	if (!valid)
+		return false;
 
 	return true;
 }
 
-bool Game::start_multiplayer(const std::string& ip, unsigned short server_port, const std::string& name)
+bool SingleplayerGame::load(const std::string& filename)
+{
+	// TODO
+	return false;
+}
+
+void SingleplayerGame::save(const std::string& filename)
+{
+	// TODO
+}
+
+void SingleplayerGame::dump()
+{
+	if (bunch.size() >= 3)
+	{
+		Tile* dumped {grid.remove(cursor.get_pos())};
+		if (dumped == nullptr)
+			messages.add("You need to select a tile to dump.", Message::Severity::LOW);
+		else
+		{
+			// take three
+			for (unsigned int i = 0; i < 3; i++)
+			{
+				Tile* tile {bunch.back()};
+				bunch.pop_back();
+				hand.add_tile(tile);
+			}
+
+			random_insert<Tile*>(bunch, dumped);
+		}
+	}
+	else
+		messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
+}
+
+bool SingleplayerGame::word_is_valid(const std::string& word) const
+{
+	return dictionary.find(word) == dictionary.end();
+}
+
+bool SingleplayerGame::peel()
+{
+	if (!Game::peel())
+		return false;
+
+	if (bunch.size() > 0)
+	{
+		Tile* tile {bunch.back()};
+		bunch.pop_back();
+		hand.add_tile(tile);
+	}
+	else
+		messages.add("You win!", Message::Severity::LOW);
+
+	return true;
+}
+
+MultiplayerGame::MultiplayerGame(const std::string& ip, unsigned short server_port, const std::string& name)
 {
 	unsigned short client_port = server_port + 1;
 	// TODO catch errors here
@@ -444,5 +468,4 @@ bool Game::start_multiplayer(const std::string& ip, unsigned short server_port, 
 
 	socket.send(join, server_ip, server_port);
 	socket.unbind();
-	return false;
 }
