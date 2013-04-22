@@ -85,6 +85,8 @@ int main(int argc, char* argv[])
 		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * b_num) / b_den); ++i)
 			random_insert(bunch, ch);
 
+	std::map<sf::IpAddress, string> players;
+
 	sf::UdpSocket socket;
 	// TODO catch failure
 	socket.bind(server_port);
@@ -105,10 +107,24 @@ int main(int argc, char* argv[])
 		{
 			case 0:
 			{
-				std::string name;
+				string name;
 				packet >> name;
-				cout << "\n" << name << " is attempting to join";
-				cout.flush();
+				if (players.count(client_ip) == 0)
+				{
+					players[client_ip] = name;
+					cout << "\n" << name << " has joined the game";
+					cout.flush();
+				}
+				break;
+			}
+			case 1:
+			{
+				if (players.count(client_ip) > 0)
+				{
+					cout << "\n" << players[client_ip] << " has left the game";
+					cout.flush();
+					players.erase(client_ip);
+				}
 				break;
 			}
 			default:

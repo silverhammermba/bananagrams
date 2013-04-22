@@ -509,6 +509,8 @@ int main()
 	}
 
 	// TODO save game if player hasn't won
+	if (game != nullptr)
+		delete game;
 
 	// TODO only do this if controls changed
 	controls.write_to_file("config.yaml");

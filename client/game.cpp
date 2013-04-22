@@ -462,11 +462,11 @@ bool SingleplayerGame::peel()
 	return true;
 }
 
-MultiplayerGame::MultiplayerGame(const std::string& ip, unsigned short server_port, const std::string& name)
+MultiplayerGame::MultiplayerGame(const std::string& ip, unsigned short port, const std::string& name)
+	: server_ip {ip}, server_port {port}
 {
 	unsigned short client_port = server_port + 1;
 	// TODO catch errors here
-	sf::IpAddress server_ip {ip};
 	socket.bind(client_port);
 
 	sf::Packet join;
@@ -477,6 +477,11 @@ MultiplayerGame::MultiplayerGame(const std::string& ip, unsigned short server_po
 
 MultiplayerGame::~MultiplayerGame()
 {
+	sf::Packet disconnect;
+	disconnect << sf::Uint8(1);
+
+	socket.send(disconnect, server_ip, server_port);
+
 	socket.unbind();
 }
 
