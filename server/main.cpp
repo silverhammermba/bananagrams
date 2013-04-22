@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 		("help", "show options")
 		("dict", po::value<string>(), "dictionary file")
 		("port", po::value<unsigned int>()->default_value(default_port), "TCP/UDP listening port")
-		("bunch", po::value<string>()->default_value("1"), "bunch multiplier (0.5, inf, or a positive integer)")
+		("bunch", po::value<string>()->default_value("1"), "bunch multiplier (0.5 or a positive integer)")
 	;
 
 	// TODO usage string
@@ -42,17 +42,9 @@ int main(int argc, char* argv[])
 	unsigned int b_num {1};
 	unsigned int b_den {1};
 	if (multi_s.str() == "0.5")
-	{
 		b_den = 2;
-	}
-	else if (multi_s.str() == "inf")
-	{
-		// TODO
-	}
 	else
-	{
 		multi_s >> b_num;
-	}
 
 	// check dictionary option
 	if (!opts.count("dict"))
