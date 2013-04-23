@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 	// TODO catch failure
 	socket.bind(server_port);
 
-	cout << "\nWaiting for player connections...";
+	cout << "\nWaiting for players to join...";
 	cout.flush();
 	while (true)
 	{
@@ -132,6 +132,7 @@ int main(int argc, char* argv[])
 				cout.flush();
 		}
 	}
+	// TODO catch interrupt and inform clients
 
 	return 0;
 }
