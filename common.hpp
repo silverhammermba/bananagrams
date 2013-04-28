@@ -4,7 +4,8 @@ static const unsigned int letter_count[26]
 //   A  B  C  D   E  F  G  H   I  J  K  L  M  N   O  P  Q  R  S  T  U  V  W  X  Y  Z
 };
 
-static const unsigned int default_port {57198};
+static const unsigned short default_port {57198};
+static const sf::Uint8 protocol_version {0};
 
 // insert x into list l at a random position
 template <class T>

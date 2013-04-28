@@ -6,13 +6,32 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+std::map<string, Player> players;
+
+void shutdown(int s)
+{
+	cout << "\nServer shutting down...";
+	// TODO send disconnects to players
+	cout << endl;
+	exit(0);
+}
+
 int main(int argc, char* argv[])
 {
+	struct sigaction action;
+	action.sa_handler = shutdown;
+	sigemptyset(&action.sa_mask);
+	action.sa_flags = 0;
+
+	sigaction(SIGINT, &action, nullptr);
+	sigaction(SIGTERM, &action, nullptr);
+	sigaction(SIGKILL, &action, nullptr);
+
 	po::options_description desc("Bananagrams multiplayer dedicated server");
 	desc.add_options()
 		("help", "show options")
 		("dict", po::value<string>(), "dictionary file")
-		("port", po::value<unsigned int>()->default_value(default_port), "TCP/UDP listening port")
+		("port", po::value<unsigned short>()->default_value(default_port), "TCP/UDP listening port")
 		("bunch", po::value<string>()->default_value("1"), "bunch multiplier (0.5 or a positive integer)")
 	;
 
@@ -29,8 +48,8 @@ int main(int argc, char* argv[])
 	}
 
 	// check port option
-	unsigned int server_port {opts["port"].as<unsigned int>()};
-	if (server_port == 0 || server_port > 65535)
+	unsigned short server_port {opts["port"].as<unsigned short>()};
+	if (server_port == 0)
 	{
 		cerr << "Invalid listening port: " << server_port << "!\n";
 		return 1;
@@ -85,8 +104,6 @@ int main(int argc, char* argv[])
 		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * b_num) / b_den); ++i)
 			random_insert(bunch, ch);
 
-	std::map<sf::IpAddress, string> players;
-
 	sf::UdpSocket socket;
 	// TODO catch failure
 	socket.bind(server_port);
@@ -99,31 +116,49 @@ int main(int argc, char* argv[])
 		sf::IpAddress client_ip;
 		unsigned short client_port;
 		socket.receive(packet, client_ip, client_port);
+
 		cout << "\nReceived packet from " << client_ip << ":" << client_port;
 		cout.flush();
 		sf::Uint8 type;
 		packet >> type;
+
+		string id;
+
 		switch(type)
 		{
-			case 0:
+			case 0: // player join
 			{
-				string name;
-				packet >> name;
-				if (players.count(client_ip) == 0)
+				sf::Uint8 version;
+				packet >> version;
+				if (version != protocol_version)
 				{
-					players[client_ip] = name;
-					cout << "\n" << name << " has joined the game";
+					// TODO send client rejection
+					cout << "\nclient failed to join"
+						    "\n\tNeed protocol version " << protocol_version << ", got " << version;
+					cout.flush();
+					break;
+				}
+				packet >> id;
+
+				if (players.count(id) == 0)
+				{
+					Player player;
+					packet >> player;
+					players[id] = player;
+					cout << "\n" << player.get_name() << " has joined the game";
 					cout.flush();
 				}
 				break;
 			}
-			case 1:
+			case 1: // player disconnect
 			{
-				if (players.count(client_ip) > 0)
+				packet >> id;
+
+				if (players.count(id) > 0)
 				{
-					cout << "\n" << players[client_ip] << " has left the game";
+					cout << "\n" << players[id].get_name() << " has left the game";
 					cout.flush();
-					players.erase(client_ip);
+					players.erase(id);
 				}
 				break;
 			}

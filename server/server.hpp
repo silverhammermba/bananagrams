@@ -1,3 +1,4 @@
+#include <csignal>
 #include <fstream>
 #include <iostream>
 #include <list>
@@ -8,3 +9,4 @@
 #include <boost/program_options.hpp>
 
 #include "../common.hpp"
+#include "player.hpp"
