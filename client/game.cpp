@@ -470,7 +470,7 @@ MultiplayerGame::MultiplayerGame(const std::string& ip, unsigned short port, con
 	socket.bind(client_port);
 
 	sf::Packet join;
-	join << sf::Uint8(0) << name;
+	join << sf::Uint8(0) << protocol_version << name;
 
 	socket.send(join, server_ip, server_port);
 }

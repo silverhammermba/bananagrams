@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
 				{
 					// TODO send client rejection
 					cout << "\nclient failed to join"
-						    "\n\tNeed protocol version " << protocol_version << ", got " << version;
+						    "\n\tNeed protocol version " << (int)protocol_version << ", got " << (int)version;
 					cout.flush();
 					break;
 				}
