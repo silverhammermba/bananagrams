@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 	desc.add_options()
 		("help", "show options")
 		("dict", po::value<string>(), "dictionary file")
-		("port", po::value<unsigned short>()->default_value(default_port), "TCP/UDP listening port")
+		("port", po::value<unsigned short>()->default_value(default_server_port), "TCP/UDP listening port")
 		("bunch", po::value<string>()->default_value("1"), "bunch multiplier (0.5 or a positive integer)")
 	;
 
@@ -145,6 +145,7 @@ int main(int argc, char* argv[])
 					Player player;
 					packet >> player;
 					players[id] = player;
+					// TODO not getting name properly
 					cout << "\n" << player.get_name() << " has joined the game";
 					cout.flush();
 				}

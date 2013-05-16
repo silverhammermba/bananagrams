@@ -93,7 +93,7 @@ MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, Text
 void MultiplayerEntry::select()
 {
 	system.close();
-	unsigned int port {default_port};
+	unsigned int port {default_server_port};
 	// TODO process server string
 	size_t port_p {server.get_string().find(':')};
 	if (port_p != std::string::npos)
