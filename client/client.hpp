@@ -42,12 +42,11 @@ public:
 		return finished;
 	}
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 	virtual bool process_event(sf::Event& event)
 	{
+		// intentionally unused parameter
 		return true;
 	}
-#pragma GCC diagnostic pop
 };
 
 #include "../common.hpp"

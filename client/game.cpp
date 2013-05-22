@@ -386,8 +386,8 @@ SingleplayerGame::SingleplayerGame(const std::string& dict, int multiplier, int 
 		}
 	}
 	else
-		std::cerr << "Couldn't find " << dict << "!\n";
-		// TODO handle this elsewhere too
+		// TODO this isn't showing up for the first game!?
+		messages.add("Failed to load dictionary '" + dict + "'", Message::Severity::HIGH);
 }
 
 SingleplayerGame::~SingleplayerGame()
@@ -402,7 +402,8 @@ SingleplayerGame::~SingleplayerGame()
 // test if game was successfully created
 bool SingleplayerGame::is_started() const
 {
-	return dictionary.size() > 0;
+	// TODO what to do with this?
+	return true;
 }
 
 bool SingleplayerGame::load(const std::string& filename)

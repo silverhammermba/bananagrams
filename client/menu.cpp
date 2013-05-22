@@ -70,7 +70,6 @@ SolitaireEntry::SolitaireEntry(const std::string& txt, MenuSystem& sys, TextEntr
 
 void SolitaireEntry::select()
 {
-	system.close();
 	// TODO display loading text
 	int mul {1};
 	int div {1};
@@ -80,6 +79,7 @@ void SolitaireEntry::select()
 		mul = multiplier.get_choice();
 	if (*game != nullptr)
 		delete *game;
+	system.close();
 	*game = new SingleplayerGame(dict_entry.get_string(), mul, div);
 	if (!((*game)->is_started()))
 		system.open();
@@ -92,7 +92,6 @@ MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, Text
 
 void MultiplayerEntry::select()
 {
-	system.close();
 	unsigned int port {default_server_port};
 	// TODO process server string
 	size_t port_p {server.get_string().find(':')};
@@ -107,6 +106,7 @@ void MultiplayerEntry::select()
 	// TODO display connecting text
 	if (*game != nullptr)
 		delete *game;
+	system.close();
 	*game = new MultiplayerGame(server.get_string().substr(0, port_p), port, player_name);
 	if (!(*game)->is_started())
 		system.open();
