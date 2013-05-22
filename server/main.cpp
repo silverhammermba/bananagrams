@@ -144,12 +144,11 @@ int main(int argc, char* argv[])
 
 				if (players.count(id) == 0)
 				{
-					// TODO god this is crappy
-					std::string name;
-					packet >> name;
-					players[id] = Player();
-					players[id].set_name(name);
-					cout << "\n" << name << " has joined the game";
+					Player player;
+					packet >> player;
+					players[id] = player;
+
+					cout << "\n" << player.get_name() << " has joined the game";
 					cout.flush();
 				}
 				break;
@@ -158,7 +157,7 @@ int main(int argc, char* argv[])
 			{
 				if (players.count(id) > 0)
 				{
-					cout << "\n" << id << " has left the game";
+					cout << "\n" << players[id].get_name() << " has left the game";
 					cout.flush();
 					players.erase(id);
 				}
