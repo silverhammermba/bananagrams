@@ -102,6 +102,7 @@ class MultiplayerGame : public Game
 	sf::UdpSocket socket;
 	sf::IpAddress server_ip;
 	unsigned short server_port;
+	std::string id;
 public:
 	MultiplayerGame(const std::string& ip, unsigned short port, const std::string& name);
 	virtual ~MultiplayerGame();
