@@ -5,8 +5,9 @@
 #include <map>
 #include <string>
 #include <sstream>
-#include <SFML/Network.hpp>
+
 #include <boost/program_options.hpp>
+#include <SFML/Network.hpp>
 
 #include "../common.hpp"
 #include "player.hpp"

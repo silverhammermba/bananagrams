@@ -119,10 +119,13 @@ int main(int argc, char* argv[])
 
 		cout << "\nReceived packet from " << client_ip << ":" << client_port;
 		cout.flush();
-		sf::Uint8 type;
-		packet >> type;
 
-		string id;
+		sf::Uint8 type;
+		std::string id;
+
+		// every client packet starts with a type and player id
+		packet >> type;
+		packet >> id;
 
 		switch(type)
 		{
@@ -138,33 +141,31 @@ int main(int argc, char* argv[])
 					cout.flush();
 					break;
 				}
-				packet >> id;
 
 				if (players.count(id) == 0)
 				{
-					Player player;
-					packet >> player;
-					players[id] = player;
-					// TODO not getting name properly
-					cout << "\n" << player.get_name() << " has joined the game";
+					// TODO god this is crappy
+					std::string name;
+					packet >> name;
+					players[id] = Player();
+					players[id].set_name(name);
+					cout << "\n" << name << " has joined the game";
 					cout.flush();
 				}
 				break;
 			}
 			case 1: // player disconnect
 			{
-				packet >> id;
-
 				if (players.count(id) > 0)
 				{
-					cout << "\n" << players[id].get_name() << " has left the game";
+					cout << "\n" << id << " has left the game";
 					cout.flush();
 					players.erase(id);
 				}
 				break;
 			}
 			default:
-				cout << "\nUnrecognized packet type: " << type;
+				cout << "\nUnrecognized packet type: " << (int)type;
 				cout.flush();
 		}
 	}

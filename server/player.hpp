@@ -5,12 +5,13 @@ class Player
 public:
 	Player();
 
+	inline void set_name(const std::string& nm)
+	{
+		name = nm;
+	}
+
 	inline const std::string& get_name() const
 	{
 		return name;
 	}
-
-	friend sf::Packet& operator >>(sf::Packet& packet, Player& player);
 };
-
-sf::Packet& operator >>(sf::Packet& packet, Player& player);
