@@ -1,20 +1,21 @@
 class Message
 {
 	sf::Text message;
-	float lifetime {0};
+	float age {0};
+	float duration;
 public:
-	enum class Severity {LOW, HIGH};
+	enum class Severity {LOW, HIGH, CRITICAL};
 
-	Message(const std::string& mes, const sf::Font& font, unsigned int size = 20, const sf::Color& color = sf::Color::Black);
+	Message(const std::string& mes, const sf::Font& font, unsigned int size = 20, const sf::Color& color = sf::Color::Black, float dur = 5);
 
-	inline void age(float time)
+	inline void step(float time)
 	{
-		lifetime += time;
+		age += time;
 	}
 
-	inline float age() const
+	inline float can_be_removed() const
 	{
-		return lifetime;
+		return duration > 0 && age > duration;
 	}
 
 	inline void set_pos(float x, float y)

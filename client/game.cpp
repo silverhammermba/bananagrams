@@ -387,7 +387,7 @@ SingleplayerGame::SingleplayerGame(const std::string& dict, int multiplier, int 
 	}
 	else
 		// TODO this isn't showing up for the first game!?
-		messages.add("Failed to load dictionary '" + dict + "'", Message::Severity::HIGH);
+		messages.add("Failed to load dictionary '" + dict + "'", Message::Severity::CRITICAL);
 }
 
 SingleplayerGame::~SingleplayerGame()
