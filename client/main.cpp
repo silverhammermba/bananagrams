@@ -97,7 +97,7 @@ int main()
 	Game* game {nullptr};
 	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt"};
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
-	SolitaireEntry start {"START GAME", current, dict_entry, multiplier, &game};
+	SingleplayerEntry start {"START GAME", current, dict_entry, multiplier, &game};
 
 	solitaire_opts.append_entry(&start);
 	solitaire_opts.append_entry(&dict_entry);

@@ -63,12 +63,12 @@ void MenuEntry::select()
 		system.set_menu(*submenu);
 }
 
-SolitaireEntry::SolitaireEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict, MultiEntry& mult, Game** g)
+SingleplayerEntry::SingleplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict, MultiEntry& mult, Game** g)
 	: Entry {txt}, system(sys), dict_entry(dict), multiplier(mult), game {g} // XXX GCC bug!
 {
 }
 
-void SolitaireEntry::select()
+void SingleplayerEntry::select()
 {
 	// TODO display loading text
 	int mul {1};
