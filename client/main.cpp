@@ -493,6 +493,8 @@ int main()
 					break;
 				}
 			}
+			// menu input reader blocks game from getting menu key release
+			controls.reset("menu");
 		}
 
 		// draw

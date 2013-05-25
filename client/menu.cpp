@@ -58,7 +58,7 @@ MenuEntry::MenuEntry(const std::string& txt, MenuSystem& sys, Menu* sub)
 void MenuEntry::select()
 {
 	if (submenu == nullptr)
-		system.close(); // TODO why do we need to double tap Esc when closing this way?
+		system.close();
 	else
 		system.set_menu(*submenu);
 }

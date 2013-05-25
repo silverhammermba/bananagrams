@@ -112,6 +112,12 @@ class KeyControls : public InputReader
 		{
 			return repeat;
 		}
+
+		inline void reset()
+		{
+			pressed = false;
+			ready = true;
+		}
 	};
 
 	// maps keys to command names
@@ -140,6 +146,12 @@ public:
 	inline bool is_rebindable(const std::string& command) const
 	{
 		return commands.at(command).is_rebindable();
+	}
+
+	// reset the state of a command
+	inline void reset(const std::string& command)
+	{
+		commands[command].reset();
 	}
 
 	void set_defaults();
