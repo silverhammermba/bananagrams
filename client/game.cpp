@@ -1,5 +1,7 @@
 #include "client.hpp"
 
+using std::cerr;
+using std::endl;
 using std::string;
 
 Game::~Game()
@@ -11,6 +13,12 @@ Game::~Game()
 	clear_buffer();
 
 	messages.clear();
+}
+
+void Game::step(float time)
+{
+	grid.step(time);
+	messages.step(time);
 }
 
 void Game::clear_buffer()
@@ -462,11 +470,14 @@ MultiplayerGame::MultiplayerGame(const std::string& ip, unsigned short port, con
 	unsigned short client_port = server_port + 1;
 	// TODO catch errors here
 	socket.bind(client_port);
+	socket.setBlocking(false);
 
 	sf::Packet join;
 	join << sf::Uint8(0) << id << protocol_version << name;
 
 	socket.send(join, server_ip, server_port);
+
+	messages.add("Connecting to " + ip + "...", Message::Severity::CRITICAL);
 }
 
 MultiplayerGame::~MultiplayerGame()
@@ -477,6 +488,36 @@ MultiplayerGame::~MultiplayerGame()
 	socket.send(disconnect, server_ip, server_port);
 
 	socket.unbind();
+}
+
+void MultiplayerGame::step(float time)
+{
+	Game::step(time);
+
+	sf::Packet packet;
+	sf::IpAddress ip;
+	unsigned short port;
+	if (socket.receive(packet, ip, port) == sf::Socket::Status::Done)
+	{
+		cerr << "Received packet from " << ip << ":" << port;
+		// TODO somehow verify that this is actually the server...
+		process_packet(packet);
+	}
+}
+
+void MultiplayerGame::process_packet(sf::Packet& packet)
+{
+	sf::Uint8 type;
+	packet >> type;
+
+	switch (type)
+	{
+		case 2:
+			messages.add("Disconnected from server: server shutting down", Message::Severity::CRITICAL);
+			break;
+		default:
+			cerr << "Received unknown packet type " << type << endl;
+	}
 }
 
 void MultiplayerGame::dump()

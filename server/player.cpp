@@ -1,7 +1,7 @@
 #include "server.hpp"
 
-Player::Player()
-	: peel {0}
+Player::Player(const sf::IpAddress& _ip)
+	: ip {_ip}, peel {0}
 {
 }
 

@@ -25,11 +25,7 @@ public:
 		return hand;
 	}
 
-	inline void step(float time)
-	{
-		grid.step(time);
-		messages.step(time);
-	}
+	virtual void step(float time);
 
 	inline sf::Vector2f get_grid_center() const
 	{
@@ -103,7 +99,10 @@ public:
 	MultiplayerGame(const std::string& ip, unsigned short port, const std::string& name);
 	virtual ~MultiplayerGame();
 
+	virtual void step(float time);
 	virtual void dump();
 	virtual bool word_is_valid(const std::string& word) const;
 	virtual bool peel();
+
+	void process_packet(sf::Packet& packet);
 };

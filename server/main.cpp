@@ -6,12 +6,20 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+sf::UdpSocket socket;
+unsigned short client_port;
+
 std::map<string, Player> players;
 
 void shutdown(int s)
 {
 	cout << "\nServer shutting down...";
-	// TODO send disconnects to players
+	for (const auto& pair: players)
+	{
+		sf::Packet sorry;
+		sorry << sf::Uint8(2);
+		socket.send(sorry, pair.second.get_ip(), client_port);
+	}
 	cout << endl;
 	exit(0);
 }
@@ -54,6 +62,8 @@ int main(int argc, char* argv[])
 		cerr << "Invalid listening port: " << server_port << "!\n";
 		return 1;
 	}
+
+	client_port = server_port + 1;
 
 	// check bunch multiplier option
 	std::stringstream multi_s;
@@ -104,9 +114,10 @@ int main(int argc, char* argv[])
 		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * b_num) / b_den); ++i)
 			random_insert(bunch, ch);
 
-	sf::UdpSocket socket;
 	// TODO catch failure
 	socket.bind(server_port);
+
+	bool playing = false;
 
 	cout << "\nWaiting for players to join...";
 	cout.flush();
@@ -144,7 +155,7 @@ int main(int argc, char* argv[])
 
 				if (players.count(id) == 0)
 				{
-					Player player;
+					Player player(client_ip);
 					packet >> player;
 					players[id] = player;
 
@@ -168,7 +179,6 @@ int main(int argc, char* argv[])
 				cout.flush();
 		}
 	}
-	// TODO catch interrupt and inform clients
 
 	return 0;
 }
