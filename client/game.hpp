@@ -96,7 +96,7 @@ class MultiplayerGame : public Game
 	unsigned short server_port;
 	std::string id;
 public:
-	MultiplayerGame(const std::string& ip, unsigned short port, const std::string& name);
+	MultiplayerGame(const std::string& server, const std::string& name);
 	virtual ~MultiplayerGame();
 
 	virtual void step(float time);

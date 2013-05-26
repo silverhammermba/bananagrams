@@ -464,9 +464,25 @@ bool SingleplayerGame::peel()
 	return true;
 }
 
-MultiplayerGame::MultiplayerGame(const std::string& ip, unsigned short port, const std::string& name)
-	: server_ip {ip}, server_port {port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
+MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& name)
+	: server_port {default_server_port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
 {
+	std::string ip {server};
+
+	// process server string
+	// TODO make this a little more robust...
+	size_t port_p {server.find(':')};
+	if (port_p != std::string::npos)
+	{
+		std::stringstream port_s;
+		port_s << server.substr(port_p + 1);
+		port_s >> server_port;
+
+		ip = server.substr(0, port_p);
+	}
+
+	server_ip = sf::IpAddress(ip);
+
 	unsigned short client_port = server_port + 1;
 	// TODO catch errors here
 	socket.bind(client_port);
@@ -477,7 +493,7 @@ MultiplayerGame::MultiplayerGame(const std::string& ip, unsigned short port, con
 
 	socket.send(join, server_ip, server_port);
 
-	messages.add("Connecting to " + ip + "...", Message::Severity::CRITICAL);
+	messages.add("Connecting to " + server + "...", Message::Severity::CRITICAL);
 }
 
 MultiplayerGame::~MultiplayerGame()

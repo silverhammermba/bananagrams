@@ -90,22 +90,13 @@ MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, Text
 
 void MultiplayerEntry::select()
 {
-	unsigned int port {default_server_port};
-	// TODO process server string
-	size_t port_p {server.get_string().find(':')};
-	if (port_p != std::string::npos)
-	{
-		std::stringstream port_s;
-		port_s << server.get_string().substr(port_p + 1);
-		port_s >> port;
-	}
 	// TODO process name string
-	std::string player_name = name.get_string();
-	// TODO display connecting text
+
 	if (*game != nullptr)
 		delete *game;
 	system.close();
-	*game = new MultiplayerGame(server.get_string().substr(0, port_p), port, player_name);
+
+	*game = new MultiplayerGame(server.get_string(), name.get_string());
 }
 
 TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, const std::string& def_display)
