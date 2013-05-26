@@ -146,6 +146,10 @@ int main(int argc, char* argv[])
 				packet >> version;
 				if (version != protocol_version)
 				{
+					sf::Packet sorry;
+					sorry << sf::Uint8(1) << sf::Uint8(0);
+					socket.send(sorry, client_ip, client_port);
+
 					// TODO send client rejection
 					cout << "\nclient failed to join"
 						    "\n\tNeed protocol version " << (int)protocol_version << ", got " << (int)version;

@@ -528,6 +528,20 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 	switch (type)
 	{
+		case 1:
+		{
+			sf::Uint8 reason;
+			packet >> reason;
+			switch (reason)
+			{
+				case 0:
+					messages.add("Disconnected from server: incompatible version", Message::Severity::CRITICAL);
+					break;
+				default:
+					messages.add("Disconnected from server: unknown reason", Message::Severity::CRITICAL);
+			}
+			break;
+		}
 		case 2:
 			messages.add("Disconnected from server: server shutting down", Message::Severity::CRITICAL);
 			break;
