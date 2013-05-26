@@ -95,7 +95,7 @@ int main()
 	solitaire.submenu = &solitaire_opts;
 
 	Game* game {nullptr};
-	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt"};
+	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
 	SingleplayerEntry start {"START GAME", current, dict_entry, multiplier, &game};
 

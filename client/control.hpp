@@ -161,8 +161,8 @@ public:
 	void load_from_file(const std::string& filename);
 	// write (non-default) binds to YAML file
 	void write_to_file(const std::string& filename);
-	// check if a command what invoked
-	bool operator[](const std::string& control);
+	// check if a command was invoked
+	bool operator[](const std::string& command);
 
 	virtual bool process_event(sf::Event& event);
 };
