@@ -81,8 +81,6 @@ void SingleplayerEntry::select()
 		delete *game;
 	system.close();
 	*game = new SingleplayerGame(dict_entry.get_string(), mul, div);
-	if (!((*game)->is_started()))
-		system.open();
 }
 
 MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game** g)
@@ -108,8 +106,6 @@ void MultiplayerEntry::select()
 		delete *game;
 	system.close();
 	*game = new MultiplayerGame(server.get_string().substr(0, port_p), port, player_name);
-	if (!(*game)->is_started())
-		system.open();
 }
 
 TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, const std::string& def_display)

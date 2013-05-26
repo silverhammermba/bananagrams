@@ -20,8 +20,6 @@ protected:
 public:
 	virtual ~Game();
 
-	virtual bool is_started() const = 0;
-
 	inline Hand& get_hand()
 	{
 		return hand;
@@ -87,8 +85,6 @@ public:
 	SingleplayerGame(const std::string& dict, int multiplier = 1, int divider = 1);
 	virtual ~SingleplayerGame();
 
-	virtual bool is_started() const;
-
 	bool load(const std::string& filename);
 	void save(const std::string& filename);
 
@@ -106,8 +102,6 @@ class MultiplayerGame : public Game
 public:
 	MultiplayerGame(const std::string& ip, unsigned short port, const std::string& name);
 	virtual ~MultiplayerGame();
-
-	virtual bool is_started() const;
 
 	virtual void dump();
 	virtual bool word_is_valid(const std::string& word) const;

@@ -399,13 +399,6 @@ SingleplayerGame::~SingleplayerGame()
 	dictionary.clear();
 }
 
-// test if game was successfully created
-bool SingleplayerGame::is_started() const
-{
-	// TODO what to do with this?
-	return true;
-}
-
 bool SingleplayerGame::load(const std::string& filename)
 {
 	// TODO
@@ -484,11 +477,6 @@ MultiplayerGame::~MultiplayerGame()
 	socket.send(disconnect, server_ip, server_port);
 
 	socket.unbind();
-}
-
-bool MultiplayerGame::is_started() const
-{
-	return false; // TODO
 }
 
 void MultiplayerGame::dump()
