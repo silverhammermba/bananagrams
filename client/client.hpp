@@ -44,7 +44,7 @@ public:
 
 	virtual bool process_event(sf::Event& event)
 	{
-		// intentionally unused parameter
+		(void)event; // intentionally unused parameter
 		return true;
 	}
 };
