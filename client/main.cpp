@@ -108,8 +108,8 @@ int main()
 
 	std::string def_ip = sf::IpAddress::getLocalAddress().toString();
 	std::string def_pt = std::to_string(default_server_port);
-	TextEntry server {"SERVER", PPB * 8, def_ip + ":" + def_pt};
-	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain"};
+	TextEntry server {"SERVER", PPB * 8, def_ip + ":" + def_pt, "localhost"};
+	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
 	MultiplayerEntry join {"JOIN", current, server, name, &game};
 	multiplayer_menu.append_entry(&server);
 	multiplayer_menu.append_entry(&name);
