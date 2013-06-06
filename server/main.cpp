@@ -13,6 +13,8 @@ std::map<string, Player> players;
 
 void shutdown(int s)
 {
+	(void)s; // intentionally unused
+
 	cout << "\nServer shutting down...";
 	for (const auto& pair: players)
 	{
@@ -117,6 +119,7 @@ int main(int argc, char* argv[])
 	// TODO catch failure
 	socket.bind(server_port);
 
+	sf::Uint8 peel_n = 0;
 	bool playing = false;
 
 	cout << "\nWaiting for players to join...";
@@ -150,9 +153,20 @@ int main(int argc, char* argv[])
 					sorry << sf::Uint8(1) << sf::Uint8(0);
 					socket.send(sorry, client_ip, client_port);
 
-					// TODO send client rejection
 					cout << "\nclient failed to join"
 						    "\n\tNeed protocol version " << (int)protocol_version << ", got " << (int)version;
+					cout.flush();
+					break;
+				}
+
+				if (playing)
+				{
+					sf::Packet sorry;
+					sorry << sf::Uint8(1) << sf::Uint8(3);
+					socket.send(sorry, client_ip, client_port);
+
+					cout << "\nclient failed to join"
+						    "\n\tGame already started";
 					cout.flush();
 					break;
 				}
@@ -165,6 +179,27 @@ int main(int argc, char* argv[])
 
 					cout << "\n" << player.get_name() << " has joined the game";
 					cout.flush();
+
+					sf::Packet accept;
+					accept << sf::Uint8(0) << sf::Uint8(players.size() - 1);
+					socket.send(accept, player.get_ip(), client_port);
+
+					playing = true;
+
+					// TODO for now, start the game immediately
+					for (const auto& pair : players)
+					{
+						string letters;
+						for (unsigned int i = 0; i < 21; i++)
+						{
+							letters.append(1, bunch.back());
+							bunch.pop_back();
+						}
+
+						sf::Packet peel;
+						peel << sf::Uint8(4) << sf::Uint8(peel_n) << letters;
+						socket.send(peel, pair.second.get_ip(), client_port);
+					}
 				}
 				break;
 			}
@@ -177,6 +212,50 @@ int main(int argc, char* argv[])
 					players.erase(id);
 				}
 				break;
+			}
+			case 6: // finished peel
+			{
+				if (players.count(id) > 0)
+				{
+					sf::Uint8 client_peel;
+					packet >> client_peel;
+
+					if (client_peel == peel_n + 1)
+					{
+						sf::Int16 remaining = bunch.size() - players.size();
+
+						// if there aren't enough letters left
+						if (remaining < 0)
+						{
+							// send victory notification
+							for (const auto& pair : players)
+							{
+								sf::Packet win;
+								win << sf::Uint8(5) << sf::Uint8(1) << id;
+								socket.send(win, pair.second.get_ip(), client_port);
+							}
+
+							cout << "\n" << players[id].get_name() << " has won the game!";
+							cout.flush();
+							shutdown(0);
+						}
+
+						++peel_n;
+						cout << "\n" << players[id].get_name() << " peeled (" << peel_n << ")";
+						cout.flush();
+
+						// send each player a new letter
+						for (const auto& pair : players)
+						{
+							string letter {bunch.back()};
+							bunch.pop_back();
+
+							sf::Packet peel;
+							peel << sf::Uint8(4) << sf::Uint8(peel_n) << remaining << letter;
+							socket.send(peel, pair.second.get_ip(), client_port);
+						}
+					}
+				}
 			}
 			default:
 				cout << "\nUnrecognized packet type: " << (int)type;
