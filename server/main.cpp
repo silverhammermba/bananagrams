@@ -236,7 +236,7 @@ int main(int argc, char* argv[])
 							for (const auto& pair : players)
 							{
 								sf::Packet win;
-								win << sf::Uint8(5) << sf::Uint8(1) << id;
+								win << sf::Uint8(6) << sf::Uint8(1) << id;
 								socket.send(win, pair.second.get_ip(), client_port);
 							}
 
