@@ -537,6 +537,15 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				case 0:
 					messages.add("Disconnected from server: incompatible version", Message::Severity::CRITICAL);
 					break;
+				case 1:
+					messages.add("Disconnected from server: server is full", Message::Severity::CRITICAL);
+					break;
+				case 2:
+					messages.add("Disconnected from server: wrong password", Message::Severity::CRITICAL);
+					break;
+				case 3:
+					messages.add("Disconnected from server: game in progress", Message::Severity::CRITICAL);
+					break;
 				default:
 					messages.add("Disconnected from server: unknown reason", Message::Severity::CRITICAL);
 			}
