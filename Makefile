@@ -1,5 +1,5 @@
 # TODO maybe try out pendantic/strict ANSI?
-CXXFLAGS=-std=c++0x -Wall -Wextra -Wfatal-errors -ggdb -pg
+CXXFLAGS=-std=c++11 -Wall -Wextra -Wfatal-errors -ggdb -pg
 CLIENT_SOURCE:=$(wildcard client/*.cpp)
 SERVER_SOURCE:=$(wildcard server/*.cpp)
 
