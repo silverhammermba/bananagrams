@@ -186,6 +186,8 @@ int main(int argc, char* argv[])
 
 					playing = true;
 
+					sf::Int16 remaining = bunch.size() - 21 * players.size();
+
 					// TODO for now, start the game immediately
 					for (const auto& pair : players)
 					{
@@ -196,8 +198,11 @@ int main(int argc, char* argv[])
 							bunch.pop_back();
 						}
 
+						cout << "\n" << "Sending " << player.get_name() << " " << letters;
+						cout.flush();
+
 						sf::Packet peel;
-						peel << sf::Uint8(4) << sf::Uint8(peel_n) << letters;
+						peel << sf::Uint8(4) << sf::Uint8(peel_n) << remaining << pair.first << letters;
 						socket.send(peel, pair.second.get_ip(), client_port);
 					}
 				}
@@ -251,7 +256,7 @@ int main(int argc, char* argv[])
 							bunch.pop_back();
 
 							sf::Packet peel;
-							peel << sf::Uint8(4) << sf::Uint8(peel_n) << remaining << letter;
+							peel << sf::Uint8(4) << sf::Uint8(peel_n) << remaining << id << letter;
 							socket.send(peel, pair.second.get_ip(), client_port);
 						}
 					}
