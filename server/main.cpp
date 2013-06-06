@@ -246,21 +246,32 @@ int main(int argc, char* argv[])
 						}
 
 						++peel_n;
-						cout << "\n" << players[id].get_name() << " peeled (" << peel_n << ")";
+						cout << "\n" << players[id].get_name() << " peeled (" << (int)peel_n << ")";
 						cout.flush();
 
 						// send each player a new letter
 						for (const auto& pair : players)
 						{
-							string letter {bunch.back()};
+							string letter;
+							letter.append(1, bunch.back());
 							bunch.pop_back();
+
+							cout << "\n" << "Sending " << pair.second.get_name() << " " << letter;
+							cout.flush();
 
 							sf::Packet peel;
 							peel << sf::Uint8(4) << sf::Uint8(peel_n) << remaining << id << letter;
 							socket.send(peel, pair.second.get_ip(), client_port);
 						}
 					}
+					else
+					{
+						cout << "\nPeel out of order: got " << (int)client_peel << ", expected " << (int)(peel_n + 1);
+						cout.flush();
+					}
 				}
+
+				break;
 			}
 			default:
 				cout << "\nUnrecognized packet type: " << (int)type;
