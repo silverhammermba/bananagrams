@@ -583,7 +583,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			else
 				break;
 
-			cerr << "Recieved " << letters.size() << " letters: " << letters << endl;
+			cerr << "Received " << letters.size() << " letters: " << letters << endl;
 
 			for (const auto& chr : letters)
 				hand.add_tile(new Tile(chr));
@@ -623,7 +623,8 @@ void MultiplayerGame::dump()
 
 bool MultiplayerGame::word_is_valid(const std::string& word) const
 {
-	return false; // TODO
+	// TODO multiplayer work checking not implemented yet
+	return true;
 }
 
 bool MultiplayerGame::peel()
@@ -631,10 +632,10 @@ bool MultiplayerGame::peel()
 	if (!Game::peel())
 		return false;
 
-	++peel_n;
+	sf::Uint8 next_peel = peel_n + 1;
 
 	sf::Packet finished_peel;
-	finished_peel << sf::Uint8(6) << id << peel_n;
+	finished_peel << sf::Uint8(6) << id << next_peel;
 
 	socket.send(finished_peel, server_ip, server_port);
 
