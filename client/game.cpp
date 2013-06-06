@@ -610,10 +610,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				packet >> winner_id;
 
 				if (winner_id == id)
+					messages.add("You win!", Message::Severity::CRITICAL);
+				else
 					// TODO get proper name
 					messages.add(winner_id + " has won the game!", Message::Severity::CRITICAL);
-				else
-					messages.add("You win!", Message::Severity::CRITICAL);
 			}
 			else
 				messages.add("You win! All other players have resigned.", Message::Severity::CRITICAL);
