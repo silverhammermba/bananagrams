@@ -579,6 +579,15 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				if (peeler_id != id)
 					// TODO get proper name and shit
 					messages.add(peeler_id + ": PEEL!", Message::Severity::HIGH);
+
+				if (remaining == 1)
+					messages.add("1 letter remains", Message::Severity::LOW);
+				else
+				{
+					std::stringstream rem;
+					rem << remaining;
+					messages.add(rem.str() + " letters remain", Message::Severity::LOW);
+				}
 			}
 			else
 				break;
