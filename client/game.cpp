@@ -515,7 +515,7 @@ void MultiplayerGame::step(float time)
 	unsigned short port;
 	if (socket.receive(packet, ip, port) == sf::Socket::Status::Done)
 	{
-		cerr << "Received packet from " << ip << ":" << port;
+		cerr << "Received packet from " << ip << ":" << port << endl;
 		// TODO somehow verify that this is actually the server...
 		process_packet(packet);
 	}
@@ -528,6 +528,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 	switch (type)
 	{
+		case 0:
+			messages.add("Connected...", Message::Severity::CRITICAL);
+			// TODO what to do with player count?
+			break;
 		case 1:
 		{
 			sf::Uint8 reason;
@@ -554,6 +558,59 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 		case 2:
 			messages.add("Disconnected from server: server shutting down", Message::Severity::CRITICAL);
 			break;
+		case 4:
+		{
+			sf::Uint8 got_peel;
+			sf::Int16 remaining;
+			string peeler_id;
+			string letters;
+
+			packet >> got_peel >> remaining >> peeler_id >> letters;
+
+			// first peel is special
+			if (peel_n == 0 && got_peel == 0)
+			{
+				messages.clear();
+				messages.add("SPLIT!", Message::Severity::HIGH);
+			}
+			else if (got_peel == peel_n + 1)
+			{
+				++peel_n;
+				if (peeler_id != id)
+					// TODO get proper name and shit
+					messages.add(peeler_id + ": PEEL!", Message::Severity::HIGH);
+			}
+			else
+				break;
+
+			cerr << "Recieved " << letters.size() << " letters: " << letters << endl;
+
+			for (const auto& chr : letters)
+				hand.add_tile(new Tile(chr));
+
+			break;
+		}
+		case 6:
+		{
+			sf::Uint8 victory;
+			packet >> victory;
+
+			if (victory)
+			{
+				string winner_id;
+				packet >> winner_id;
+
+				if (winner_id == id)
+					// TODO get proper name
+					messages.add(winner_id + " has won the game!", Message::Severity::CRITICAL);
+				else
+					messages.add("You win!", Message::Severity::CRITICAL);
+			}
+			else
+				messages.add("You win! All other players have resigned.", Message::Severity::CRITICAL);
+
+			break;
+		}
 		default:
 			cerr << "Received unknown packet type " << type << endl;
 	}
@@ -574,5 +631,12 @@ bool MultiplayerGame::peel()
 	if (!Game::peel())
 		return false;
 
-	return false; // TODO
+	++peel_n;
+
+	sf::Packet finished_peel;
+	finished_peel << sf::Uint8(6) << id << peel_n;
+
+	socket.send(finished_peel, server_ip, server_port);
+
+	return true; // TODO
 }
