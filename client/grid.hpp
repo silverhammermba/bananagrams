@@ -1,4 +1,8 @@
 // for hwords and vwords vectors
+
+// map used for associating strings to position/direction in grid
+typedef std::map<std::string, std::vector<std::array<int, 3>>> gridword_map;
+
 namespace std
 {
 	template<> struct less<sf::Vector2i>
@@ -12,7 +16,7 @@ namespace std
 
 class Grid
 {
-	std::map<std::string, std::vector<std::array<int, 3>>> words; // for checking grid
+	gridword_map words; // for checking grid
 	std::vector<Tile*> grid;
 	unsigned int tiles {0};
 	sf::Vector2i min {0, 0};
@@ -78,7 +82,7 @@ public:
 	// check if topology of grid is valid
 	bool is_continuous();
 	// get map of words to vector of position/direction triplets
-	std::map<std::string, std::vector<std::array<int, 3>>>& get_words();
+	gridword_map& get_words();
 	// mark a bad word starting at x, y, oriented in dir
 	void bad_word(int x, int y, int dir);
 

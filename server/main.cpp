@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
 						cout.flush();
 
 						sf::Packet peel;
-						peel << sf::Uint8(4) << sf::Uint8(peel_n) << remaining << pair.first << letters;
+						peel << sf::Uint8(5) << sf::Uint8(peel_n) << remaining << pair.first << letters;
 						socket.send(peel, pair.second.get_ip(), client_port);
 					}
 				}
@@ -217,6 +217,18 @@ int main(int argc, char* argv[])
 					players.erase(id);
 				}
 				break;
+			}
+			case 4:
+			{
+				string word;
+				packet >> word;
+
+				sf::Packet lookup;
+				lookup << sf::Uint8(4) << word;
+
+				lookup << (dictionary.count(word) == 1);
+
+				socket.send(lookup, client_ip, client_port);
 			}
 			case 6: // finished peel
 			{
@@ -236,7 +248,7 @@ int main(int argc, char* argv[])
 							for (const auto& pair : players)
 							{
 								sf::Packet win;
-								win << sf::Uint8(6) << sf::Uint8(1) << id;
+								win << sf::Uint8(7) << sf::Uint8(1) << id;
 								socket.send(win, pair.second.get_ip(), client_port);
 							}
 
@@ -260,7 +272,7 @@ int main(int argc, char* argv[])
 							cout.flush();
 
 							sf::Packet peel;
-							peel << sf::Uint8(4) << sf::Uint8(peel_n) << remaining << id << letter;
+							peel << sf::Uint8(5) << sf::Uint8(peel_n) << remaining << id << letter;
 							socket.send(peel, pair.second.get_ip(), client_port);
 						}
 					}

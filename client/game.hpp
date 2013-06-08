@@ -89,11 +89,15 @@ public:
 
 class MultiplayerGame : public Game
 {
+	gridword_map lookup_words;
+	gridword_map bad_words;
+
 	sf::UdpSocket socket;
 	sf::IpAddress server_ip;
 	unsigned short server_port;
 	std::string id;
 	sf::Uint8 peel_n {0};
+	std::map<std::string, bool> dictionary;
 public:
 	MultiplayerGame(const std::string& server, const std::string& name);
 	virtual ~MultiplayerGame();
@@ -101,6 +105,7 @@ public:
 	virtual void step(float time);
 	virtual void dump();
 	virtual bool peel();
+	bool resolve_peel();
 
 	void process_packet(sf::Packet& packet);
 };

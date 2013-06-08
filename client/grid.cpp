@@ -247,7 +247,7 @@ bool Grid::is_continuous()
 	return valid;
 }
 
-std::map<string, vector<array<int, 3>>>& Grid::get_words()
+gridword_map& Grid::get_words()
 {
 	std::stringstream temp;
 	vector<string> defns;
@@ -294,6 +294,7 @@ std::map<string, vector<array<int, 3>>>& Grid::get_words()
 
 void Grid::bad_word(int x, int y, int dir)
 {
+	// TODO with multiplayer games, the word might no longer exist!!!
 	Tile* tile;
 	int coord[2];
 	for (coord[0] = x, coord[1] = y; (tile = get(coord[0], coord[1])) != nullptr; coord[dir]++)

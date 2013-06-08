@@ -544,10 +544,30 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			}
 			break;
 		}
-		case 2:
+		case 2: // server shutdown
 			messages.add("Disconnected from server: server shutting down", Message::Severity::CRITICAL);
 			break;
-		case 4:
+		case 4: // word lookup response
+		{
+			string word;
+			bool valid;
+			packet >> word >> valid;
+
+			dictionary[word] = valid;
+
+			// if we still need the result for this word
+			if (lookup_words.count(word))
+			{
+				if (!valid)
+					bad_words[word] = lookup_words[word];
+
+				lookup_words.erase(word);
+
+				if (lookup_words.size() == 0)
+					resolve_peel();
+			}
+		}
+		case 5: // start new peel
 		{
 			sf::Uint8 got_peel;
 			sf::Int16 remaining;
@@ -588,7 +608,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			break;
 		}
-		case 6:
+		case 7: // victory
 		{
 			sf::Uint8 victory;
 			packet >> victory;
@@ -619,10 +639,21 @@ void MultiplayerGame::dump()
 	// TODO
 }
 
-bool MultiplayerGame::peel()
+// called once all words from peel have been looked up
+bool MultiplayerGame::resolve_peel()
 {
-	if (!Game::peel())
+	if (bad_words.size() > 0)
+	{
+		for (auto& word : bad_words)
+		{
+			messages.add(word.first + " is not a word.", Message::Severity::HIGH);
+			// color incorrect tiles
+			for (auto& pos: word.second)
+				grid.bad_word(pos[0], pos[1], pos[2]);
+		}
+
 		return false;
+	}
 
 	sf::Uint8 next_peel = peel_n + 1;
 
@@ -631,5 +662,41 @@ bool MultiplayerGame::peel()
 
 	socket.send(finished_peel, server_ip, server_port);
 
-	return true; // TODO
+	return true;
+}
+
+bool MultiplayerGame::peel()
+{
+	lookup_words.clear();
+	bad_words.clear();
+
+	if (!Game::peel())
+		return false;
+
+	const gridword_map& words {grid.get_words()};
+	std::map<string, bool>::iterator it;
+
+	// check words
+	for (auto& word : words)
+	{
+		if ((it = dictionary.find(word.first)) == dictionary.end())
+			lookup_words[word.first] = word.second;
+		else if (!it->second)
+			bad_words[word.first] = word.second;
+	}
+
+	if (lookup_words.size() > 0)
+	{
+		for (auto& word : lookup_words)
+		{
+			sf::Packet lookup;
+			lookup << sf::Uint8(4) << id << word.first;
+			socket.send(lookup, server_ip, server_port);
+		}
+
+		return false;
+	}
+
+	// all words are in local dictionary
+	return resolve_peel();
 }
