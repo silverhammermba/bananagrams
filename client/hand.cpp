@@ -114,6 +114,14 @@ void Hand::reshuffle()
 	}
 }
 
+bool Hand::is_empty() const
+{
+	for (char ch = 'A'; ch <= 'Z'; ch++)
+		if (hand.has_any(ch))
+			return false
+	return true;
+}
+
 void Hand::clear()
 {
 	for (char ch = 'A'; ch <= 'Z'; ch++)

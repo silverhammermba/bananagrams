@@ -27,6 +27,8 @@ public:
 		return tiles[ch - 'A'].size() > 0;
 	}
 
+	bool is_empty() const;
+
 	void clear();
 
 	void add_tile(Tile* tile);

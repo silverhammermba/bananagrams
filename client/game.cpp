@@ -317,16 +317,10 @@ void Game::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf
 	hand.draw_on(window);
 }
 
+// check if hand is empty and grid is continuous
 bool Game::peel()
 {
-	bool spent {true};
-	for (char ch = 'A'; ch <= 'Z'; ch++)
-		if (hand.has_any(ch))
-		{
-			spent = false;
-			break;
-		}
-	if (!spent)
+	if (!hand.is_empty())
 	{
 		messages.add("You have not used all of your letters.", Message::Severity::HIGH);
 		return false;
