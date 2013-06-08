@@ -646,6 +646,8 @@ bool MultiplayerGame::resolve_peel()
 {
 	if (bad_words.size() > 0)
 	{
+		cerr << "There are incorrect words" << endl;
+
 		for (auto& word : bad_words)
 		{
 			messages.add(word.first + " is not a word.", Message::Severity::HIGH);
@@ -657,7 +659,10 @@ bool MultiplayerGame::resolve_peel()
 		return false;
 	}
 
+
 	sf::Uint8 next_peel = peel_n + 1;
+
+	cerr << "No incorrect words. Requesting peel " << next_peel << endl;
 
 	sf::Packet finished_peel;
 	finished_peel << sf::Uint8(6) << id << next_peel;
@@ -691,6 +696,7 @@ bool MultiplayerGame::peel()
 	{
 		for (auto& word : lookup_words)
 		{
+			cerr << "Requesting lookup of " << word.first << endl;
 			sf::Packet lookup;
 			lookup << sf::Uint8(4) << id << word.first;
 			socket.send(lookup, server_ip, server_port);
