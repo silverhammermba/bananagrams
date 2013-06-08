@@ -229,6 +229,8 @@ int main(int argc, char* argv[])
 				lookup << (dictionary.count(word) == 1);
 
 				socket.send(lookup, client_ip, client_port);
+
+				break;
 			}
 			case 6: // finished peel
 			{

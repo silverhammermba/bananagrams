@@ -541,6 +541,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				default:
 					messages.add("Disconnected from server: unknown reason", Message::Severity::CRITICAL);
 			}
+
 			break;
 		}
 		case 2: // server shutdown
@@ -565,6 +566,8 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				if (lookup_words.size() == 0)
 					resolve_peel();
 			}
+
+			break;
 		}
 		case 5: // start new peel
 		{
