@@ -369,7 +369,6 @@ SingleplayerGame::SingleplayerGame(const std::string& dict, int multiplier, int 
 		}
 	}
 	else
-		// TODO this isn't showing up for the first game!?
 		messages.add("Failed to load dictionary '" + dict + "'", Message::Severity::CRITICAL);
 }
 
@@ -448,7 +447,7 @@ bool SingleplayerGame::peel()
 		hand.add_tile(tile);
 	}
 	else
-		messages.add("You win!", Message::Severity::LOW);
+		messages.add("You win!", Message::Severity::CRITICAL);
 
 	return true;
 }
@@ -521,7 +520,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			messages.add("Connected...", Message::Severity::CRITICAL);
 			// TODO what to do with player count?
 			break;
-		case 1:
+		case 1: // connection refused
 		{
 			sf::Uint8 reason;
 			packet >> reason;
