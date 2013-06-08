@@ -332,25 +332,6 @@ bool Game::peel()
 		return false;
 	}
 
-	auto words = grid.get_words();
-	bool valid {true};
-
-	// check words
-	for (auto word : words)
-	{
-		if (!word_is_valid(word.first))
-		{
-			valid = false;
-			messages.add(word.first + " is not a word.", Message::Severity::HIGH);
-			// color incorrect tiles
-			for (auto& pos: word.second)
-				grid.bad_word(pos[0], pos[1], pos[2]);
-		}
-	}
-
-	if (!valid)
-		return false;
-
 	return true;
 }
 
@@ -436,14 +417,28 @@ void SingleplayerGame::dump()
 		messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
 }
 
-bool SingleplayerGame::word_is_valid(const std::string& word) const
-{
-	return dictionary.find(word) != dictionary.end();
-}
-
 bool SingleplayerGame::peel()
 {
 	if (!Game::peel())
+		return false;
+
+	auto words = grid.get_words();
+	bool valid {true};
+
+	// check words
+	for (auto word : words)
+	{
+		if (dictionary.find(word.first) == dictionary.end())
+		{
+			valid = false;
+			messages.add(word.first + " is not a word.", Message::Severity::HIGH);
+			// color incorrect tiles
+			for (auto& pos: word.second)
+				grid.bad_word(pos[0], pos[1], pos[2]);
+		}
+	}
+
+	if (!valid)
 		return false;
 
 	if (bunch.size() > 0)
@@ -622,12 +617,6 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 void MultiplayerGame::dump()
 {
 	// TODO
-}
-
-bool MultiplayerGame::word_is_valid(const std::string& word) const
-{
-	// TODO multiplayer work checking not implemented yet
-	return true;
 }
 
 bool MultiplayerGame::peel()

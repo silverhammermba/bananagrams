@@ -47,7 +47,6 @@ public:
 	void paste();
 	void remove_at_mouse();
 	virtual void dump() = 0;
-	virtual bool word_is_valid(const std::string& word) const = 0;
 	virtual bool peel();
 	void remove();
 	void place(char ch);
@@ -85,7 +84,6 @@ public:
 	void save(const std::string& filename);
 
 	virtual void dump();
-	virtual bool word_is_valid(const std::string& word) const;
 	virtual bool peel();
 };
 
@@ -102,7 +100,6 @@ public:
 
 	virtual void step(float time);
 	virtual void dump();
-	virtual bool word_is_valid(const std::string& word) const;
 	virtual bool peel();
 
 	void process_packet(sf::Packet& packet);
