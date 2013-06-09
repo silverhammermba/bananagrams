@@ -733,3 +733,6 @@ bool MultiplayerGame::peel()
 	// all words are in local dictionary
 	return resolve_peel();
 }
+
+// TODO need display for other players, letters remaining, etc.
+//void MultiplayerGame::draw_on

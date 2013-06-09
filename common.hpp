@@ -7,6 +7,8 @@ static const unsigned int letter_count[26]
 static const unsigned short default_server_port {57198}; // client port is server port + 1
 static const sf::Uint8 protocol_version {0};
 
+// TODO define packet types here for readability
+
 // insert x into list l at a random position
 template <class T>
 void random_insert(std::list<T>& l, T x)

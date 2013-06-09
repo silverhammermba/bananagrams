@@ -110,11 +110,21 @@ int main(int argc, char* argv[])
 	cout << dictionary.size() << " words found";
 	cout.flush();
 
+	// TODO srand
+
 	// LET'S GO!!!
 	std::list<char> bunch;
 	for (char ch = 'A'; ch <= 'Z'; ++ch)
 		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * b_num) / b_den); ++i)
 			random_insert(bunch, ch);
+
+	// TODO for debugging
+	/*
+	auto it = bunch.begin();
+	for (unsigned int i = 0; i < 25; i++)
+		++it;
+	bunch.erase(it, bunch.end());
+	*/
 
 	// TODO catch failure
 	socket.bind(server_port);
