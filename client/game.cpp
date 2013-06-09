@@ -610,6 +610,19 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			break;
 		}
+		case 6: // dump
+		{
+			string letters;
+			packet >> letters;
+
+			for (unsigned int i = 0; i < letters.size(); i++)
+				hand.add_tile(new Tile(letters[i]));
+
+			if (letters.size() == 1)
+				messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
+
+			break;
+		}
 		case 7: // victory
 		{
 			sf::Uint8 victory;
@@ -638,7 +651,19 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 void MultiplayerGame::dump()
 {
-	// TODO
+	// TODO don't allow if still waiting for peel?
+	Tile* dumped {grid.remove(cursor.get_pos())};
+	if (dumped == nullptr)
+	{
+		messages.add("You need to select a tile to dump.", Message::Severity::LOW);
+		return;
+	}
+
+	sf::Packet dump_request;
+	dump_request << sf::Uint8(5) << id << sf::Int8(dumped->ch());
+	socket.send(dump_request, server_ip, server_port);
+
+	delete dumped;
 }
 
 // called once all words from peel have been looked up

@@ -232,6 +232,43 @@ int main(int argc, char* argv[])
 
 				break;
 			}
+			case 5:
+			{
+				sf::Int8 chr;
+				packet >> chr;
+
+				cerr << endl << players[id].get_name() << " dumped " << chr;
+				cerr.flush();
+
+				string letters;
+
+				sf::Packet dump;
+				dump << sf::Uint8(6);
+
+				if (bunch.size() >= 3)
+				{
+					// take three
+					for (unsigned int i = 0; i < 3; i++)
+					{
+						letters.append(1, bunch.back());
+						bunch.pop_back();
+					}
+
+					random_insert(bunch, (char)chr);
+				}
+				else
+				{
+					letters.append(1, (char)chr);
+					cerr << "\n\tNot enough letters left for dump";
+					cerr.flush();
+				}
+
+				dump << letters;
+
+				socket.send(dump, client_ip, client_port);
+
+				break;
+			}
 			case 6: // finished peel
 			{
 				if (players.count(id) > 0)
