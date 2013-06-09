@@ -7,7 +7,21 @@ static const unsigned int letter_count[26]
 static const unsigned short default_server_port {57198}; // client port is server port + 1
 static const sf::Uint8 protocol_version {0};
 
-// TODO define packet types here for readability
+// packet types
+static const sf::Uint8 cl_connect    {0};
+static const sf::Uint8 cl_disconnect {1};
+static const sf::Uint8 cl_ready      {2};
+static const sf::Uint8 cl_check      {3};
+static const sf::Uint8 cl_dump       {4};
+static const sf::Uint8 cl_peel       {5};
+
+static const sf::Uint8 sv_connect    {0};
+static const sf::Uint8 sv_disconnect {1};
+static const sf::Uint8 sv_info       {2};
+static const sf::Uint8 sv_check      {3};
+static const sf::Uint8 sv_dump       {4};
+static const sf::Uint8 sv_peel       {5};
+static const sf::Uint8 sv_done       {6};
 
 // insert x into list l at a random position
 template <class T>

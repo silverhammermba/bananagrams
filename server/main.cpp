@@ -19,7 +19,7 @@ void shutdown(int s)
 	for (const auto& pair: players)
 	{
 		sf::Packet sorry;
-		sorry << sf::Uint8(2);
+		sorry << sv_disconnect << sf::Uint8(4);
 		socket.send(sorry, pair.second.get_ip(), client_port);
 	}
 	cout << endl;
@@ -153,14 +153,14 @@ int main(int argc, char* argv[])
 
 		switch(type)
 		{
-			case 0: // player join
+			case cl_connect:
 			{
 				sf::Uint8 version;
 				packet >> version;
 				if (version != protocol_version)
 				{
 					sf::Packet sorry;
-					sorry << sf::Uint8(1) << sf::Uint8(0);
+					sorry << sv_disconnect << sf::Uint8(0);
 					socket.send(sorry, client_ip, client_port);
 
 					cout << "\nclient failed to join"
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
 				if (playing)
 				{
 					sf::Packet sorry;
-					sorry << sf::Uint8(1) << sf::Uint8(3);
+					sorry << sv_disconnect << sf::Uint8(3);
 					socket.send(sorry, client_ip, client_port);
 
 					cout << "\nclient failed to join"
@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
 					cout.flush();
 
 					sf::Packet accept;
-					accept << sf::Uint8(0) << sf::Uint8(players.size() - 1);
+					accept << sv_connect << sf::Uint8(players.size() - 1);
 					socket.send(accept, player.get_ip(), client_port);
 
 					playing = true;
@@ -212,13 +212,13 @@ int main(int argc, char* argv[])
 						cout.flush();
 
 						sf::Packet peel;
-						peel << sf::Uint8(5) << sf::Uint8(peel_n) << remaining << pair.first << letters;
+						peel << sv_peel << sf::Uint8(peel_n) << remaining << pair.first << letters;
 						socket.send(peel, pair.second.get_ip(), client_port);
 					}
 				}
 				break;
 			}
-			case 1: // player disconnect
+			case cl_disconnect:
 			{
 				if (players.count(id) > 0)
 				{
@@ -228,21 +228,19 @@ int main(int argc, char* argv[])
 				}
 				break;
 			}
-			case 4:
+			case cl_check:
 			{
 				string word;
 				packet >> word;
 
 				sf::Packet lookup;
-				lookup << sf::Uint8(4) << word;
-
-				lookup << (dictionary.count(word) == 1);
+				lookup << sv_check << word << (dictionary.count(word) == 1);
 
 				socket.send(lookup, client_ip, client_port);
 
 				break;
 			}
-			case 5:
+			case cl_dump:
 			{
 				sf::Int8 chr;
 				packet >> chr;
@@ -251,9 +249,6 @@ int main(int argc, char* argv[])
 				cerr.flush();
 
 				string letters;
-
-				sf::Packet dump;
-				dump << sf::Uint8(6);
 
 				if (bunch.size() >= 3)
 				{
@@ -273,13 +268,14 @@ int main(int argc, char* argv[])
 					cerr.flush();
 				}
 
-				dump << letters;
+				sf::Packet dump;
+				dump << sv_dump << letters;
 
 				socket.send(dump, client_ip, client_port);
 
 				break;
 			}
-			case 6: // finished peel
+			case cl_peel:
 			{
 				if (players.count(id) > 0)
 				{
@@ -297,7 +293,7 @@ int main(int argc, char* argv[])
 							for (const auto& pair : players)
 							{
 								sf::Packet win;
-								win << sf::Uint8(7) << sf::Uint8(1) << id;
+								win << sv_done << sf::Uint8(1) << id;
 								socket.send(win, pair.second.get_ip(), client_port);
 							}
 
@@ -321,7 +317,7 @@ int main(int argc, char* argv[])
 							cout.flush();
 
 							sf::Packet peel;
-							peel << sf::Uint8(5) << sf::Uint8(peel_n) << remaining << id << letter;
+							peel << sv_peel << sf::Uint8(peel_n) << remaining << id << letter;
 							socket.send(peel, pair.second.get_ip(), client_port);
 						}
 					}

@@ -477,7 +477,7 @@ MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& n
 	socket.setBlocking(false);
 
 	sf::Packet join;
-	join << sf::Uint8(0) << id << protocol_version << name;
+	join << cl_connect << id << protocol_version << name;
 
 	socket.send(join, server_ip, server_port);
 
@@ -487,7 +487,7 @@ MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& n
 MultiplayerGame::~MultiplayerGame()
 {
 	sf::Packet disconnect;
-	disconnect << sf::Uint8(1) << id;
+	disconnect << cl_disconnect << id;
 
 	socket.send(disconnect, server_ip, server_port);
 
@@ -516,38 +516,41 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 	switch (type)
 	{
-		case 0:
+		case sv_connect:
 			messages.add("Connected...", Message::Severity::CRITICAL);
 			// TODO what to do with player count?
 			break;
-		case 1: // connection refused
+		case sv_disconnect:
 		{
 			sf::Uint8 reason;
 			packet >> reason;
+
+			string message {"Disconnected from server: "};
 			switch (reason)
 			{
 				case 0:
-					messages.add("Disconnected from server: incompatible version", Message::Severity::CRITICAL);
+					message.append("incompatible version");
 					break;
 				case 1:
-					messages.add("Disconnected from server: server is full", Message::Severity::CRITICAL);
+					message.append("server is full");
 					break;
 				case 2:
-					messages.add("Disconnected from server: wrong password", Message::Severity::CRITICAL);
+					message.append("wrong password");
 					break;
 				case 3:
-					messages.add("Disconnected from server: game in progress", Message::Severity::CRITICAL);
+					message.append("game in progress");
+					break;
+				case 4:
+					message.append("server shutting down");
 					break;
 				default:
-					messages.add("Disconnected from server: unknown reason", Message::Severity::CRITICAL);
+					message.append("unknown reason");
 			}
 
+			messages.add(message, Message::Severity::CRITICAL);
 			break;
 		}
-		case 2: // server shutdown
-			messages.add("Disconnected from server: server shutting down", Message::Severity::CRITICAL);
-			break;
-		case 4: // word lookup response
+		case sv_check:
 		{
 			string word;
 			bool valid;
@@ -569,7 +572,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			break;
 		}
-		case 5: // start new peel
+		case sv_peel:
 		{
 			sf::Uint8 got_peel;
 			sf::Int16 remaining;
@@ -610,7 +613,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			break;
 		}
-		case 6: // dump
+		case sv_dump:
 		{
 			string letters;
 			packet >> letters;
@@ -623,7 +626,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			break;
 		}
-		case 7: // victory
+		case sv_done:
 		{
 			sf::Uint8 victory;
 			packet >> victory;
@@ -660,7 +663,7 @@ void MultiplayerGame::dump()
 	}
 
 	sf::Packet dump_request;
-	dump_request << sf::Uint8(5) << id << sf::Int8(dumped->ch());
+	dump_request << cl_dump << id << sf::Int8(dumped->ch());
 	socket.send(dump_request, server_ip, server_port);
 
 	delete dumped;
@@ -690,7 +693,7 @@ bool MultiplayerGame::resolve_peel()
 	cerr << "No incorrect words. Requesting peel " << next_peel << endl;
 
 	sf::Packet finished_peel;
-	finished_peel << sf::Uint8(6) << id << next_peel;
+	finished_peel << cl_peel << id << next_peel;
 
 	socket.send(finished_peel, server_ip, server_port);
 
@@ -723,7 +726,7 @@ bool MultiplayerGame::peel()
 		{
 			cerr << "Requesting lookup of " << word.first << endl;
 			sf::Packet lookup;
-			lookup << sf::Uint8(4) << id << word.first;
+			lookup << cl_check << id << word.first;
 			socket.send(lookup, server_ip, server_port);
 		}
 
