@@ -68,7 +68,7 @@ public:
 		return cursor.get_center();
 	}
 	void set_zoom(float zoom);
-	void draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view);
+	virtual void draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const;
 };
 
 class SingleplayerGame : public Game
@@ -108,4 +108,5 @@ public:
 	bool resolve_peel();
 
 	void process_packet(sf::Packet& packet);
+	virtual void draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const;
 };

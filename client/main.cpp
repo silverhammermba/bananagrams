@@ -21,9 +21,10 @@ class WindowEvents : public InputReader
 {
 	State& state;
 	MenuSystem& system;
+	Game** game;
 public:
-	WindowEvents(State& s, MenuSystem& sys)
-		: state(s), system(sys)
+	WindowEvents(State& s, MenuSystem& sys, Game** g)
+		: state(s), system(sys), game {g}
 	{
 	}
 
@@ -43,6 +44,9 @@ public:
 			state.grid_view->setSize(event.size.width, event.size.height);
 			state.grid_view->zoom(state.zoom);
 			system.menu().update_position();
+
+			if (*game != nullptr)
+				(*game)->get_hand().position_tiles();
 		}
 		return true;
 	}
@@ -135,7 +139,7 @@ int main()
 
 	current.set_menu(main);
 
-	WindowEvents win_events {state, current};
+	WindowEvents win_events {state, current, &game};
 	input_readers.push_back(&win_events);
 
 	sf::Color background {22, 22, 22};

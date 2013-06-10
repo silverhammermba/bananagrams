@@ -42,64 +42,77 @@ void Hand::position_list(std::list<Tile*>& l)
 	}
 }
 
-void Hand::counts(sf::RenderWindow& window)
+void Hand::position_tiles()
 {
-	position_list(single);
+	if (draw_func == &Hand::counts)
+	{
+		position_list(single);
+		for (auto& tile : single)
+			number[tile->ch() - 'A'].setPosition(tile->get_pos() + sf::Vector2f(PPB / 32.0, 0));
+	}
+	else if (draw_func == &Hand::stacks)
+	{
+		auto size = gui_view.getSize();
+		unsigned int nonempty {0};
+		for (char ch = 'A'; ch <= 'Z'; ch++)
+			if (has_any(ch))
+				nonempty++;
+		if (nonempty == 0)
+			return;
+		float padding {PPB / 8.f};
+		float room_per_tile {nonempty == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(nonempty - 1)};
+		if (room_per_tile > (PPB * 5) / 3.0)
+			room_per_tile = (PPB * 5) / 3.0;
+		// center tiles
+		float x {(size.x - room_per_tile * (nonempty - 1) - PPB) / 2.0f};
+		for (char ch = 'A'; ch <= 'Z'; ch++)
+		{
+			if (has_any(ch))
+			{
+				unsigned int i {0};
+				for (auto tile: tiles[ch - 'A'])
+				{
+					tile->set_pos(x + (i * PPB) / 16.f, size.y - PPB - padding - (i * PPB) / 16.f);
+					i++;
+				}
+				x += room_per_tile;
+			}
+		}
+	}
+	else if (draw_func == &Hand::ordered)
+	{
+		position_list(sort);
+	}
+	else // draw_func == &Hand::scrambled
+	{
+		position_list(scram);
+	}
+}
 
+void Hand::counts(sf::RenderWindow& window) const
+{
 	for (auto tile: single)
 	{
 		tile->draw_on(window);
-		number[tile->ch() - 'A'].setPosition(tile->get_pos() + sf::Vector2f(PPB / 32.0, 0));
 		window.draw(number[tile->ch() - 'A']);
 	}
 }
 
-void Hand::stacks(sf::RenderWindow& window)
+void Hand::stacks(sf::RenderWindow& window) const
 {
-	auto size = gui_view.getSize();
-	unsigned int nonempty {0};
-	for (char ch = 'A'; ch <= 'Z'; ch++)
-		if (has_any(ch))
-			nonempty++;
-	if (nonempty == 0)
-		return;
-	float padding {PPB / 8.f};
-	float room_per_tile {nonempty == 1 ? 0 : (size.x - PPB - padding * 2) / (float)(nonempty - 1)};
-	if (room_per_tile > (PPB * 5) / 3.0)
-		room_per_tile = (PPB * 5) / 3.0;
-	// center tiles
-	float x {(size.x - room_per_tile * (nonempty - 1) - PPB) / 2.0f};
-	for (char ch = 'A'; ch <= 'Z'; ch++)
-	{
-		if (has_any(ch))
-		{
-			unsigned int i {0};
-			for (auto tile: tiles[ch - 'A'])
-			{
-				tile->set_pos(x + (i * PPB) / 16.f, size.y - PPB - padding - (i * PPB) / 16.f);
-				i++;
-			}
-			x += room_per_tile;
-		}
-	}
-
 	for (char ch = 'Z'; ch >= 'A'; --ch)
 		for (auto tile: tiles[ch - 'A'])
 			tile->draw_on(window);
 }
 
-void Hand::ordered(sf::RenderWindow& window)
+void Hand::ordered(sf::RenderWindow& window) const
 {
-	position_list(sort);
-
 	for (auto tile: sort)
 		tile->draw_on(window);
 }
 
-void Hand::scrambled(sf::RenderWindow& window)
+void Hand::scrambled(sf::RenderWindow& window) const
 {
-	position_list(scram);
-
 	for (auto tile: scram)
 		tile->draw_on(window);
 }
@@ -133,6 +146,7 @@ void Hand::clear()
 	scram.clear();
 	sort.clear();
 	single.clear();
+	position_tiles();
 }
 
 void Hand::add_tile(Tile* tile)
@@ -161,6 +175,8 @@ void Hand::add_tile(Tile* tile)
 			sort.insert(it, tile);
 			break;
 		}
+
+	position_tiles();
 }
 
 Tile* Hand::remove_tile(char ch)
@@ -185,6 +201,8 @@ Tile* Hand::remove_tile(char ch)
 			single.remove(tile);
 	}
 
+	position_tiles();
+
 	return tile;
 }
 
@@ -194,19 +212,24 @@ void Hand::set_scrambled()
 		reshuffle();
 	else
 		draw_func = &Hand::scrambled;
+
+	position_tiles();
 }
 
 void Hand::set_sorted()
 {
 	draw_func = &Hand::ordered;
+	position_tiles();
 }
 
 void Hand::set_counts()
 {
 	draw_func = &Hand::counts;
+	position_tiles();
 }
 
 void Hand::set_stacked()
 {
 	draw_func = &Hand::stacks;
+	position_tiles();
 }

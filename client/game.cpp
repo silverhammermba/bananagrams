@@ -300,8 +300,7 @@ void Game::set_zoom(float zoom)
 	selection.set_zoom(zoom);
 }
 
-// TODO make this const once Hand is fixed
-void Game::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view)
+void Game::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const
 {
 	window.setView(grid_view);
 	grid.draw_on(window);
@@ -738,4 +737,7 @@ bool MultiplayerGame::peel()
 }
 
 // TODO need display for other players, letters remaining, etc.
-//void MultiplayerGame::draw_on
+void MultiplayerGame::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const
+{
+	Game::draw_on(window, grid_view, gui_view);
+}

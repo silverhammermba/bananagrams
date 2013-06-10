@@ -9,13 +9,14 @@ class Hand
 
 	// position tiles in std::list in nice rows
 	void position_list(std::list<Tile*>& l);
-	// tile arrangement functions
-	void counts(sf::RenderWindow& window);
-	void stacks(sf::RenderWindow& window);
-	void ordered(sf::RenderWindow& window);
-	void scrambled(sf::RenderWindow& window);
 
-	void (Hand::*draw_func)(sf::RenderWindow&) {&Hand::scrambled};
+	// tile drawing functions
+	void counts(sf::RenderWindow& window) const;
+	void stacks(sf::RenderWindow& window) const;
+	void ordered(sf::RenderWindow& window) const;
+	void scrambled(sf::RenderWindow& window) const;
+
+	void (Hand::*draw_func)(sf::RenderWindow&) const {&Hand::scrambled};
 
 	void reshuffle();
 public:
@@ -34,8 +35,10 @@ public:
 	void add_tile(Tile* tile);
 	Tile* remove_tile(char ch);
 
-	// TODO make this const
-	inline void draw_on(sf::RenderWindow& window)
+	// position whatever the current arrangement is
+	void position_tiles();
+
+	inline void draw_on(sf::RenderWindow& window) const
 	{
 		(this->*draw_func)(window);
 	}
