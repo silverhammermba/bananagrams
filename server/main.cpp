@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
 		("dict", po::value<string>(), "dictionary file")
 		("port", po::value<unsigned short>()->default_value(default_server_port), "TCP/UDP listening port")
 		("bunch", po::value<string>()->default_value("1"), "bunch multiplier (0.5 or a positive integer)")
+		("limit", po::value<unsigned int>(), "player limit")
 	;
 
 	// TODO usage string
@@ -76,6 +77,28 @@ int main(int argc, char* argv[])
 		b_den = 2;
 	else
 		multi_s >> b_num;
+
+	unsigned int max_players = (8 * b_num) / b_den;
+
+	if (opts.count("limit"))
+	{
+		auto limit = opts["limit"].as<unsigned int>();
+
+		if (limit > max_players)
+		{
+			cerr << "\nmax player limit is " << max_players << " for this bunch size";
+			cerr.flush();
+		}
+		else if (limit < 2)
+		{
+			cerr << "\nmin player limit is 2";
+			cerr.flush();
+		}
+		else
+		{
+			max_players = limit;
+		}
+	}
 
 	// check dictionary option
 	if (!opts.count("dict"))
@@ -131,6 +154,7 @@ int main(int argc, char* argv[])
 
 	sf::Uint8 peel_n = 0;
 	bool playing = false;
+	bool try_start_game = false;
 
 	cout << "\nWaiting for players to join...";
 	cout.flush();
@@ -151,6 +175,7 @@ int main(int argc, char* argv[])
 		packet >> type;
 		packet >> id;
 
+		// TODO send player info packets
 		switch(type)
 		{
 			case cl_connect:
@@ -165,6 +190,18 @@ int main(int argc, char* argv[])
 
 					cout << "\nclient failed to join"
 						    "\n\tNeed protocol version " << (int)protocol_version << ", got " << (int)version;
+					cout.flush();
+					break;
+				}
+
+				if (players.size() == max_players)
+				{
+					sf::Packet sorry;
+					sorry << sv_disconnect << sf::Uint8(1);
+					socket.send(sorry, client_ip, client_port);
+
+					cout << "\nclient failed to join"
+						    "\n\tGame full";
 					cout.flush();
 					break;
 				}
@@ -194,27 +231,6 @@ int main(int argc, char* argv[])
 					accept << sv_connect << sf::Uint8(players.size() - 1);
 					socket.send(accept, player.get_ip(), client_port);
 
-					playing = true;
-
-					sf::Int16 remaining = bunch.size() - 21 * players.size();
-
-					// TODO for now, start the game immediately
-					for (const auto& pair : players)
-					{
-						string letters;
-						for (unsigned int i = 0; i < 21; i++)
-						{
-							letters.append(1, bunch.back());
-							bunch.pop_back();
-						}
-
-						cout << "\n" << "Sending " << player.get_name() << " " << letters;
-						cout.flush();
-
-						sf::Packet peel;
-						peel << sv_peel << sf::Uint8(peel_n) << remaining << pair.first << letters;
-						socket.send(peel, pair.second.get_ip(), client_port);
-					}
 				}
 				break;
 			}
@@ -225,8 +241,26 @@ int main(int argc, char* argv[])
 					cout << "\n" << players[id].get_name() << " has left the game";
 					cout.flush();
 					players.erase(id);
+
+					try_start_game = true;
 				}
 				break;
+			}
+			case cl_ready:
+			{
+				if (!playing)
+				{
+					if (players.count(id) > 0)
+					{
+						bool ready;
+						packet >> ready;
+
+						players[id].ready = ready;
+
+						if (ready)
+							try_start_game = true;
+					}
+				}
 			}
 			case cl_check:
 			{
@@ -333,6 +367,49 @@ int main(int argc, char* argv[])
 			default:
 				cout << "\nUnrecognized packet type: " << (int)type;
 				cout.flush();
+		}
+
+		if (try_start_game)
+		{
+			if (players.size() >= 2)
+			{
+				bool all_ready = true;
+				for (const auto& pair : players)
+				{
+					if (!pair.second.ready)
+					{
+						all_ready = false;
+						break;
+					}
+				}
+
+				if (all_ready)
+				{
+					playing = true;
+
+					// TODO determine number of letters based on bunch size/player number
+					sf::Int16 remaining = bunch.size() - 21 * players.size();
+
+					for (const auto& pair : players)
+					{
+						string letters;
+						for (unsigned int i = 0; i < 21; i++)
+						{
+							letters.append(1, bunch.back());
+							bunch.pop_back();
+						}
+
+						cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
+						cout.flush();
+
+						sf::Packet peel;
+						peel << sv_peel << sf::Uint8(peel_n) << remaining << pair.first << letters;
+						socket.send(peel, pair.second.get_ip(), client_port);
+					}
+				}
+			}
+
+			try_start_game = false;
 		}
 	}
 

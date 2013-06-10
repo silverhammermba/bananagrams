@@ -2,8 +2,9 @@ class Player
 {
 	sf::IpAddress ip;
 	std::string name;
-	unsigned int peel;
 public:
+	bool ready;
+
 	explicit Player() {}; // XXX to appease the players map
 	Player(const sf::IpAddress& _ip);
 
