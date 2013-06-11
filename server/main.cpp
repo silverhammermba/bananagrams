@@ -242,7 +242,8 @@ int main(int argc, char* argv[])
 					cout.flush();
 					players.erase(id);
 
-					try_start_game = true;
+					if (!playing)
+						try_start_game = true;
 				}
 				break;
 			}
