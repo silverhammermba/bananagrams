@@ -56,10 +56,11 @@ resizing the window again should fix the problem.
 Credits
 -------
  * SFML 2.0
- * yaml-cpp 0.5.0-1
+ * yaml-cpp 0.5.0
+ * Boost 1.53.0
  * WordNet 3.1
  * Enable2k North American word list
- * DejaVu 2.33-4
+ * DejaVu 2.33
 
 License
 -------
