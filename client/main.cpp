@@ -370,6 +370,9 @@ int main()
 					game->quick_place();
 			}
 
+			if (controls["ready"])
+				game->ready(); // multiplayer only
+
 			if (controls["cut"])
 				game->cut();
 

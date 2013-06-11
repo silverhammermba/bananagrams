@@ -59,3 +59,4 @@ public:
 #include "buffer.hpp"
 #include "game.hpp"
 #include "menu.hpp"
+#include "player.hpp"

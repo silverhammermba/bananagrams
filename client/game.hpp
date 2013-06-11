@@ -32,6 +32,7 @@ public:
 		return grid.get_center();
 	}
 
+	virtual void ready() = 0;
 	void clear_buffer();
 	void update_mouse_pos(const sf::RenderWindow& window, const sf::View& view, const sf::Vector2i& pos);
 	void select();
@@ -83,6 +84,7 @@ public:
 	bool load(const std::string& filename);
 	void save(const std::string& filename);
 
+	virtual void ready() {};
 	virtual void dump();
 	virtual bool peel();
 };
@@ -95,7 +97,11 @@ class MultiplayerGame : public Game
 	sf::UdpSocket socket;
 	sf::IpAddress server_ip;
 	unsigned short server_port;
+
 	std::string id;
+	bool connected = false;
+	bool playing = false;
+	bool is_ready = false;
 	sf::Uint8 peel_n {0};
 	std::map<std::string, bool> dictionary;
 public:
@@ -103,6 +109,7 @@ public:
 	virtual ~MultiplayerGame();
 
 	virtual void step(float time);
+	virtual void ready();
 	virtual void dump();
 	virtual bool peel();
 	bool resolve_peel();

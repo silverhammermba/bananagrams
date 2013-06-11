@@ -220,6 +220,7 @@ KeyControls::KeyControls()
 	bind("sort_tiles"     , "f2"             , PRESS );
 	bind("count_tiles"    , "f3"             , PRESS );
 	bind("stack_tiles"    , "f4"             , PRESS );
+	bind("ready"          , "f5"             , PRESS );
 	set_defaults();
 }
 

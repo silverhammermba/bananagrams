@@ -508,6 +508,29 @@ void MultiplayerGame::step(float time)
 	}
 }
 
+void MultiplayerGame::ready()
+{
+	if (connected)
+	{
+		if (!playing)
+		{
+			is_ready = !is_ready;
+
+			sf::Packet ready_msg;
+			ready_msg << cl_ready << id << is_ready;
+
+			socket.send(ready_msg, server_ip, server_port);
+
+			if (is_ready)
+				messages.add("You are ready", Message::Severity::LOW);
+			else
+				messages.add("You are not ready", Message::Severity::LOW);
+		}
+	}
+	else
+		messages.add("You are not connected to the server!", Message::Severity::HIGH);
+}
+
 void MultiplayerGame::process_packet(sf::Packet& packet)
 {
 	sf::Uint8 type;
@@ -517,6 +540,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 	{
 		case sv_connect:
 			messages.add("Connected...", Message::Severity::CRITICAL);
+			connected = true;
 			// TODO what to do with player count?
 			break;
 		case sv_disconnect:
@@ -546,6 +570,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					message.append("unknown reason");
 			}
 
+			connected = false;
 			messages.add(message, Message::Severity::CRITICAL);
 			break;
 		}
@@ -583,6 +608,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			// first peel is special
 			if (peel_n == 0 && got_peel == 0)
 			{
+				playing = true;
 				messages.clear();
 				messages.add("SPLIT!", Message::Severity::HIGH);
 			}
@@ -643,6 +669,9 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			}
 			else
 				messages.add("You win! All other players have resigned.", Message::Severity::CRITICAL);
+
+			connected = false;
+			playing = false;
 
 			break;
 		}
