@@ -261,6 +261,8 @@ int main(int argc, char* argv[])
 							try_start_game = true;
 					}
 				}
+
+				break;
 			}
 			case cl_check:
 			{
@@ -279,8 +281,8 @@ int main(int argc, char* argv[])
 				sf::Int8 chr;
 				packet >> chr;
 
-				cerr << endl << players[id].get_name() << " dumped " << chr;
-				cerr.flush();
+				cout << endl << players[id].get_name() << " dumped " << chr;
+				cout.flush();
 
 				string letters;
 
@@ -298,8 +300,8 @@ int main(int argc, char* argv[])
 				else
 				{
 					letters.append(1, (char)chr);
-					cerr << "\n\tNot enough letters left for dump";
-					cerr.flush();
+					cout << "\n\tNot enough letters left for dump";
+					cout.flush();
 				}
 
 				sf::Packet dump;
@@ -371,6 +373,8 @@ int main(int argc, char* argv[])
 
 		if (try_start_game)
 		{
+			cout << "\nTrying to start game...";
+
 			if (players.size() >= 2)
 			{
 				bool all_ready = true;
@@ -407,7 +411,13 @@ int main(int argc, char* argv[])
 						socket.send(peel, pair.second.get_ip(), client_port);
 					}
 				}
+				else
+					cout << "\n\tNot all players are ready";
 			}
+			else
+				cout << "\n\tNot enough players";
+
+			cout.flush();
 
 			try_start_game = false;
 		}
