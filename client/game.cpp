@@ -630,7 +630,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				}
 			}
 			else
+			{
+				cerr << "Peel out of order. Got " << (int)got_peel << ", expecting " << (int)(peel_n + 1);
 				break;
+			}
 
 			cerr << "Received " << letters.size() << " letters: " << letters << endl;
 
@@ -717,9 +720,9 @@ bool MultiplayerGame::resolve_peel()
 	}
 
 
-	sf::Uint8 next_peel = peel_n + 1;
+	sf::Int16 next_peel = peel_n + 1;
 
-	cerr << "No incorrect words. Requesting peel " << next_peel << endl;
+	cerr << "No incorrect words. Requesting peel " << (int)next_peel << endl;
 
 	sf::Packet finished_peel;
 	finished_peel << cl_peel << id << next_peel;
