@@ -102,7 +102,7 @@ class MultiplayerGame : public Game
 	bool connected = false;
 	bool playing = false;
 	bool is_ready = false;
-	sf::Uint8 peel_n {0};
+	sf::Int16 peel_n {-1};
 	std::map<std::string, bool> dictionary;
 public:
 	MultiplayerGame(const std::string& server, const std::string& name);

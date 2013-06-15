@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 	// TODO catch failure
 	socket.bind(server_port);
 
-	sf::Uint8 peel_n = 0;
+	sf::Int16 peel_n {0};
 	bool playing = false;
 	bool try_start_game = false;
 
@@ -242,6 +242,8 @@ int main(int argc, char* argv[])
 					cout.flush();
 					players.erase(id);
 
+					// TODO notify other players of disconnect/victory
+
 					if (!playing)
 						try_start_game = true;
 				}
@@ -316,7 +318,7 @@ int main(int argc, char* argv[])
 			{
 				if (players.count(id) > 0)
 				{
-					sf::Uint8 client_peel;
+					sf::Int16 client_peel;
 					packet >> client_peel;
 
 					if (client_peel == peel_n + 1)
@@ -354,7 +356,7 @@ int main(int argc, char* argv[])
 							cout.flush();
 
 							sf::Packet peel;
-							peel << sv_peel << sf::Uint8(peel_n) << remaining << id << letter;
+							peel << sv_peel << sf::Int16(peel_n) << remaining << id << letter;
 							socket.send(peel, pair.second.get_ip(), client_port);
 						}
 					}
@@ -408,7 +410,7 @@ int main(int argc, char* argv[])
 						cout.flush();
 
 						sf::Packet peel;
-						peel << sv_peel << sf::Uint8(peel_n) << remaining << pair.first << letters;
+						peel << sv_peel << sf::Int16(peel_n) << remaining << pair.first << letters;
 						socket.send(peel, pair.second.get_ip(), client_port);
 					}
 				}

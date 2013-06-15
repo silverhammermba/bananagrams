@@ -598,22 +598,23 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 		}
 		case sv_peel:
 		{
-			sf::Uint8 got_peel;
+			sf::Int16 got_peel;
 			sf::Int16 remaining;
 			string peeler_id;
 			string letters;
 
 			packet >> got_peel >> remaining >> peeler_id >> letters;
 
-			// first peel is special
-			if (peel_n == 0 && got_peel == 0)
+			if (got_peel == peel_n + 1)
 			{
-				playing = true;
-				messages.clear();
-				messages.add("SPLIT!", Message::Severity::HIGH);
-			}
-			else if (got_peel == peel_n + 1)
-			{
+				// first peel is special
+				if (got_peel == 0)
+				{
+					playing = true;
+					messages.clear();
+					messages.add("SPLIT!", Message::Severity::HIGH);
+				}
+
 				++peel_n;
 				if (peeler_id != id)
 					// TODO get proper name and shit

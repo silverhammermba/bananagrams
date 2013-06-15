@@ -63,6 +63,8 @@ void MenuEntry::select()
 		system.set_menu(*submenu);
 }
 
+// TODO add entry for resuming saved game
+
 SingleplayerEntry::SingleplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict, MultiEntry& mult, Game** g)
 	: Entry {txt}, system(sys), dict_entry(dict), multiplier(mult), game {g} // XXX GCC bug!
 {
@@ -82,6 +84,8 @@ void SingleplayerEntry::select()
 	system.close();
 	*game = new SingleplayerGame(dict_entry.get_string(), mul, div);
 }
+
+// TODO add entry for disconnecting from game
 
 MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game** g)
 	: Entry {txt}, system(sys), server(srv), name(nm), game {g} // XXX GCC bug!
