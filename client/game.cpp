@@ -480,6 +480,7 @@ MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& n
 
 	socket.send(join, server_ip, server_port);
 
+	// TODO keep sending connection packets until connected
 	messages.add("Connecting to " + server + "...", Message::Severity::CRITICAL);
 }
 

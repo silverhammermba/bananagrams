@@ -9,20 +9,18 @@ using std::string;
 sf::UdpSocket socket;
 unsigned short client_port;
 
-std::map<string, Player> players;
+Game* game;
 
 void shutdown(int s)
 {
 	(void)s; // intentionally unused
 
 	cout << "\nServer shutting down...";
-	for (const auto& pair: players)
-	{
-		sf::Packet sorry;
-		sorry << sv_disconnect << sf::Uint8(4);
-		socket.send(sorry, pair.second.get_ip(), client_port);
-	}
-	cout << endl;
+	cout.flush();
+
+	if (game != nullptr)
+		delete game;
+
 	exit(0);
 }
 
@@ -68,17 +66,25 @@ int main(int argc, char* argv[])
 
 	client_port = server_port + 1;
 
+	// game options
+	unsigned int b_num;
+	unsigned int b_den;
+	unsigned int max_players;
+	std::map<string, string> dictionary;
+
+	// load options from command line
+
 	// check bunch multiplier option
 	std::stringstream multi_s;
 	multi_s << opts["bunch"].as<string>();
-	unsigned int b_num {1};
-	unsigned int b_den {1};
+	b_num = 1;
+	b_den = 1;
 	if (multi_s.str() == "0.5")
 		b_den = 2;
 	else
 		multi_s >> b_num;
 
-	unsigned int max_players = (8 * b_num) / b_den;
+	max_players = (8 * b_num) / b_den;
 
 	if (opts.count("limit"))
 	{
@@ -108,7 +114,6 @@ int main(int argc, char* argv[])
 	}
 
 	string dict = opts["dict"].as<string>();
-	std::map<string, string> dictionary;
 
 	cout << "Loading dictionary... ";
 	cout.flush();
@@ -134,12 +139,7 @@ int main(int argc, char* argv[])
 	cout.flush();
 
 	// TODO srand
-
 	// LET'S GO!!!
-	std::list<char> bunch;
-	for (char ch = 'A'; ch <= 'Z'; ++ch)
-		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * b_num) / b_den); ++i)
-			random_insert(bunch, ch);
 
 	// TODO for debugging
 	/*
@@ -152,8 +152,8 @@ int main(int argc, char* argv[])
 	// TODO catch failure
 	socket.bind(server_port);
 
-	sf::Int16 peel_n {0};
-	bool playing = false;
+	game = new Game(socket, b_num, b_den, max_players);
+
 	bool try_start_game = false;
 
 	cout << "\nWaiting for players to join...";
@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 					break;
 				}
 
-				if (players.size() == max_players)
+				if (game->is_full())
 				{
 					sf::Packet sorry;
 					sorry << sv_disconnect << sf::Uint8(1);
@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
 					break;
 				}
 
-				if (playing)
+				if (game->in_progress())
 				{
 					sf::Packet sorry;
 					sorry << sv_disconnect << sf::Uint8(3);
@@ -218,53 +218,33 @@ int main(int argc, char* argv[])
 					break;
 				}
 
-				if (players.count(id) == 0)
+				Player player(client_ip);
+				packet >> player;
+
+				if (game->add_player(id, player))
 				{
-					Player player(client_ip);
-					packet >> player;
-					players[id] = player;
-
-					cout << "\n" << player.get_name() << " has joined the game";
-					cout.flush();
-
 					sf::Packet accept;
 					accept << sv_connect << sf::Uint8(players.size() - 1);
 					socket.send(accept, player.get_ip(), client_port);
-
 				}
 				break;
 			}
 			case cl_disconnect:
 			{
-				if (players.count(id) > 0)
+				if (game->remove_player(id))
 				{
-					cout << "\n" << players[id].get_name() << " has left the game";
-					cout.flush();
-					players.erase(id);
-
 					// TODO notify other players of disconnect/victory
-
-					if (!playing)
-						try_start_game = true;
 				}
 				break;
 			}
 			case cl_ready:
 			{
-				if (!playing)
-				{
-					if (players.count(id) > 0)
-					{
-						bool ready;
-						packet >> ready;
+				bool ready;
+				packet >> ready;
 
-						players[id].ready = ready;
+				game->set_ready(id, ready);
 
-						if (ready)
-							try_start_game = true;
-					}
-				}
-
+				// TODO notify players of ready status
 				break;
 			}
 			case cl_check:
@@ -287,28 +267,8 @@ int main(int argc, char* argv[])
 				cout << endl << players[id].get_name() << " dumped " << chr;
 				cout.flush();
 
-				string letters;
-
-				if (bunch.size() >= 3)
-				{
-					// take three
-					for (unsigned int i = 0; i < 3; i++)
-					{
-						letters.append(1, bunch.back());
-						bunch.pop_back();
-					}
-
-					random_insert(bunch, (char)chr);
-				}
-				else
-				{
-					letters.append(1, (char)chr);
-					cout << "\n\tNot enough letters left for dump";
-					cout.flush();
-				}
-
 				sf::Packet dump;
-				dump << sv_dump << letters;
+				dump << sv_dump << game->dump(chr);
 
 				socket.send(dump, client_ip, client_port);
 
@@ -316,54 +276,37 @@ int main(int argc, char* argv[])
 			}
 			case cl_peel:
 			{
-				if (players.count(id) > 0)
+				sf::Int16 client_peel;
+				packet >> client_peel;
+
+				if (game->peel(id, client_peel))
 				{
-					sf::Int16 client_peel;
-					packet >> client_peel;
-
-					if (client_peel == peel_n + 1)
+					if (game->is_over())
 					{
-						sf::Int16 remaining = bunch.size() - players.size();
+						string winner {game->winner()};
 
-						// if there aren't enough letters left
-						if (remaining < 0)
+						// send victory notification
+						for (const auto& pair : game->get_players())
 						{
-							// send victory notification
-							for (const auto& pair : players)
-							{
-								sf::Packet win;
-								win << sv_done << sf::Uint8(1) << id;
-								socket.send(win, pair.second.get_ip(), client_port);
-							}
-
-							cout << "\n" << players[id].get_name() << " has won the game!";
-							cout.flush();
-							shutdown(0);
+							sf::Packet win;
+							win << sv_done << sf::Uint8(1) << winner;
+							socket.send(win, pair.second.get_ip(), client_port);
 						}
-
-						++peel_n;
-						cout << "\n" << players[id].get_name() << " peeled (" << (int)peel_n << ")";
-						cout.flush();
-
+					}
+					else
+					{
 						// send each player a new letter
-						for (const auto& pair : players)
+						for (const auto& pair : game->get_players())
 						{
-							string letter;
-							letter.append(1, bunch.back());
-							bunch.pop_back();
+							string letter = game->next_letter();
 
 							cout << "\n" << "Sending " << pair.second.get_name() << " " << letter;
 							cout.flush();
 
 							sf::Packet peel;
-							peel << sv_peel << sf::Int16(peel_n) << remaining << id << letter;
+							peel << sv_peel << sf::Int16(game->current_peel()) << remaining << id << letter;
 							socket.send(peel, pair.second.get_ip(), client_port);
 						}
-					}
-					else
-					{
-						cout << "\nPeel out of order: got " << (int)client_peel << ", expected " << (int)(peel_n + 1);
-						cout.flush();
 					}
 				}
 
