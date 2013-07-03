@@ -1,3 +1,5 @@
+// TODO keep track of letters so they can be readded to bunch upon disconnect
+
 class Player
 {
 	sf::IpAddress ip;

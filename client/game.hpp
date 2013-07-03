@@ -97,6 +97,7 @@ class MultiplayerGame : public Game
 	sf::UdpSocket socket;
 	sf::IpAddress server_ip;
 	unsigned short server_port;
+	Acket* ack {nullptr};
 
 	std::string id;
 	bool connected = false;
@@ -104,6 +105,8 @@ class MultiplayerGame : public Game
 	bool is_ready = false;
 	sf::Int16 peel_n {-1};
 	std::map<std::string, bool> dictionary;
+
+	void set_ack(sf::Packet& packet, sf::Uint8 response);
 public:
 	MultiplayerGame(const std::string& server, const std::string& name);
 	virtual ~MultiplayerGame();

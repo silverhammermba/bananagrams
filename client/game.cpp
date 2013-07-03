@@ -478,9 +478,8 @@ MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& n
 	sf::Packet join;
 	join << cl_connect << id << protocol_version << name;
 
-	socket.send(join, server_ip, server_port);
+	set_ack(join, sv_connect);
 
-	// TODO keep sending connection packets until connected
 	messages.add("Connecting to " + server + "...", Message::Severity::CRITICAL);
 }
 
@@ -774,4 +773,12 @@ bool MultiplayerGame::peel()
 void MultiplayerGame::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const
 {
 	Game::draw_on(window, grid_view, gui_view);
+}
+
+void set_ack(sf::Packet& packet, sf::Uint8 response)
+{
+	if (ack != nullptr)
+		delete ack;
+
+	ack = new Acket(socket, server_ip, server_port, packet, response);
 }
