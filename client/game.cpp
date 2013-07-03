@@ -497,6 +497,9 @@ void MultiplayerGame::step(float time)
 {
 	Game::step(time);
 
+	if (ack != nullptr)
+		ack->age(time);
+
 	sf::Packet packet;
 	sf::IpAddress ip;
 	unsigned short port;
@@ -519,7 +522,7 @@ void MultiplayerGame::ready()
 			sf::Packet ready_msg;
 			ready_msg << cl_ready << id << is_ready;
 
-			socket.send(ready_msg, server_ip, server_port);
+			set_ack(ready_msg, sv_peel);
 
 			if (is_ready)
 				messages.add("You are ready", Message::Severity::LOW);
@@ -582,6 +585,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			dictionary[word] = valid;
 
+			// TODO use one packet for word check to work better with ACK
 			// if we still need the result for this word
 			if (lookup_words.count(word))
 			{
@@ -696,7 +700,8 @@ void MultiplayerGame::dump()
 
 	sf::Packet dump_request;
 	dump_request << cl_dump << id << sf::Int8(dumped->ch());
-	socket.send(dump_request, server_ip, server_port);
+
+	set_ack(dump_request, sv_dump);
 
 	delete dumped;
 }
@@ -727,7 +732,7 @@ bool MultiplayerGame::resolve_peel()
 	sf::Packet finished_peel;
 	finished_peel << cl_peel << id << next_peel;
 
-	socket.send(finished_peel, server_ip, server_port);
+	set_ack(finished_peel, sv_peel);
 
 	return true;
 }
