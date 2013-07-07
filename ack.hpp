@@ -1,7 +1,7 @@
 // class for resending packets until a proper acknowledgement is received
 class Acket
 {
-	sf::Socket& socket;
+	sf::UdpSocket& socket;
 	const sf::IpAddress& ip;
 	unsigned short port;
 	sf::Packet packet;
@@ -14,8 +14,8 @@ class Acket
 		socket.send(packet, ip, port);
 	}
 public:
-	Acket(sf::Socket& _socket, const sf::IpAddres& _ip, unsigned short _port, sf::Packet& _packet, sf::Uint8 _response)
-		: socket {_socket}, ip {_ip}, port {_port}, packet {_packet}, response {_response}
+	Acket(sf::UdpSocket& _socket, const sf::IpAddress& _ip, unsigned short _port, sf::Packet& _packet, sf::Uint8 _response)
+		: socket (_socket), ip (_ip), port {_port}, packet {_packet}, response {_response}
 	{
 	}
 
@@ -39,4 +39,4 @@ public:
 	{
 		return type == response;
 	}
-}
+};
