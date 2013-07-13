@@ -780,7 +780,7 @@ void MultiplayerGame::draw_on(sf::RenderWindow& window, const sf::View& grid_vie
 	Game::draw_on(window, grid_view, gui_view);
 }
 
-void set_ack(sf::Packet& packet, sf::Uint8 response)
+void MultiplayerGame::set_ack(sf::Packet& packet, sf::Uint8 response)
 {
 	if (ack != nullptr)
 		delete ack;

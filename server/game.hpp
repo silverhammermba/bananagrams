@@ -1,15 +1,17 @@
 class Game
 {
-	sf::Socket& socket;
+	sf::UdpSocket& socket;
+	unsigned short client_port;
 	unsigned int player_limit;
 	std::list<char> bunch;
 	std::map<std::string, Player> players;
 	sf::Int16 peel_number {0};
 	bool playing {false};
 	std::string winner {""};
+
+	void try_to_start();
 public:
-	Game(sf::Socket& _socket, unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _player_limit)
-	~Game();
+	Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _player_limit);
 
 	inline bool is_full() const
 	{
@@ -31,9 +33,11 @@ public:
 		return peel_number;
 	}
 
+	std::string dump(char chr);
+
 	bool add_player(const std::string& id, Player& player);
 	bool remove_player(const std::string& id);
 	void set_ready(const std::string& id, bool ready);
-	bool peel(const string& id, sf::Int16 number);
-	string next_letter();
+	bool peel(const std::string& id, sf::Int16 number);
+	std::string next_letter();
 };

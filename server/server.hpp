@@ -11,3 +11,4 @@
 
 #include "../common.hpp"
 #include "player.hpp"
+#include "game.hpp"

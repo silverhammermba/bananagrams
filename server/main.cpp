@@ -11,6 +11,7 @@ unsigned short client_port;
 
 Game* game;
 
+// callback for interrupt signal
 void shutdown(int s)
 {
 	(void)s; // intentionally unused
@@ -19,13 +20,25 @@ void shutdown(int s)
 	cout.flush();
 
 	if (game != nullptr)
+	{
+		cout << "\nNotifying players...";
+		for (const auto& pair: game->get_players())
+		{
+			sf::Packet sorry;
+			sorry << sv_disconnect << sf::Uint8(4);
+			socket.send(sorry, pair.second.get_ip(), client_port);
+		}
+		cout << endl;
+
 		delete game;
+	}
 
 	exit(0);
 }
 
 int main(int argc, char* argv[])
 {
+	// set up shutdown callback for interrupts
 	struct sigaction action;
 	action.sa_handler = shutdown;
 	sigemptyset(&action.sa_mask);
@@ -35,6 +48,7 @@ int main(int argc, char* argv[])
 	sigaction(SIGTERM, &action, nullptr);
 	sigaction(SIGKILL, &action, nullptr);
 
+	// command line arguments
 	po::options_description desc("Bananagrams multiplayer dedicated server");
 	desc.add_options()
 		("help", "show options")
