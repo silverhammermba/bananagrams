@@ -168,8 +168,6 @@ int main(int argc, char* argv[])
 
 	game = new Game(socket, b_num, b_den, max_players);
 
-	bool try_start_game = false;
-
 	cout << "\nWaiting for players to join...";
 	cout.flush();
 	while (true)
@@ -238,7 +236,7 @@ int main(int argc, char* argv[])
 				if (game->add_player(id, player))
 				{
 					sf::Packet accept;
-					accept << sv_connect << sf::Uint8(players.size() - 1);
+					accept << sv_connect << sf::Uint8(game->get_players().size() - 1);
 					socket.send(accept, player.get_ip(), client_port);
 				}
 				break;
@@ -282,7 +280,7 @@ int main(int argc, char* argv[])
 				cout.flush();
 
 				sf::Packet dump;
-				dump << sv_dump << game->dump(chr);
+				dump << sv_dump << game->dump(id, chr);
 
 				socket.send(dump, client_ip, client_port);
 
@@ -331,56 +329,19 @@ int main(int argc, char* argv[])
 				cout.flush();
 		}
 
-		if (try_start_game)
+		for (const auto& pair : players)
 		{
-			cout << "\nTrying to start game...";
+			// TODO something like this, take letters, make acket, blah
+			pair.second.send_peel();
 
-			if (players.size() >= 2)
-			{
-				bool all_ready = true;
-				for (const auto& pair : players)
-				{
-					if (!pair.second.ready)
-					{
-						all_ready = false;
-						break;
-					}
-				}
-
-				if (all_ready)
-				{
-					playing = true;
-
-					// TODO determine number of letters based on bunch size/player number
-					sf::Int16 remaining = bunch.size() - 21 * players.size();
-
-					for (const auto& pair : players)
-					{
-						string letters;
-						for (unsigned int i = 0; i < 21; i++)
-						{
-							letters.append(1, bunch.back());
-							bunch.pop_back();
-						}
-
-						cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
-						cout.flush();
-
-						sf::Packet peel;
-						peel << sv_peel << sf::Int16(peel_n) << remaining << pair.first << letters;
-						socket.send(peel, pair.second.get_ip(), client_port);
-					}
-				}
-				else
-					cout << "\n\tNot all players are ready";
-			}
-			else
-				cout << "\n\tNot enough players";
-
+			cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
 			cout.flush();
 
-			try_start_game = false;
+			sf::Packet peel;
+			peel << sv_peel << sf::Int16(peel_n) << remaining << pair.first << letters;
+			socket.send(peel, pair.second.get_ip(), client_port);
 		}
+
 	}
 
 	return 0;

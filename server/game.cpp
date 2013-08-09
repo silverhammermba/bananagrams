@@ -33,7 +33,11 @@ bool Game::remove_player(const string& id)
 		cout.flush();
 		players.erase(id);
 
-		if (!playing)
+		if (playing)
+		{
+			// TODO add player's letters back to bunch
+		}
+		else
 			try_to_start();
 	}
 	else
@@ -54,7 +58,7 @@ void Game::set_ready(const string& id, bool ready)
 	}
 }
 
-string Game::dump(char chr)
+string Game::dump(const string& id, char chr)
 {
 	string letters;
 
@@ -63,6 +67,7 @@ string Game::dump(char chr)
 		// take three
 		for (unsigned int i = 0; i < 3; i++)
 		{
+			// TODO give letters to player
 			letters.append(1, bunch.back());
 			bunch.pop_back();
 		}
@@ -85,19 +90,17 @@ string Game::dump(char chr)
 }
 
 // TODO fucking sloppy. three different conditions to report in one function
-sf::Int16 Game::peel(const string& id, sf::Int16 number, bool& success, bool& victory)
+bool Game::peel(const string& id, sf::Int16 number, bool& success, bool& victory)
 {
-	sf::Int16 remaining;
 
-	if (!player || players.count(id) == 0)
-	{
-		success = false;
-		return remaining;
-	}
+	// if game hasn't started or invalid player id
+	if (!playing || players.count(id) == 0)
+		return false;
 
+	// if this is the correct peel number
 	if (number == peel_number + 1)
 	{
-		sf::Int16 remaining = bunch.size() - players.size();
+		remaining -= players.size();
 
 		// if there aren't enough letters left
 		if (remaining < 0)
@@ -110,7 +113,7 @@ sf::Int16 Game::peel(const string& id, sf::Int16 number, bool& success, bool& vi
 			return true;
 		}
 
-		++peel_n;
+		++peel_number;
 		cout << "\n" << players[id].get_name() << " peeled (" << (int)peel_number << ")";
 		cout.flush();
 
@@ -118,7 +121,7 @@ sf::Int16 Game::peel(const string& id, sf::Int16 number, bool& success, bool& vi
 	}
 	else
 	{
-		cout << "\nPeel out of order: got " << (int)client_peel << ", expected " << (int)(peel_n + 1);
+		cout << "\nPeel out of order: got " << (int)client_peel << ", expected " << (int)(peel_number + 1);
 		cout.flush();
 
 		return false;

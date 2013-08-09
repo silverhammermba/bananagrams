@@ -13,6 +13,11 @@ class Game
 public:
 	Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _player_limit);
 
+	inline const std::map<std::string, Player>& get_players() const
+	{
+		return players;
+	}
+
 	inline bool is_full() const
 	{
 		return players.size() == player_limit;
