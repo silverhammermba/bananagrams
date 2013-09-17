@@ -475,12 +475,17 @@ MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& n
 	socket.bind(client_port);
 	socket.setBlocking(false);
 
-	sf::Packet join;
-	join << cl_connect << id << protocol_version << name;
+	pending = new sf::Packet;
+	(*pending) << cl_connect << id << protocol_version << name;
 
-	set_ack(join, sv_connect);
-
+	time_stale = 0.f; // SO FRESH
+	poll_pause = 0.f; // haven't sent first packet yet
+	timeout = 30.f; // long timeout for connection
+	polling = 3.f; // and slow polling
 	messages.add("Connecting to " + server + "...", Message::Severity::CRITICAL);
+
+	// TODO not DRY
+	socket.send(*pending, server_ip, server_port);
 }
 
 MultiplayerGame::~MultiplayerGame()
@@ -497,9 +502,7 @@ void MultiplayerGame::step(float time)
 {
 	Game::step(time);
 
-	if (ack != nullptr)
-		ack->age(time);
-
+	// process incoming packets
 	sf::Packet packet;
 	sf::IpAddress ip;
 	unsigned short port;
@@ -508,6 +511,23 @@ void MultiplayerGame::step(float time)
 		cerr << "Received packet from " << ip << ":" << port << endl;
 		// TODO somehow verify that this is actually the server...
 		process_packet(packet);
+	}
+
+	// process outgoing packets
+	if (pending != nullptr)
+	{
+		time_stale += time;
+		poll_pause += time;
+
+		if (time_stale > timeout)
+		{
+			// TODO assume we lost connection
+		}
+		else if (poll_pause >= polling)
+		{
+			socket.send(*pending, server_ip, server_port);
+			poll_pause -= polling;
+		}
 	}
 }
 
@@ -534,6 +554,7 @@ void MultiplayerGame::ready()
 		messages.add("You are not connected to the server!", Message::Severity::HIGH);
 }
 
+// TODO probably need to totally redo to remove acket shit
 void MultiplayerGame::process_packet(sf::Packet& packet)
 {
 	sf::Uint8 type;

@@ -97,16 +97,20 @@ class MultiplayerGame : public Game
 	sf::UdpSocket socket;
 	sf::IpAddress server_ip;
 	unsigned short server_port;
-	Acket* ack {nullptr};
+	float time_stale;
+	float poll_pause;
+	float timeout;
+	float polling;
 
 	std::string id;
 	bool connected = false;
 	bool playing = false;
 	bool is_ready = false;
+	bool waiting = false;
 	sf::Int16 peel_n {-1};
 	std::map<std::string, bool> dictionary;
 
-	void set_ack(sf::Packet& packet, sf::Uint8 response);
+	sf::Packet* pending = nullptr;
 public:
 	MultiplayerGame(const std::string& server, const std::string& name);
 	virtual ~MultiplayerGame();
