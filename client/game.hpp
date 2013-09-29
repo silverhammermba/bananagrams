@@ -1,4 +1,3 @@
-// TODO use inheritance to make single/multiplayer
 class Game
 {
 	CutBuffer* buffer {nullptr};
@@ -111,9 +110,19 @@ class MultiplayerGame : public Game
 	std::map<std::string, bool> dictionary;
 
 	sf::Packet* pending = nullptr;
+	sf::Uint8 pending_type = 255;
 public:
 	MultiplayerGame(const std::string& server, const std::string& name);
 	virtual ~MultiplayerGame();
+
+	// create new pending packet and store type
+	void set_pending(sf::Uint8 type);
+	// when a packet is acknowledged, reset packet sending state
+	void clear_pending(bool force = false);
+	// send unacknowledged packet
+	void send_pending();
+
+	void disconnect();
 
 	virtual void step(float time);
 	virtual void ready();

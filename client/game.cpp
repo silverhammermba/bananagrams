@@ -475,8 +475,8 @@ MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& n
 	socket.bind(client_port);
 	socket.setBlocking(false);
 
-	pending = new sf::Packet;
-	(*pending) << cl_connect << id << protocol_version << name;
+	set_pending(cl_connect);
+	(*pending) << protocol_version << name;
 
 	time_stale = 0.f; // SO FRESH
 	poll_pause = 0.f; // haven't sent first packet yet
@@ -484,16 +484,13 @@ MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& n
 	polling = 3.f; // and slow polling
 	messages.add("Connecting to " + server + "...", Message::Severity::CRITICAL);
 
-	// TODO not DRY
-	socket.send(*pending, server_ip, server_port);
+	send_pending();
 }
 
 MultiplayerGame::~MultiplayerGame()
 {
-	sf::Packet disconnect;
-	disconnect << cl_disconnect << id;
-
-	socket.send(disconnect, server_ip, server_port);
+	set_pending(cl_disconnect);
+	send_pending();
 
 	socket.unbind();
 }
@@ -521,14 +518,50 @@ void MultiplayerGame::step(float time)
 
 		if (time_stale > timeout)
 		{
-			// TODO assume we lost connection
+			messages.add("Disconnected from server: server timed out", Message::Severity::CRITICAL);
+			disconnect();
 		}
 		else if (poll_pause >= polling)
 		{
-			socket.send(*pending, server_ip, server_port);
+			send_pending();
 			poll_pause -= polling;
 		}
 	}
+}
+
+void MultiplayerGame::send_pending()
+{
+	if (pending == nullptr)
+		cerr << "Attempt to send null packet!\n";
+	else
+		socket.send(*pending, server_ip, server_port);
+}
+
+void MultiplayerGame::set_pending(sf::Uint8 type)
+{
+	clear_pending(true);
+	pending = new sf::Packet;
+	(*pending) << type << id;
+	pending_type = type;
+}
+
+void MultiplayerGame::clear_pending(bool force)
+{
+	if (pending == nullptr)
+	{
+		if (!force)
+			cerr << "Attempt to clear null packet!\n";
+	}
+	else
+	{
+		delete pending;
+		pending = nullptr;
+	}
+
+	pending_type = 255;
+
+	time_stale = 0.f;
+	poll_pause = 0.f;
 }
 
 void MultiplayerGame::ready()
@@ -539,10 +572,9 @@ void MultiplayerGame::ready()
 		{
 			is_ready = !is_ready;
 
-			sf::Packet ready_msg;
-			ready_msg << cl_ready << id << is_ready;
-
-			set_ack(ready_msg, sv_peel);
+			set_pending(cl_ready);
+			(*pending) << is_ready;
+			send_pending();
 
 			if (is_ready)
 				messages.add("You are ready", Message::Severity::LOW);
@@ -562,11 +594,62 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 	switch (type)
 	{
-		case sv_connect:
-			messages.add("Connected...", Message::Severity::CRITICAL);
-			connected = true;
-			// TODO what to do with player count?
+		case sv_info:
+		{
+			if (!connected)
+			{
+				messages.add("Connected...", Message::Severity::CRITICAL);
+				connected = true;
+
+				// want more responsiveness from server
+				timeout = 5.f;
+				polling = 0.5f;
+
+				clear_pending();
+			}
+
+			string uuid;
+			sf::Uint8 event;
+			packet >> uuid >> event;
+
+			if (uuid == id)
+			{
+				if (!playing) // we might be sending ready packets
+					if ((is_ready && event == 2) || (!is_ready && event == 3)) // server acknowledged ready status
+						clear_pending();
+			}
+			else
+			{
+				string name;
+				packet >> name;
+				// TODO keep track of other players
+
+				switch (event)
+				{
+					case 0: // joining
+						messages.add(name + " joined the game", Message::Severity::LOW);
+						break;
+					case 1: // leaving
+						messages.add(name + " left the game", Message::Severity::LOW);
+						break;
+					case 2: // ready
+						messages.add(name + " is ready to play", Message::Severity::LOW);
+						break;
+					case 3: // not ready
+						messages.add(name + " is not ready", Message::Severity::LOW);
+						break;
+					default:
+						// just ignore it
+						break;
+				}
+			}
+
+			// acknowledge
+			sf::Packet ack;
+			ack << cl_ack << id;
+			socket.send(ack, server_ip, server_port);
 			break;
+		}
 		case sv_disconnect:
 		{
 			sf::Uint8 reason;
@@ -594,7 +677,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					message.append("unknown reason");
 			}
 
-			connected = false;
+			disconnect();
 			messages.add(message, Message::Severity::CRITICAL);
 			break;
 		}
@@ -606,16 +689,25 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			dictionary[word] = valid;
 
-			// TODO use one packet for word check to work better with ACK
-			// if we still need the result for this word
-			if (lookup_words.count(word))
+			// if this is the word we requested
+			if (pending_type == cl_check && lookup_words.begin()->first == word)
 			{
 				if (!valid)
 					bad_words[word] = lookup_words[word];
 
 				lookup_words.erase(word);
 
-				if (lookup_words.size() == 0)
+				if (lookup_words.size() > 0)
+				{
+					// TODO DRY off
+					gridword_map::iterator next_word = lookup_words.begin();
+					cerr << "Requesting lookup of " << next_word->first << endl;
+					set_pending(cl_check);
+					(*pending) << next_word->first;
+
+					send_pending();
+				}
+				else
 					resolve_peel();
 			}
 
@@ -630,8 +722,20 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			packet >> got_peel >> remaining >> peeler_id >> letters;
 
+			// acknowledge
+			sf::Packet ack;
+			ack << cl_ack << id;
+			socket.send(ack, server_ip, server_port);
+
 			if (got_peel == peel_n + 1)
 			{
+				// if we're trying to peel, this means it worked
+				if (pending_type == cl_peel)
+				{
+					clear_pending();
+					waiting = false;
+				}
+
 				// first peel is special
 				if (got_peel == 0)
 				{
@@ -669,14 +773,20 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 		}
 		case sv_dump:
 		{
-			string letters;
-			packet >> letters;
+			if (pending_type == cl_dump)
+			{
+				string letters;
+				packet >> letters;
 
-			for (unsigned int i = 0; i < letters.size(); i++)
-				hand.add_tile(new Tile(letters[i]));
+				for (unsigned int i = 0; i < letters.size(); i++)
+					hand.add_tile(new Tile(letters[i]));
 
-			if (letters.size() == 1)
-				messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
+				if (letters.size() == 1)
+					messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
+
+				clear_pending();
+				waiting = false;
+			}
 
 			break;
 		}
@@ -711,20 +821,26 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 void MultiplayerGame::dump()
 {
-	// TODO don't allow if still waiting for peel?
-	Tile* dumped {grid.remove(cursor.get_pos())};
-	if (dumped == nullptr)
+	Tile* selected {grid.get(cursor.get_pos())};
+	if (selected == nullptr)
 	{
 		messages.add("You need to select a tile to dump.", Message::Severity::LOW);
 		return;
 	}
+	else if (waiting)
+	{
+		messages.add("Waiting for server response. You cannot dump now.", Message::Severity::HIGH);
+		return;
+	}
 
-	sf::Packet dump_request;
-	dump_request << cl_dump << id << sf::Int8(dumped->ch());
+	selected = grid.remove(cursor.get_pos());
+	set_pending(cl_dump);
+	(*pending) << sf::Int8(selected->ch());
+	send_pending();
 
-	set_ack(dump_request, sv_dump);
+	waiting = true;
 
-	delete dumped;
+	delete selected;
 }
 
 // called once all words from peel have been looked up
@@ -742,6 +858,8 @@ bool MultiplayerGame::resolve_peel()
 				grid.bad_word(pos[0], pos[1], pos[2]);
 		}
 
+		waiting = false;
+
 		return false;
 	}
 
@@ -750,16 +868,23 @@ bool MultiplayerGame::resolve_peel()
 
 	cerr << "No incorrect words. Requesting peel " << (int)next_peel << endl;
 
-	sf::Packet finished_peel;
-	finished_peel << cl_peel << id << next_peel;
+	set_pending(cl_peel);
+	(*pending) << next_peel;
+	send_pending();
 
-	set_ack(finished_peel, sv_peel);
+	waiting = true;
 
 	return true;
 }
 
 bool MultiplayerGame::peel()
 {
+	if (waiting)
+	{
+		messages.add("Waiting for server response. You cannot peel now.", Message::Severity::HIGH);
+		return false;
+	}
+
 	lookup_words.clear();
 	bad_words.clear();
 
@@ -780,13 +905,14 @@ bool MultiplayerGame::peel()
 
 	if (lookup_words.size() > 0)
 	{
-		for (auto& word : lookup_words)
-		{
-			cerr << "Requesting lookup of " << word.first << endl;
-			sf::Packet lookup;
-			lookup << cl_check << id << word.first;
-			socket.send(lookup, server_ip, server_port);
-		}
+		gridword_map::iterator next_word = lookup_words.begin();
+		cerr << "Requesting lookup of " << next_word->first << endl;
+		set_pending(cl_check);
+		(*pending) << next_word->first;
+
+		send_pending();
+
+		waiting = true;
 
 		return false;
 	}
@@ -795,16 +921,15 @@ bool MultiplayerGame::peel()
 	return resolve_peel();
 }
 
+void MultiplayerGame::disconnect()
+{
+	connected = false;
+	playing = false;
+	clear_pending(true);
+}
+
 // TODO need display for other players, letters remaining, etc.
 void MultiplayerGame::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const
 {
 	Game::draw_on(window, grid_view, gui_view);
-}
-
-void MultiplayerGame::set_ack(sf::Packet& packet, sf::Uint8 response)
-{
-	if (ack != nullptr)
-		delete ack;
-
-	ack = new Acket(socket, server_ip, server_port, packet, response);
 }

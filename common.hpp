@@ -21,6 +21,7 @@ static const sf::Uint8 sv_info       {1};
 static const sf::Uint8 sv_check      {2};
 static const sf::Uint8 sv_dump       {3};
 static const sf::Uint8 sv_peel       {4};
+static const sf::Uint8 sv_done       {5};
 
 // insert x into list l at a random position
 template <class T>
