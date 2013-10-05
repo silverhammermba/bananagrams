@@ -38,7 +38,7 @@ public:
 		return peel_number;
 	}
 
-	std::string dump(char chr);
+	std::string dump(const std::string& id, const sf::Int16& dump_n, char chr);
 
 	bool add_player(const std::string& id, Player& player);
 	bool remove_player(const std::string& id);

@@ -1,12 +1,12 @@
 #include "server.hpp"
 
-Player::Player(const sf::IpAddress& _ip)
-	: ip {_ip}
+Player::Player(const sf::IpAddress& _ip, const std::string& _name)
+	: ip {_ip}, name {_name}
 {
 }
 
-sf::Packet& operator >>(sf::Packet& packet, Player& player)
+void Player::add_dump(const std::string& letters)
 {
-	packet >> player.name;
-	return packet;
+	dumps.push_back(letters);
+	// TODO add letters to hand as well
 }

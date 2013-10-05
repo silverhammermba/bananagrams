@@ -206,46 +206,54 @@ int main(int argc, char* argv[])
 					break;
 				}
 
-				if (game->is_full())
-				{
-					sf::Packet sorry;
-					sorry << sv_disconnect << sf::Uint8(1);
-					socket.send(sorry, client_ip, client_port);
+				std::string name;
+				packet >> name;
 
-					cout << "\nclient failed to join"
-						    "\n\tGame full";
-					cout.flush();
-					break;
+				// if it is an unknown player
+				if (game->get_players().count(id) == 0)
+				{
+					if (game->is_full())
+					{
+						sf::Packet sorry;
+						sorry << sv_disconnect << sf::Uint8(1);
+						socket.send(sorry, client_ip, client_port);
+
+						cout << "\nclient failed to join"
+								"\n\tGame full";
+						cout.flush();
+						break;
+					}
+
+					if (game->in_progress())
+					{
+						sf::Packet sorry;
+						sorry << sv_disconnect << sf::Uint8(3);
+						socket.send(sorry, client_ip, client_port);
+
+						cout << "\nclient failed to join"
+								"\n\tGame already started";
+						cout.flush();
+						break;
+					}
+
+					game->add_player(id, client_ip, name);
 				}
 
-				if (game->in_progress())
-				{
-					sf::Packet sorry;
-					sorry << sv_disconnect << sf::Uint8(3);
-					socket.send(sorry, client_ip, client_port);
+				sf::Packet join;
+				join << sv_info << id << sf::Uint8(0) << name;
+				for (auto& player : game->get_players())
+					socket.send(join, player.get_ip(), client_port);
 
-					cout << "\nclient failed to join"
-						    "\n\tGame already started";
-					cout.flush();
-					break;
-				}
-
-				Player player(client_ip);
-				packet >> player;
-
-				if (game->add_player(id, player))
-				{
-					sf::Packet accept;
-					accept << sv_connect << sf::Uint8(game->get_players().size() - 1);
-					socket.send(accept, player.get_ip(), client_port);
-				}
 				break;
 			}
 			case cl_disconnect:
 			{
 				if (game->remove_player(id))
 				{
-					// TODO notify other players of disconnect/victory
+					sf::Packet leave;
+					leave << sv_info << id << sf::Uint8(1);
+					for (auto& player : game->get_players())
+						socket.send(leave, player.get_ip(), client_port);
 				}
 				break;
 			}
@@ -254,9 +262,13 @@ int main(int argc, char* argv[])
 				bool ready;
 				packet >> ready;
 
-				game->set_ready(id, ready);
-
-				// TODO notify players of ready status
+				if (game->set_ready(id, ready))
+				{
+					sf::Packet rdy;
+					rdy << sv_info << id << (ready ? sf::Uint8(2) : sf::Uint8(3));
+					for (auto& player : game->get_players())
+						socket.send(rdy, player.get_ip(), client_port);
+				}
 				break;
 			}
 			case cl_check:
@@ -273,16 +285,17 @@ int main(int argc, char* argv[])
 			}
 			case cl_dump:
 			{
-				sf::Int8 chr;
-				packet >> chr;
+				if (game->has_player(id))
+				{
+					sf::Int16 dump_n;
+					sf::Int8 chr;
+					packet >> dump_n >> chr;
 
-				cout << endl << players[id].get_name() << " dumped " << chr;
-				cout.flush();
+					sf::Packet dump;
+					dump << sv_dump << dump_n << game->dump(id, dump_n, chr);
 
-				sf::Packet dump;
-				dump << sv_dump << game->dump(id, chr);
-
-				socket.send(dump, client_ip, client_port);
+					socket.send(dump, client_ip, client_port);
+				}
 
 				break;
 			}

@@ -586,7 +586,6 @@ void MultiplayerGame::ready()
 		messages.add("You are not connected to the server!", Message::Severity::HIGH);
 }
 
-// TODO probably need to totally redo to remove acket shit
 void MultiplayerGame::process_packet(sf::Packet& packet)
 {
 	sf::Uint8 type;
@@ -835,7 +834,7 @@ void MultiplayerGame::dump()
 
 	selected = grid.remove(cursor.get_pos());
 	set_pending(cl_dump);
-	(*pending) << sf::Int8(selected->ch());
+	(*pending) << ++dump_n << sf::Int8(selected->ch());
 	send_pending();
 
 	waiting = true;

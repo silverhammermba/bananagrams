@@ -12,14 +12,16 @@ Game::Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _playe
 			random_insert(bunch, ch);
 }
 
-bool Game::add_player(const string& id, Player& player)
+bool Game::add_player(const string& id, const sf::IpAddress& ip, const std::string& name)
 {
 	if (!playing && players.count(id) == 0)
 	{
-		players[id] = player;
+		players[id] = Player(ip, name);
 
-		cout << "\n" << player.get_name() << " has joined the game";
+		cout << "\n" << name << " has joined the game";
 		cout.flush();
+
+		return true;
 	}
 	else
 		return false;
@@ -58,19 +60,27 @@ void Game::set_ready(const string& id, bool ready)
 	}
 }
 
-string Game::dump(const string& id, char chr)
+// must be called with valid id and valid dump
+string Game::dump(const string& id, const sf::Int16& dump_n, char chr)
 {
+	// old dump, return stored letters
+	if (dump_n < players[id].get_dumps().size())
+		return players[id].get_dumps()[dump_n];
+
 	string letters;
+
+	cout << endl << players[id].get_name() << " dumped " << chr;
+	cout.flush();
 
 	if (playing && bunch.size() >= 3)
 	{
 		// take three
 		for (unsigned int i = 0; i < 3; i++)
 		{
-			// TODO give letters to player
 			letters.append(1, bunch.back());
 			bunch.pop_back();
 		}
+		players[id].add_dump(letters);
 
 		random_insert(bunch, (char)chr);
 	}

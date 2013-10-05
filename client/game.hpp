@@ -109,6 +109,8 @@ class MultiplayerGame : public Game
 	sf::Int16 peel_n {-1};
 	std::map<std::string, bool> dictionary;
 
+	sf::Int16 dump_n {-1};
+
 	sf::Packet* pending = nullptr;
 	sf::Uint8 pending_type = 255;
 public:
