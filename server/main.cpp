@@ -364,6 +364,7 @@ int main(int argc, char* argv[])
 
 				break;
 			}
+			// TODO need to handle acks for peels/splits
 			default:
 				cout << "\nUnrecognized packet type: " << (int)type;
 				cout.flush();

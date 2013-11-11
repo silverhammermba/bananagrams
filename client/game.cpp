@@ -689,7 +689,8 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			dictionary[word] = valid;
 
 			// if this is the word we requested
-			if (pending_type == cl_check && lookup_words.begin()->first == word)
+			// TODO if words are spelled wrong, gets into weird loop where client thinks it times out
+			if (pending_type == cl_check && lookup_words.size() > 0 && lookup_words.begin()->first == word)
 			{
 				if (!valid)
 					bad_words[word] = lookup_words[word];
@@ -723,6 +724,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			// acknowledge
 			sf::Packet ack;
+			// TODO too many acks in general. only need to ack peels and splits
 			ack << cl_ack << id;
 			socket.send(ack, server_ip, server_port);
 
