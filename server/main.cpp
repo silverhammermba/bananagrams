@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
 	// TODO catch failure
 	socket.bind(server_port);
 
-	game = new Game(socket, b_num, b_den, max_players);
+	game = new Game(b_num, b_den, max_players);
 
 	cout << "\nWaiting for players to join...";
 	cout.flush();
@@ -186,6 +186,10 @@ int main(int argc, char* argv[])
 		// every client packet starts with a type and player id
 		packet >> type;
 		packet >> id;
+
+		// only process packets if we know the player or they're connecting
+		if (type != cl_connect && !game->has_player(id))
+			continue;
 
 		// TODO send player info packets
 		switch(type)
@@ -210,7 +214,7 @@ int main(int argc, char* argv[])
 				packet >> name;
 
 				// if it is an unknown player
-				if (game->get_players().count(id) == 0)
+				if (!game->has_player(id))
 				{
 					if (game->is_full())
 					{
@@ -237,24 +241,31 @@ int main(int argc, char* argv[])
 					}
 
 					game->add_player(id, client_ip, name);
+
+					cout << "\n" << name << " has joined the game";
+					cout.flush();
 				}
 
+				// let everyone know about the connection
 				sf::Packet join;
 				join << sv_info << id << sf::Uint8(0) << name;
-				for (auto& player : game->get_players())
-					socket.send(join, player.get_ip(), client_port);
+				for (const auto& pair : game->get_players())
+					socket.send(join, pair.second.get_ip(), client_port);
 
 				break;
 			}
 			case cl_disconnect:
 			{
-				if (game->remove_player(id))
-				{
-					sf::Packet leave;
-					leave << sv_info << id << sf::Uint8(1);
-					for (auto& player : game->get_players())
-						socket.send(leave, player.get_ip(), client_port);
-				}
+				cout << "\n" << game->get_player_name(id) << " has left the game";
+				cout.flush();
+
+				game->remove_player(id);
+
+				sf::Packet leave;
+				leave << sv_info << id << sf::Uint8(1);
+				for (const auto& pair : game->get_players())
+					socket.send(leave, pair.second.get_ip(), client_port);
+
 				break;
 			}
 			case cl_ready:
@@ -262,13 +273,13 @@ int main(int argc, char* argv[])
 				bool ready;
 				packet >> ready;
 
-				if (game->set_ready(id, ready))
-				{
-					sf::Packet rdy;
-					rdy << sv_info << id << (ready ? sf::Uint8(2) : sf::Uint8(3));
-					for (auto& player : game->get_players())
-						socket.send(rdy, player.get_ip(), client_port);
-				}
+				game->set_ready(id, ready);
+
+				sf::Packet rdy;
+				rdy << sv_info << id << (ready ? sf::Uint8(2) : sf::Uint8(3));
+				for (const auto& pair : game->get_players())
+					socket.send(rdy, pair.second.get_ip(), client_port);
+
 				break;
 			}
 			case cl_check:
@@ -285,14 +296,21 @@ int main(int argc, char* argv[])
 			}
 			case cl_dump:
 			{
-				if (game->has_player(id))
-				{
-					sf::Int16 dump_n;
-					sf::Int8 chr;
-					packet >> dump_n >> chr;
+				sf::Int16 dump_n;
+				sf::Int8 chr;
+				packet >> dump_n >> chr;
 
+				if (game->check_dump(id, dump_n))
+				{
 					sf::Packet dump;
-					dump << sv_dump << dump_n << game->dump(id, dump_n, chr);
+
+					string letters = game->dump(id, dump_n, chr);
+
+					cout << endl << game->get_player_name(id) << " dumped " << chr
+					     << "\n\tand received " << letters;
+					cout.flush();
+
+					dump << sv_dump << dump_n << letters;
 
 					socket.send(dump, client_ip, client_port);
 				}
@@ -304,17 +322,20 @@ int main(int argc, char* argv[])
 				sf::Int16 client_peel;
 				packet >> client_peel;
 
-				if (game->peel(id, client_peel))
+				if (game->check_peel(client_peel))
 				{
-					if (game->is_over())
+					cout << "\n" << game->get_player_name(id) << " peeled (" << (int)client_peel << ")";
+
+					if (game->peel())
 					{
-						string winner {game->winner()};
+						cout << "\n" << game->get_player_name(id) << " has won the game!";
+						cout.flush();
 
 						// send victory notification
 						for (const auto& pair : game->get_players())
 						{
 							sf::Packet win;
-							win << sv_done << sf::Uint8(1) << winner;
+							win << sv_done << sf::Uint8(1) << id;
 							socket.send(win, pair.second.get_ip(), client_port);
 						}
 					}
@@ -323,16 +344,22 @@ int main(int argc, char* argv[])
 						// send each player a new letter
 						for (const auto& pair : game->get_players())
 						{
-							string letter = game->next_letter();
+							string letter;
+							letter.append(1, pair.second.last_peel());
 
 							cout << "\n" << "Sending " << pair.second.get_name() << " " << letter;
 							cout.flush();
 
 							sf::Packet peel;
-							peel << sv_peel << sf::Int16(game->current_peel()) << remaining << id << letter;
+							peel << sv_peel << sf::Int16(game->current_peel()) << game->get_remaining() << id << letter;
 							socket.send(peel, pair.second.get_ip(), client_port);
 						}
 					}
+				}
+				else
+				{
+					cout << "\nPeel out of order: got " << (int)client_peel << ", expected " << (int)(game->get_peel() + 1);
+					cout.flush();
 				}
 
 				break;
@@ -342,19 +369,28 @@ int main(int argc, char* argv[])
 				cout.flush();
 		}
 
-		for (const auto& pair : players)
+		if (game->should_start())
 		{
-			// TODO something like this, take letters, make acket, blah
-			pair.second.send_peel();
+			cout << "\nStarting game";
 
-			cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
+			game->start();
+
+			sf::Int16 remaining = game->get_remaining();
+
+			for (const auto& pair : game->get_players())
+			{
+				// TODO resend peel packets until ACK
+				std::string letters = pair.second.get_hand_str();
+
+				cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
+
+				sf::Packet peel;
+				peel << sv_peel << sf::Int16(0) << remaining << pair.first << letters;
+				socket.send(peel, pair.second.get_ip(), client_port);
+			}
+
 			cout.flush();
-
-			sf::Packet peel;
-			peel << sv_peel << sf::Int16(peel_n) << remaining << pair.first << letters;
-			socket.send(peel, pair.second.get_ip(), client_port);
 		}
-
 	}
 
 	return 0;

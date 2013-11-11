@@ -1,7 +1,5 @@
 #include "server.hpp"
 
-using std::cout;
-using std::endl;
 using std::string;
 
 Game::Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _player_limit)
@@ -12,139 +10,79 @@ Game::Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _playe
 			random_insert(bunch, ch);
 }
 
-bool Game::add_player(const string& id, const sf::IpAddress& ip, const std::string& name)
+void Game::add_player(const string& id, const sf::IpAddress& ip, const string& name)
 {
-	if (!playing && players.count(id) == 0)
-	{
-		players[id] = Player(ip, name);
-
-		cout << "\n" << name << " has joined the game";
-		cout.flush();
-
-		return true;
-	}
-	else
-		return false;
+	players[id] = Player(ip, name);
 }
 
-bool Game::remove_player(const string& id)
+void Game::remove_player(const string& id)
 {
-	if (players.count(id) > 0)
-	{
-		cout << "\n" << players[id].get_name() << " has left the game";
-		cout.flush();
-		players.erase(id);
+	bunch.splice(bunch.end(), players[id].get_hand());
 
-		if (playing)
-		{
-			// TODO add player's letters back to bunch
-		}
-		else
-			try_to_start();
-	}
-	else
-		return false;
+	players.erase(id);
+
+	if (!playing)
+		try_to_start();
 }
 
 void Game::set_ready(const string& id, bool ready)
 {
 	if (!playing)
 	{
-		if (players.count(id) > 0)
-		{
-			players[id].ready = ready;
+		players[id].ready = ready;
 
-			if (ready)
-				try_to_start();
-		}
+		if (ready)
+			try_to_start();
 	}
 }
 
-// must be called with valid id and valid dump
+// XXX assumes dump is valid!
 string Game::dump(const string& id, const sf::Int16& dump_n, char chr)
 {
-	// old dump, return stored letters
-	if (dump_n < players[id].get_dumps().size())
-		return players[id].get_dumps()[dump_n];
-
-	string letters;
-
-	cout << endl << players[id].get_name() << " dumped " << chr;
-	cout.flush();
-
-	if (playing && bunch.size() >= 3)
+	if (dump_n == players[id].get_dump() - 1)
+		return players[id].last_dump();
+	else if (dump_n == players[id].get_dump())
 	{
-		// take three
-		for (unsigned int i = 0; i < 3; i++)
+		string letters;
+
+		if (bunch.size() >= 3)
 		{
-			letters.append(1, bunch.back());
-			bunch.pop_back();
+			// take three
+			for (unsigned int i = 0; i < 3; i++)
+			{
+				letters.append(1, bunch.back());
+				bunch.pop_back();
+			}
+			players[id].give_dump(letters);
+
+			random_insert(bunch, (char)chr);
 		}
-		players[id].add_dump(letters);
-
-		random_insert(bunch, (char)chr);
-	}
-	else
-	{
-		letters.append(1, (char)chr);
-
-		if (playing)
-			cout << "\n\tNot enough letters left for dump";
 		else
-			cout << "\n\tDump received before game started";
+			letters.append(1, (char)chr);
 
-		cout.flush();
+		return letters;
 	}
 
-	return letters;
+	// XXX should never get here!!!
+	return "";
 }
 
-// TODO fucking sloppy. three different conditions to report in one function
-bool Game::peel(const string& id, sf::Int16 number, bool& success, bool& victory)
+// XXX assumes peeling is valid. returns true if game has ended
+bool Game::peel()
 {
-
-	// if game hasn't started or invalid player id
-	if (!playing || players.count(id) == 0)
-		return false;
-
-	// if this is the correct peel number
-	if (number == peel_number + 1)
-	{
-		remaining -= players.size();
-
-		// if there aren't enough letters left
-		if (remaining < 0)
-		{
-			winner = id;
-
-			cout << "\n" << players[id].get_name() << " has won the game!";
-			cout.flush();
-
-			return true;
-		}
-
-		++peel_number;
-		cout << "\n" << players[id].get_name() << " peeled (" << (int)peel_number << ")";
-		cout.flush();
-
+	// if there aren't enough letters left
+	if (bunch.size() < players.size())
 		return true;
-	}
-	else
+
+	++peel_number;
+
+	for (auto& pair : players)
 	{
-		cout << "\nPeel out of order: got " << (int)client_peel << ", expected " << (int)(peel_number + 1);
-		cout.flush();
-
-		return false;
+		pair.second.give_peel(bunch.back());
+		bunch.pop_back();
 	}
-}
 
-string Game::next_letter()
-{
-	string letter;
-	letter.append(1, bunch.back());
-	bunch.pop_back();
-
-	return letter;
+	return false;
 }
 
 void Game::try_to_start()
@@ -162,28 +100,25 @@ void Game::try_to_start()
 		if (!pair.second.ready)
 			return;
 
-	cout << "\nStarting game";
-	cout.flush();
+	must_start = true;
+}
 
+void Game::start()
+{
+	must_start = false;
 	playing = true;
 
-	// TODO determine number of letters based on bunch size/player number
-	sf::Int16 remaining = bunch.size() - 21 * players.size();
+	unsigned int num_letters = 21; // TODO calculate
 
-	for (const auto& pair : players)
+	for (auto& pair : players)
 	{
 		string letters;
-		for (unsigned int i = 0; i < 21; i++)
+		for (unsigned int i = 0; i < num_letters; ++i)
 		{
 			letters.append(1, bunch.back());
 			bunch.pop_back();
 		}
 
-		cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
-		cout.flush();
-
-		sf::Packet peel;
-		peel << sv_peel << sf::Int16(peel_n) << remaining << pair.first << letters;
-		socket.send(peel, pair.second.get_ip(), client_port);
+		pair.second.give_split(letters);
 	}
 }
