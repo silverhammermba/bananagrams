@@ -686,10 +686,11 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			bool valid;
 			packet >> word >> valid;
 
+			cerr << word << " is " << (valid? "" : "not ") << "valid\n";
+
 			dictionary[word] = valid;
 
 			// if this is the word we requested
-			// TODO if words are spelled wrong, gets into weird loop where client thinks it times out
 			if (pending_type == cl_check && lookup_words.size() > 0 && lookup_words.begin()->first == word)
 			{
 				if (!valid)
@@ -708,7 +709,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					send_pending();
 				}
 				else
+				{
+					clear_pending(true);
 					resolve_peel();
+				}
 			}
 
 			break;
