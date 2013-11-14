@@ -266,6 +266,8 @@ int main(int argc, char* argv[])
 				for (const auto& pair : game->get_players())
 					socket.send(leave, pair.second.get_ip(), client_port);
 
+				// TODO end game if now below limit
+
 				break;
 			}
 			case cl_ready:

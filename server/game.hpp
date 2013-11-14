@@ -26,7 +26,7 @@ public:
 		return players.at(id).get_name();
 	}
 
-	inline unsigned int get_remaining() const
+	inline sf::Int16 get_remaining() const
 	{
 		return bunch.size();
 	}
