@@ -778,20 +778,31 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 		}
 		case sv_dump:
 		{
+			sf::Int16 dump_num;
+			packet >> dump_num;
+
+			// if we dumped and this is the right number
 			if (pending_type == cl_dump)
 			{
-				string letters;
-				packet >> letters;
+				if (dump_num == dump_n)
+				{
+					string letters;
+					packet >> letters;
 
-				for (unsigned int i = 0; i < letters.size(); i++)
-					hand.add_tile(new Tile(letters[i]));
+					for (unsigned int i = 0; i < letters.size(); i++)
+						hand.add_tile(new Tile(letters[i]));
 
-				if (letters.size() == 1)
-					messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
+					if (letters.size() == 1)
+						messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
 
-				clear_pending();
-				waiting = false;
+					clear_pending();
+					waiting = false;
+				}
+				else
+					cerr << "Got dump " << (int)(dump_num) << " but expected " << (int)dump_n << endl;
 			}
+			else
+				cerr << "Received unexpected dump.\n";
 
 			break;
 		}
