@@ -793,11 +793,11 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 				++peel_n;
 				if (peeler_id != id)
-					// TODO get proper name and shit
-					messages.add(peeler_id + ": PEEL!", Message::Severity::HIGH);
+					// TODO this doesn't work
+					messages.add(players.at(peeler_id).get_name() + ": PEEL!", Message::Severity::HIGH);
 
-				if (remaining == 1)
-					messages.add("1 letter remains", Message::Severity::LOW);
+				if (remaining < players.size())
+					messages.add("Final peel!", Message::Severity::HIGH);
 				else
 				{
 					std::stringstream rem;
