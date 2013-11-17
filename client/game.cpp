@@ -887,6 +887,12 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 void MultiplayerGame::dump()
 {
+	if (!connected)
+	{
+		messages.add("You are not connected to the server!", Message::Severity::HIGH);
+		return;
+	}
+
 	Tile* selected {grid.get(cursor.get_pos())};
 	if (selected == nullptr)
 	{
@@ -945,6 +951,12 @@ bool MultiplayerGame::resolve_peel()
 
 bool MultiplayerGame::peel()
 {
+	if (!connected)
+	{
+		messages.add("You are not connected to the server!", Message::Severity::HIGH);
+		return;
+	}
+
 	if (waiting)
 	{
 		messages.add("Waiting for server response. You cannot peel now.", Message::Severity::HIGH);
