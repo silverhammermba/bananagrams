@@ -161,8 +161,8 @@ int main(int argc, char* argv[])
 	cout << dictionary.size() << " words found";
 	cout.flush();
 
-	// TODO srand
 	// LET'S GO!!!
+	std::srand(std::time(nullptr));
 
 	// TODO catch failure
 	socket.bind(server_port);
@@ -524,8 +524,6 @@ int main(int argc, char* argv[])
 			else
 				cout << game->get_player_name(peeler) << ": Peel!";
 
-			peeler.clear();
-
 			// if victory
 			if (game->peel())
 				game->winner = peeler;
@@ -549,6 +547,8 @@ int main(int argc, char* argv[])
 					game->wait();
 				}
 			}
+
+			peeler.clear();
 
 			cout.flush();
 		}
