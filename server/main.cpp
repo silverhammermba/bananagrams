@@ -234,8 +234,8 @@ int main(int argc, char* argv[])
 					sorry << sv_disconnect << sf::Uint8(0);
 					socket.send(sorry, client_ip, client_port);
 
-					cout << "\nclient failed to join"
-					        "\n\tNeed protocol version " << (int)protocol_version << ", got " << (int)version;
+					cout << "\nclient failed to join: "
+					        "need protocol version " << (int)protocol_version << ", got " << (int)version;
 					cout.flush();
 					break;
 				}
@@ -252,8 +252,7 @@ int main(int argc, char* argv[])
 						sorry << sv_disconnect << sf::Uint8(1);
 						socket.send(sorry, client_ip, client_port);
 
-						cout << "\nclient failed to join"
-						        "\n\tGame full";
+						cout << "\nclient failed to join: game full";
 						cout.flush();
 						break;
 					}
@@ -264,8 +263,7 @@ int main(int argc, char* argv[])
 						sorry << sv_disconnect << sf::Uint8(3);
 						socket.send(sorry, client_ip, client_port);
 
-						cout << "\nclient failed to join"
-						        "\n\tGame already started";
+						cout << "\nclient failed to join: game already started";
 						cout.flush();
 						break;
 					}
@@ -368,7 +366,7 @@ int main(int argc, char* argv[])
 					string letters = game->dump(id, dump_n, chr);
 
 					cout << endl << game->get_player_name(id) << " dumped " << chr
-					     << "\n\tand received " << letters;
+					     << " and received " << letters;
 					cout.flush();
 
 					dump << sv_dump << dump_n << letters;
@@ -391,7 +389,7 @@ int main(int argc, char* argv[])
 						peeler = id;
 					else
 					{
-						cout << "\n" << game->get_player_name(id) << " peeled too. Waiting on some players...";
+						cout << "\n" << game->get_player_name(id) << " also peeled. Waiting on some players...";
 						cout.flush();
 					}
 				}
