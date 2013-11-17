@@ -352,7 +352,7 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					cout << "\nPeel out of order: got " << (int)client_peel << ", expected " << (int)(game->get_peel() + 1);
+					cout << "\nPeel out of order: got " << (int)client_peel << ", expected " << (int)game->get_peel();
 					cout.flush();
 				}
 
@@ -445,7 +445,7 @@ int main(int argc, char* argv[])
 					cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
 
 					sf::Packet peel;
-					peel << sv_peel << sf::Int16(0) << remaining << pair.first << letters;
+					peel << sv_peel << sf::Int16(game->get_peel() - 1) << remaining << pair.first << letters;
 
 					if (!pair.second.has_pending())
 						socket.send(peel, pair.second.get_ip(), client_port);

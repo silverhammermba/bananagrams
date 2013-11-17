@@ -61,11 +61,6 @@ public:
 		waiting = false;
 	}
 
-	inline const sf::Int16& current_peel() const
-	{
-		return peel_number;
-	}
-
 	inline bool check_dump(const std::string& id, const sf::Int16& dump_n) const
 	{
 		return (dump_n == players.at(id).get_dump() - 1) || (dump_n == players.at(id).get_dump());
@@ -73,7 +68,7 @@ public:
 
 	inline bool check_peel(const sf::Int16& number)
 	{
-		if (number == peel_number + 1)
+		if (number == peel_number)
 			ready_to_peel = true;
 		return ready_to_peel;
 	}
