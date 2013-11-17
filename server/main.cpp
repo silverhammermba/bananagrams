@@ -443,6 +443,8 @@ int main(int argc, char* argv[])
 			else
 				cout << game->get_player_name(peeler) << ": Peel!";
 
+			peeler.clear();
+
 			// if victory
 			if (game->peel())
 			{
