@@ -976,7 +976,7 @@ bool MultiplayerGame::peel()
 	if (!connected)
 	{
 		messages.add("You are not connected to the server!", Message::Severity::HIGH);
-		return;
+		return false;
 	}
 
 	if (waiting)
