@@ -10,9 +10,10 @@ Game::Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _playe
 			random_insert(bunch, ch);
 }
 
-void Game::add_player(const string& id, const sf::IpAddress& ip, const string& name)
+Player& Game::add_player(const string& id, const sf::IpAddress& ip, const string& name)
 {
 	players[id] = Player(ip, name);
+	return players[id];
 }
 
 void Game::remove_player(const string& id)

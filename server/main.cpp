@@ -164,16 +164,9 @@ int main(int argc, char* argv[])
 	// TODO srand
 	// LET'S GO!!!
 
-	// TODO for debugging
-	/*
-	auto it = bunch.begin();
-	for (unsigned int i = 0; i < 25; i++)
-		++it;
-	bunch.erase(it, bunch.end());
-	*/
-
 	// TODO catch failure
 	socket.bind(server_port);
+	socket.setBlocking(false);
 
 	sf::Clock timer;
 
@@ -185,10 +178,38 @@ int main(int argc, char* argv[])
 	cout.flush();
 	while (true)
 	{
+		float elapsed = timer.getElapsedTime().asSeconds();
+		timer.restart();
+
+		// send pending packets
+		for (auto& pair : game->get_players())
+		{
+			if (pair.second.has_pending())
+			{
+				pair.second.step(elapsed);
+
+				if (pair.second.get_timeout() > 5.f)
+				{
+					cout << endl << pair.second.get_name() << " timed out";
+					cout.flush();
+					game->remove_player(pair.first);
+				}
+				else if (pair.second.poll > 0.5f)
+				{
+					pair.second.poll -= 0.5f;
+					sf::Packet pending(pair.second.get_pending());
+					socket.send(pending, pair.second.get_ip(), client_port);
+				}
+			}
+		}
+
+		// get new packets
 		sf::Packet packet;
 		sf::IpAddress client_ip;
 		unsigned short client_port;
-		socket.receive(packet, client_ip, client_port);
+
+		if (socket.receive(packet, client_ip, client_port) != sf::Socket::Status::Done)
+			continue;
 
 		sf::Uint8 type;
 		std::string id;
@@ -214,7 +235,7 @@ int main(int argc, char* argv[])
 					socket.send(sorry, client_ip, client_port);
 
 					cout << "\nclient failed to join"
-						    "\n\tNeed protocol version " << (int)protocol_version << ", got " << (int)version;
+					        "\n\tNeed protocol version " << (int)protocol_version << ", got " << (int)version;
 					cout.flush();
 					break;
 				}
@@ -232,7 +253,7 @@ int main(int argc, char* argv[])
 						socket.send(sorry, client_ip, client_port);
 
 						cout << "\nclient failed to join"
-								"\n\tGame full";
+						        "\n\tGame full";
 						cout.flush();
 						break;
 					}
@@ -244,7 +265,7 @@ int main(int argc, char* argv[])
 						socket.send(sorry, client_ip, client_port);
 
 						cout << "\nclient failed to join"
-								"\n\tGame already started";
+						        "\n\tGame already started";
 						cout.flush();
 						break;
 					}
@@ -260,17 +281,29 @@ int main(int argc, char* argv[])
 						game->wait();
 					}
 
-					game->add_player(id, client_ip, name);
+					Player& new_player = game->add_player(id, client_ip, name);
+
+					// let new player know about all other players
+					for (auto& pair : game->get_players())
+					{
+						if (pair.first == id) continue;
+
+						sf::Packet join;
+						join << sv_info << pair.first << sf::Uint8(0) << pair.second.get_name();
+						if (!new_player.has_pending())
+							socket.send(join, client_ip, client_port);
+						new_player.add_pending(join);
+						game->wait();
+					}
 
 					cout << "\n" << name << " has joined the game";
 					cout.flush();
 				}
 
-				// by now they're definitely a player, confirm connection
+				// by now we know they are a player, ack connection
 				sf::Packet join;
 				join << sv_info << id << sf::Uint8(0) << name;
-				socket.send(join, game->get_players().at(id).get_ip(), client_port);
-				// TODO notify new players of existing players
+				socket.send(join, client_ip, client_port);
 
 				break;
 			}
@@ -399,27 +432,6 @@ int main(int argc, char* argv[])
 			default:
 				cout << "\nUnrecognized packet type: " << (int)type;
 				cout.flush();
-		}
-
-		// send pending packets
-		for (auto& pair : game->get_players())
-		{
-			float elapsed = timer.getElapsedTime().asSeconds();
-			timer.restart();
-
-			if (pair.second.has_pending())
-			{
-				pair.second.step(elapsed);
-
-				if (pair.second.get_timeout() > 5.f)
-					game->remove_player(pair.first);
-				else if (pair.second.poll > 0.5f)
-				{
-					pair.second.poll -= 0.5f;
-					sf::Packet pending(pair.second.get_pending());
-					socket.send(pending, pair.second.get_ip(), client_port);
-				}
-			}
 		}
 
 		// peel

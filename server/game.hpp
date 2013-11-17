@@ -80,7 +80,7 @@ public:
 
 	std::string dump(const std::string& id, const sf::Int16& dump_n, char chr);
 
-	void add_player(const std::string& id, const sf::IpAddress& ip, const std::string& name);
+	Player& add_player(const std::string& id, const sf::IpAddress& ip, const std::string& name);
 	void remove_player(const std::string& id);
 	void set_ready(const std::string& id, bool ready);
 	bool peel();
