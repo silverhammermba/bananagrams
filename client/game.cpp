@@ -517,6 +517,7 @@ void MultiplayerGame::step(float time)
 
 		if (time_stale > timeout)
 		{
+			// TODO sometimes this happens immediately after connecting...
 			messages.add("Disconnected from server: server timed out", Message::Severity::CRITICAL);
 			disconnect();
 		}
@@ -634,7 +635,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 							++ack_num;
 						}
 						else
+						{
 							cerr << "Redundant join for player: " << name << endl;
+							--ack_n;
+						}
 
 						// acknowledge
 						sf::Packet ack;
@@ -653,7 +657,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 							++ack_num;
 						}
 						else
+						{
 							cerr << "Disconnect for unknown player: " << id << endl;
+							--ack_n;
+						}
 
 						// acknowledge
 						sf::Packet ack;
@@ -818,7 +825,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				++ack_num;
 			}
 			else
+			{
 				cerr << "Peel out of order. Got " << (int)got_peel << ", expecting " << (int)(peel_n + 1);
+				--ack_n;
+			}
 
 			sf::Packet ack;
 			ack << cl_ack << id << ack_n;
@@ -861,6 +871,8 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			sf::Uint8 victory;
 			packet >> victory;
 
+			sf::Int16 ack_n = ack_num;
+
 			if (victory)
 			{
 				string winner_id;
@@ -869,14 +881,24 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				if (winner_id == id)
 					messages.add("You win!", Message::Severity::CRITICAL);
 				else
-					// TODO get proper name
-					messages.add(winner_id + " has won the game!", Message::Severity::CRITICAL);
+					messages.add(players.at(winner_id).get_name() + " has won the game!", Message::Severity::CRITICAL);
 			}
 			else
+				// TODO server reports normal victory when all other players leave
 				messages.add("You win! All other players have resigned.", Message::Severity::CRITICAL);
+
+			if (playing)
+				++ack_num;
+			else
+				--ack_n;
 
 			connected = false;
 			playing = false;
+
+			// acknowledge
+			sf::Packet ack;
+			ack << cl_ack << id << ack_n;
+			socket.send(ack, server_ip, server_port);
 
 			break;
 		}
