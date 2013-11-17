@@ -5,7 +5,8 @@ class Game
 	std::map<std::string, Player> players;
 	sf::Int16 peel_number {0};
 	bool playing {false};
-	bool must_start {false};
+	bool ready_to_peel {false}; // game is ready for next peel
+	bool waiting {false}; // waiting for clients to acknowledge critical server packets before next peel
 
 	void try_to_start();
 public:
@@ -16,7 +17,7 @@ public:
 		return players.count(id) != 0;
 	}
 
-	inline const std::map<std::string, Player>& get_players() const
+	inline std::map<std::string, Player>& get_players()
 	{
 		return players;
 	}
@@ -41,9 +42,23 @@ public:
 		return playing;
 	}
 
-	inline bool should_start() const
+	inline bool can_peel() const
 	{
-		return must_start;
+		return ready_to_peel && !waiting;
+	}
+
+	inline void wait()
+	{
+		waiting = true;
+	}
+
+	void check_waiting()
+	{
+		for (const auto& pair : players)
+			if (pair.second.has_pending())
+				return;
+
+		waiting = false;
 	}
 
 	inline const sf::Int16& current_peel() const
@@ -56,9 +71,11 @@ public:
 		return (dump_n == players.at(id).get_dump() - 1) || (dump_n == players.at(id).get_dump());
 	}
 
-	inline bool check_peel(const sf::Int16& number) const
+	inline bool check_peel(const sf::Int16& number)
 	{
-		return number == peel_number + 1;
+		if (number == peel_number + 1)
+			ready_to_peel = true;
+		return ready_to_peel;
 	}
 
 	inline const sf::Int16& get_peel() const
@@ -73,4 +90,5 @@ public:
 	void set_ready(const std::string& id, bool ready);
 	bool peel();
 	void start();
+	void got_ack(const std::string& id, const sf::Int16& ack_num) const;
 };

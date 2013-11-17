@@ -17,7 +17,8 @@ void Game::add_player(const string& id, const sf::IpAddress& ip, const string& n
 
 void Game::remove_player(const string& id)
 {
-	bunch.splice(bunch.end(), players[id].get_hand());
+	// TODO should randomly insert instead
+	bunch.splice(bunch.end(), players.at(id).get_hand());
 
 	players.erase(id);
 
@@ -29,7 +30,7 @@ void Game::set_ready(const string& id, bool ready)
 {
 	if (!playing)
 	{
-		players[id].ready = ready;
+		players.at(id).ready = ready;
 
 		if (ready)
 			try_to_start();
@@ -39,9 +40,9 @@ void Game::set_ready(const string& id, bool ready)
 // XXX assumes dump is valid!
 string Game::dump(const string& id, const sf::Int16& dump_n, char chr)
 {
-	if (dump_n == players[id].get_dump() - 1)
-		return players[id].last_dump();
-	else if (dump_n == players[id].get_dump())
+	if (dump_n == players.at(id).get_dump() - 1)
+		return players.at(id).last_dump();
+	else if (dump_n == players.at(id).get_dump())
 	{
 		string letters;
 
@@ -53,7 +54,7 @@ string Game::dump(const string& id, const sf::Int16& dump_n, char chr)
 				letters.append(1, bunch.back());
 				bunch.pop_back();
 			}
-			players[id].give_dump(letters);
+			players.at(id).give_dump(letters);
 
 			random_insert(bunch, (char)chr);
 		}
@@ -74,12 +75,30 @@ bool Game::peel()
 	if (bunch.size() < players.size())
 		return true;
 
-	++peel_number;
+	unsigned int num_letters = 1;
+	ready_to_peel = false;
+
+	// if this is the first peel
+	if (peel_number++ == 0)
+	{
+		playing = true;
+		num_letters = 21; // TODO calculate
+
+		// reset ack counters to track peels
+		for (auto& pair : players)
+			pair.second.reset_ack();
+	}
 
 	for (auto& pair : players)
 	{
-		pair.second.give_peel(bunch.back());
-		bunch.pop_back();
+		string letters;
+		for (unsigned int i = 0; i < num_letters; ++i)
+		{
+			letters.append(1, bunch.back());
+			bunch.pop_back();
+		}
+
+		pair.second.give_peel(letters);
 	}
 
 	return false;
@@ -92,7 +111,7 @@ void Game::try_to_start()
 		return;
 
 	// if not enough players
-	if (players.size() < 2)
+	if (players.size() < 1) // TODO for debugging only
 		return;
 
 	// if players aren't ready
@@ -100,25 +119,5 @@ void Game::try_to_start()
 		if (!pair.second.ready)
 			return;
 
-	must_start = true;
-}
-
-void Game::start()
-{
-	must_start = false;
-	playing = true;
-
-	unsigned int num_letters = 21; // TODO calculate
-
-	for (auto& pair : players)
-	{
-		string letters;
-		for (unsigned int i = 0; i < num_letters; ++i)
-		{
-			letters.append(1, bunch.back());
-			bunch.pop_back();
-		}
-
-		pair.second.give_split(letters);
-	}
+	ready_to_peel = true;
 }

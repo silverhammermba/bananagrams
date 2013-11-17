@@ -17,7 +17,7 @@ client/%.o: client/%.cpp client/client.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 dedicated_server: $(patsubst %.cpp,%.o,$(SERVER_SOURCE))
-	$(CXX) $(CXXFLAGS) -o dedicated_server $+ -lboost_program_options -lsfml-network
+	$(CXX) $(CXXFLAGS) -o dedicated_server $+ -lboost_program_options -lsfml-network -lsfml-system
 
 server/server.hpp: server/*.hpp common.hpp
 	touch server/server.hpp

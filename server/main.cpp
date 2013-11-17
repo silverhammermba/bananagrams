@@ -166,6 +166,10 @@ int main(int argc, char* argv[])
 	// TODO catch failure
 	socket.bind(server_port);
 
+	sf::Clock timer;
+
+	string peeler;
+
 	game = new Game(b_num, b_den, max_players);
 
 	cout << "\nWaiting for players to join...";
@@ -191,7 +195,6 @@ int main(int argc, char* argv[])
 		if (type != cl_connect && !game->has_player(id))
 			continue;
 
-		// TODO send player info packets
 		switch(type)
 		{
 			case cl_connect:
@@ -249,8 +252,13 @@ int main(int argc, char* argv[])
 				// let everyone know about the connection
 				sf::Packet join;
 				join << sv_info << id << sf::Uint8(0) << name;
-				for (const auto& pair : game->get_players())
-					socket.send(join, pair.second.get_ip(), client_port);
+				for (auto& pair : game->get_players())
+				{
+					if (!pair.second.has_pending())
+						socket.send(join, pair.second.get_ip(), client_port);
+					pair.second.add_pending(join);
+					game->wait();
+				}
 
 				break;
 			}
@@ -261,10 +269,16 @@ int main(int argc, char* argv[])
 
 				game->remove_player(id);
 
+				// let everyone else know about disconnection
 				sf::Packet leave;
 				leave << sv_info << id << sf::Uint8(1);
-				for (const auto& pair : game->get_players())
-					socket.send(leave, pair.second.get_ip(), client_port);
+				for (auto& pair : game->get_players())
+				{
+					if (!pair.second.has_pending())
+						socket.send(leave, pair.second.get_ip(), client_port);
+					pair.second.add_pending(leave);
+					game->wait();
+				}
 
 				// TODO end game if now below limit
 
@@ -324,38 +338,16 @@ int main(int argc, char* argv[])
 				sf::Int16 client_peel;
 				packet >> client_peel;
 
+				// make sure peel number is correct
 				if (game->check_peel(client_peel))
 				{
-					cout << "\n" << game->get_player_name(id) << " peeled (" << (int)client_peel << ")";
-
-					if (game->peel())
-					{
-						cout << "\n" << game->get_player_name(id) << " has won the game!";
-						cout.flush();
-
-						// send victory notification
-						for (const auto& pair : game->get_players())
-						{
-							sf::Packet win;
-							win << sv_done << sf::Uint8(1) << id;
-							socket.send(win, pair.second.get_ip(), client_port);
-						}
-					}
+					// store first peeler id
+					if (peeler.size() == 0)
+						peeler = id;
 					else
 					{
-						// send each player a new letter
-						for (const auto& pair : game->get_players())
-						{
-							string letter;
-							letter.append(1, pair.second.last_peel());
-
-							cout << "\n" << "Sending " << pair.second.get_name() << " " << letter;
-							cout.flush();
-
-							sf::Packet peel;
-							peel << sv_peel << sf::Int16(game->current_peel()) << game->get_remaining() << id << letter;
-							socket.send(peel, pair.second.get_ip(), client_port);
-						}
+						cout << "\n" << game->get_player_name(id) << " peeled too. Waiting on some players...";
+						cout.flush();
 					}
 				}
 				else
@@ -366,30 +358,101 @@ int main(int argc, char* argv[])
 
 				break;
 			}
-			// TODO need to handle acks for peels/splits
+			case cl_ack:
+			{
+				sf::Int16 ack_num;
+				packet >> ack_num;
+
+				Player& player = game->get_players().at(id);
+
+				// if we were waiting for this ACK
+				if (player.acknowledged(ack_num))
+				{
+					// if they have more pending, send the first
+					if (player.has_pending())
+					{
+						sf::Packet pending(player.get_pending());
+						socket.send(pending, player.get_ip(), client_port);
+					}
+					else // check if game can proceed
+						game->check_waiting();
+				}
+				else
+				{
+					cout << "\nMismatched ACK (" << (int)ack_num << ")";
+					cout.flush();
+				}
+				break;
+			}
 			default:
 				cout << "\nUnrecognized packet type: " << (int)type;
 				cout.flush();
 		}
 
-		if (game->should_start())
+		// send pending packets
+		for (auto& pair : game->get_players())
 		{
-			cout << "\nStarting game";
+			float elapsed = timer.getElapsedTime().asSeconds();
+			timer.restart();
 
-			game->start();
-
-			sf::Int16 remaining = game->get_remaining();
-
-			for (const auto& pair : game->get_players())
+			if (pair.second.has_pending())
 			{
-				// TODO resend peel packets until ACK
-				std::string letters = pair.second.get_hand_str();
+				pair.second.step(elapsed);
 
-				cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
+				if (pair.second.get_timeout() > 5.f)
+					game->remove_player(pair.first);
+				else if (pair.second.poll > 0.5f)
+				{
+					pair.second.poll -= 0.5f;
+					sf::Packet pending(pair.second.get_pending());
+					socket.send(pending, pair.second.get_ip(), client_port);
+				}
+			}
+		}
 
-				sf::Packet peel;
-				peel << sv_peel << sf::Int16(0) << remaining << pair.first << letters;
-				socket.send(peel, pair.second.get_ip(), client_port);
+		// peel
+		if (game->can_peel())
+		{
+			cout << endl;
+			if (peeler.size() == 0)
+				cout << "Split!";
+			else
+				cout << game->get_player_name(peeler) << ": Peel!";
+
+			// if victory
+			if (game->peel())
+			{
+				cout << "\n" << game->get_player_name(id) << " has won the game!";
+				cout.flush();
+
+				// send victory notification
+				for (const auto& pair : game->get_players())
+				{
+					sf::Packet win;
+					win << sv_done << sf::Uint8(1) << id;
+					socket.send(win, pair.second.get_ip(), client_port);
+					// TODO ack
+				}
+			}
+			else
+			{
+				sf::Int16 remaining = game->get_remaining();
+
+				for (auto& pair : game->get_players())
+				{
+					std::string letters = pair.second.get_hand_str();
+
+					cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
+
+					sf::Packet peel;
+					peel << sv_peel << sf::Int16(0) << remaining << pair.first << letters;
+
+					if (!pair.second.has_pending())
+						socket.send(peel, pair.second.get_ip(), client_port);
+
+					pair.second.add_pending(peel);
+					game->wait();
+				}
 			}
 
 			cout.flush();
