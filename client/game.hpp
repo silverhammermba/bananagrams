@@ -113,6 +113,9 @@ class MultiplayerGame : public Game
 
 	sf::Packet* pending = nullptr;
 	sf::Uint8 pending_type = 255;
+	sf::Int16 ack_num {0};
+
+	std::map<std::string, Player> players;
 public:
 	MultiplayerGame(const std::string& server, const std::string& name);
 	virtual ~MultiplayerGame();

@@ -58,6 +58,6 @@ public:
 #include "grid.hpp"
 #include "hand.hpp"
 #include "buffer.hpp"
+#include "player.hpp"
 #include "game.hpp"
 #include "menu.hpp"
-#include "player.hpp"

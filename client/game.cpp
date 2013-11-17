@@ -626,27 +626,73 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				switch (event)
 				{
 					case 0: // joining
-						messages.add(name + " joined the game", Message::Severity::LOW);
+					{
+						sf::Int16 ack_n = ack_num;
+
+						if (!players.count(id))
+						{
+							players[id] = Player(name);
+							messages.add(name + " joined the game", Message::Severity::LOW);
+							++ack_num;
+						}
+						else
+							cerr << "Redundant join for player: " << name << endl;
+
+						// acknowledge
+						sf::Packet ack;
+						ack << cl_ack << id << ack_n;
+						socket.send(ack, server_ip, server_port);
 						break;
+					}
 					case 1: // leaving
-						messages.add(name + " left the game", Message::Severity::LOW);
+					{
+						sf::Int16 ack_n = ack_num;
+
+						if (players.count(id))
+						{
+							players.erase(id);
+							messages.add(name + " left the game", Message::Severity::LOW);
+							++ack_num;
+						}
+						else
+							cerr << "Disconnect for unknown player: " << name << " (" << id << ")\n";
+
+						// acknowledge
+						sf::Packet ack;
+						ack << cl_ack << id << ack_n;
+						socket.send(ack, server_ip, server_port);
 						break;
+					}
 					case 2: // ready
-						messages.add(name + " is ready to play", Message::Severity::LOW);
+					{
+						if (players.count(id))
+						{
+							players.at(id).ready = true;
+							messages.add(name + " is ready to play", Message::Severity::LOW);
+						}
+						else
+							cerr << "Ready for unknown player: " << name << " (" << id << ")\n";
 						break;
+					}
 					case 3: // not ready
-						messages.add(name + " is not ready", Message::Severity::LOW);
+					{
+						if (players.count(id))
+						{
+							players.at(id).ready = false;
+							messages.add(name + " is not ready", Message::Severity::LOW);
+						}
+						else
+							cerr << "Unready for unknown player: " << name << " (" << id << ")\n";
 						break;
+					}
 					default:
-						// just ignore it
+					{
+						cerr << "Unknown sv_info event: " << (int)event << endl;
 						break;
+					}
 				}
 			}
 
-			// acknowledge
-			sf::Packet ack;
-			ack << cl_ack << id;
-			socket.send(ack, server_ip, server_port);
 			break;
 		}
 		case sv_disconnect:
@@ -727,10 +773,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			packet >> got_peel >> remaining >> peeler_id >> letters;
 
 			// acknowledge
-			sf::Packet ack;
-			// TODO too many acks in general. only need to ack peels and splits
-			ack << cl_ack << id;
-			socket.send(ack, server_ip, server_port);
+			sf::Int16 ack_n = ack_num;
 
 			if (got_peel == peel_n + 1)
 			{
@@ -762,17 +805,26 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					rem << remaining;
 					messages.add(rem.str() + " letters remain", Message::Severity::LOW);
 				}
+
+				cerr << "Received " << letters.size() << " letters: " << letters << endl;
+
+				for (const auto& chr : letters)
+					hand.add_tile(new Tile(chr));
+
+				if (got_peel == 0)
+				{
+					ack_n = 0;
+					ack_num = 0;
+				}
+
+				++ack_num;
 			}
 			else
-			{
 				cerr << "Peel out of order. Got " << (int)got_peel << ", expecting " << (int)(peel_n + 1);
-				break;
-			}
 
-			cerr << "Received " << letters.size() << " letters: " << letters << endl;
-
-			for (const auto& chr : letters)
-				hand.add_tile(new Tile(chr));
+			sf::Packet ack;
+			ack << cl_ack << id << ack_n;
+			socket.send(ack, server_ip, server_port);
 
 			break;
 		}
