@@ -7,9 +7,13 @@ class Game
 	bool playing {false};
 	bool ready_to_peel {false}; // game is ready for next peel
 	bool waiting {false}; // waiting for clients to acknowledge critical server packets before next peel
+	bool ready_to_finish {false}; // true if game just finished
+	bool finished {false};
 
 	void try_to_start();
 public:
+	std::string winner;
+
 	Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _player_limit);
 
 	inline bool has_player(const std::string& id) const
@@ -47,19 +51,32 @@ public:
 		return ready_to_peel && !waiting;
 	}
 
+	inline bool is_finished() const
+	{
+		return finished;
+	}
+
+	inline bool is_ready_to_finish() const
+	{
+		return ready_to_finish;
+	}
+
+	inline void finish()
+	{
+		ready_to_finish = false;
+	}
+
+	inline bool can_restart() const
+	{
+		return finished && !waiting;
+	}
+
 	inline void wait()
 	{
 		waiting = true;
 	}
 
-	void check_waiting()
-	{
-		for (const auto& pair : players)
-			if (pair.second.has_pending())
-				return;
-
-		waiting = false;
-	}
+	void check_waiting();
 
 	inline bool check_dump(const std::string& id, const sf::Int16& dump_n) const
 	{

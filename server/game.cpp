@@ -23,7 +23,19 @@ void Game::remove_player(const string& id)
 
 	players.erase(id);
 
-	if (!playing)
+	if (playing)
+	{
+		if (players.size() < 2)
+		{
+			ready_to_finish = true;
+			finished = true;
+
+			// win by default
+			if (players.size() > 0)
+				winner = players.begin()->first;
+		}
+	}
+	else
 		try_to_start();
 }
 
@@ -74,7 +86,11 @@ bool Game::peel()
 {
 	// if there aren't enough letters left
 	if (bunch.size() < players.size())
+	{
+		ready_to_finish = true;
+		finished = true;
 		return true;
+	}
 
 	unsigned int num_letters = 1;
 	ready_to_peel = false;
@@ -112,7 +128,7 @@ void Game::try_to_start()
 		return;
 
 	// if not enough players
-	if (players.size() < 2) // TODO for debugging only
+	if (players.size() < 2)
 		return;
 
 	// if players aren't ready
@@ -121,4 +137,13 @@ void Game::try_to_start()
 			return;
 
 	ready_to_peel = true;
+}
+
+void Game::check_waiting()
+{
+	for (const auto& pair : players)
+		if (pair.second.has_pending())
+			return;
+
+	waiting = false;
 }

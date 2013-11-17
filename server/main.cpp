@@ -182,25 +182,75 @@ int main(int argc, char* argv[])
 		timer.restart();
 
 		// send pending packets
-		for (auto& pair : game->get_players())
+		for (auto& pair1 : game->get_players())
 		{
-			if (pair.second.has_pending())
+			if (pair1.second.has_pending())
 			{
-				pair.second.step(elapsed);
+				pair1.second.step(elapsed);
 
-				if (pair.second.get_timeout() > 5.f)
+				// check for timeout
+				if (pair1.second.get_timeout() > 5.f)
 				{
-					cout << endl << pair.second.get_name() << " timed out";
+					cout << endl << pair1.second.get_name() << " timed out";
 					cout.flush();
-					game->remove_player(pair.first);
+
+					string id = pair1.first;
+
+					game->remove_player(id);
+
+					// notify players of timeout
+					sf::Packet leave;
+					leave << sv_info << id << sf::Uint8(1);
+					for (auto& pair2 : game->get_players())
+					{
+						if (!pair2.second.has_pending())
+							socket.send(leave, pair2.second.get_ip(), client_port);
+						pair2.second.add_pending(leave);
+						game->wait();
+					}
 				}
-				else if (pair.second.poll > 0.5f)
+				// else send pending packets
+				else if (pair1.second.poll > 0.5f)
 				{
-					pair.second.poll -= 0.5f;
-					sf::Packet pending(pair.second.get_pending());
-					socket.send(pending, pair.second.get_ip(), client_port);
+					pair1.second.poll -= 0.5f;
+					sf::Packet pending(pair1.second.get_pending());
+					socket.send(pending, pair1.second.get_ip(), client_port);
 				}
 			}
+		}
+
+		// if the game has just ended
+		if (game->is_ready_to_finish())
+		{
+			game->finish();
+
+			sf::Packet win;
+			win << sv_done;
+
+			// TODO can winner be empty if there are any players left?
+			if (game->winner.empty())
+				win << sf::Uint8(0);
+			else
+				win << sf::Uint8(1) << game->winner;
+
+			// send victory notification
+			for (auto& pair : game->get_players())
+			{
+				if (!pair.second.has_pending())
+					socket.send(win, pair.second.get_ip(), client_port);
+
+				pair.second.add_pending(win);
+				game->wait();
+			}
+		}
+
+		if (game->can_restart())
+		{
+			cout << "\nRestarting...";
+			cout.flush();
+
+			delete game;
+			game = new Game(b_num, b_den, max_players);
 		}
 
 		// get new packets
@@ -323,8 +373,6 @@ int main(int argc, char* argv[])
 					game->wait();
 				}
 
-				// TODO end game if now below limit
-
 				break;
 			}
 			case cl_ready:
@@ -355,6 +403,13 @@ int main(int argc, char* argv[])
 			}
 			case cl_dump:
 			{
+				if (game->is_finished())
+				{
+					cout << "\nDump received after game end";
+					cout.flush();
+					break;
+				}
+
 				sf::Int16 dump_n;
 				sf::Int8 chr;
 				packet >> dump_n >> chr;
@@ -378,6 +433,13 @@ int main(int argc, char* argv[])
 			}
 			case cl_peel:
 			{
+				if (game->is_finished())
+				{
+					cout << "\nPeel received after game end";
+					cout.flush();
+					break;
+				}
+
 				sf::Int16 client_peel;
 				packet >> client_peel;
 
@@ -445,19 +507,7 @@ int main(int argc, char* argv[])
 
 			// if victory
 			if (game->peel())
-			{
-				cout << "\n" << game->get_player_name(id) << " has won the game!";
-				cout.flush();
-
-				// send victory notification
-				for (const auto& pair : game->get_players())
-				{
-					sf::Packet win;
-					win << sv_done << sf::Uint8(1) << id;
-					socket.send(win, pair.second.get_ip(), client_port);
-					// TODO ack, also this is totally broken
-				}
-			}
+				game->winner = peeler;
 			else
 			{
 				sf::Int16 remaining = game->get_remaining();
