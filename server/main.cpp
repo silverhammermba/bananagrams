@@ -49,24 +49,33 @@ int main(int argc, char* argv[])
 	sigaction(SIGKILL, &action, nullptr);
 
 	// command line arguments
-	po::options_description desc("Bananagrams multiplayer dedicated server");
+	po::options_description desc("Bananagrams dedicated server options");
 	desc.add_options()
-		("help", "show options")
-		("dict", po::value<string>(), "dictionary file")
-		("port", po::value<unsigned short>()->default_value(default_server_port), "TCP/UDP listening port")
-		("bunch", po::value<string>()->default_value("1"), "bunch multiplier (0.5 or a positive integer)")
-		("limit", po::value<unsigned int>(), "player limit")
+		("help",                                                                   "show options")
+		("dict",  po::value<string>()->required(),                                 "dictionary file")
+		("port",  po::value<unsigned short>()->default_value(default_server_port), "TCP/UDP listening port")
+		("bunch", po::value<string>()->default_value("1"),                         "bunch multiplier (0.5 or a positive integer)")
+		("limit", po::value<unsigned int>(),                                       "player limit")
 	;
 
 	// TODO usage string
 	// TODO print help on unrecognized options
 	po::variables_map opts;
 	po::store(po::parse_command_line(argc, argv, desc), opts);
-	po::notify(opts);
 
 	if (opts.count("help"))
 	{
 		cerr << desc << endl;
+		return 1;
+	}
+
+	try
+	{
+		po::notify(opts);
+	}
+	catch (po::required_option& e)
+	{
+		cerr << "Error: " << e.what() << endl << endl << desc << endl;
 		return 1;
 	}
 
