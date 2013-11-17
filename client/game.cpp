@@ -873,22 +873,24 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			sf::Int16 ack_n = ack_num;
 
-			if (victory)
-			{
-				string winner_id;
-				packet >> winner_id;
-
-				if (winner_id == id)
-					messages.add("You win!", Message::Severity::CRITICAL);
-				else
-					messages.add(players.at(winner_id).get_name() + " has won the game!", Message::Severity::CRITICAL);
-			}
-			else
-				// TODO server reports normal victory when all other players leave
-				messages.add("You win! All other players have resigned.", Message::Severity::CRITICAL);
-
 			if (playing)
+			{
+				if (victory)
+				{
+					string winner_id;
+					packet >> winner_id;
+
+					if (winner_id == id)
+						messages.add("You win!", Message::Severity::CRITICAL);
+					else
+						messages.add(players.at(winner_id).get_name() + " has won the game!", Message::Severity::CRITICAL);
+				}
+				else
+					// TODO server reports normal victory when all other players leave
+					messages.add("You win! All other players have resigned.", Message::Severity::CRITICAL);
+
 				++ack_num;
+			}
 			else
 				--ack_n;
 
