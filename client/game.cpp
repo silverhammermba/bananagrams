@@ -896,6 +896,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 			connected = false;
 			playing = false;
+			clear_pending(true);
 
 			// acknowledge
 			sf::Packet ack;

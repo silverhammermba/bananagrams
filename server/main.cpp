@@ -505,6 +505,7 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
+					// TODO getting mismatch for ACK of sv_done
 					cout << "\nMismatched ACK (" << (int)ack_num << ")";
 					cout.flush();
 				}
@@ -520,7 +521,7 @@ int main(int argc, char* argv[])
 		{
 			cout << endl;
 			if (peeler.size() == 0)
-				cout << "Split!";
+				cout << "Split!"; // TODO somehow getting here after game ended
 			else
 				cout << game->get_player_name(peeler) << ": Peel!";
 
