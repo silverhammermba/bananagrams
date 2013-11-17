@@ -505,7 +505,6 @@ void MultiplayerGame::step(float time)
 	unsigned short port;
 	if (socket.receive(packet, ip, port) == sf::Socket::Status::Done)
 	{
-		cerr << "Received packet from " << ip << ":" << port << endl;
 		// TODO somehow verify that this is actually the server...
 		process_packet(packet);
 	}

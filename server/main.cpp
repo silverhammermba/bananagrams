@@ -190,9 +190,6 @@ int main(int argc, char* argv[])
 		unsigned short client_port;
 		socket.receive(packet, client_ip, client_port);
 
-		cout << "\nReceived packet from " << client_ip << ":" << client_port;
-		cout.flush();
-
 		sf::Uint8 type;
 		std::string id;
 
