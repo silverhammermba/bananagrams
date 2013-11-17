@@ -628,9 +628,9 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 						sf::Int16 ack_n = ack_num;
 
-						if (!players.count(id))
+						if (!players.count(uuid))
 						{
-							players[id] = Player(name);
+							players[uuid] = Player(name);
 							messages.add(name + " joined the game", Message::Severity::LOW);
 							++ack_num;
 						}
@@ -650,15 +650,15 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					{
 						sf::Int16 ack_n = ack_num;
 
-						if (players.count(id))
+						if (players.count(uuid))
 						{
-							messages.add(players.at(id).get_name() + " left the game", Message::Severity::LOW);
-							players.erase(id);
+							messages.add(players.at(uuid).get_name() + " left the game", Message::Severity::LOW);
+							players.erase(uuid);
 							++ack_num;
 						}
 						else
 						{
-							cerr << "Disconnect for unknown player: " << id << endl;
+							cerr << "Disconnect for unknown player: " << uuid << endl;
 							--ack_n;
 						}
 
@@ -670,24 +670,24 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					}
 					case 2: // ready
 					{
-						if (players.count(id))
+						if (players.count(uuid))
 						{
-							players.at(id).ready = true;
-							messages.add(players.at(id).get_name() + " is ready to play", Message::Severity::LOW);
+							players.at(uuid).ready = true;
+							messages.add(players.at(uuid).get_name() + " is ready to play", Message::Severity::LOW);
 						}
 						else
-							cerr << "Ready for unknown player: " << id << endl;
+							cerr << "Ready for unknown player: " << uuid << endl;
 						break;
 					}
 					case 3: // not ready
 					{
-						if (players.count(id))
+						if (players.count(uuid))
 						{
-							players.at(id).ready = false;
-							messages.add(players.at(id).get_name() + " is not ready", Message::Severity::LOW);
+							players.at(uuid).ready = false;
+							messages.add(players.at(uuid).get_name() + " is not ready", Message::Severity::LOW);
 						}
 						else
-							cerr << "Unready for unknown player: " << id << endl;
+							cerr << "Unready for unknown player: " << uuid << endl;
 						break;
 					}
 					default:
