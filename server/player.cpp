@@ -11,14 +11,6 @@ Player::~Player()
 		delete packet;
 }
 
-std::string Player::get_hand_str() const
-{
-	std::string str;
-	for (const auto& letter : hand)
-		str.append(1, letter);
-	return str;
-}
-
 void Player::give_dump(const std::string& letters)
 {
 	// TODO remove dumped letter
@@ -30,6 +22,33 @@ void Player::give_dump(const std::string& letters)
 
 void Player::give_peel(const std::string& letters)
 {
+	peel = letters;
 	for (auto& letter : letters)
 		hand.push_back(letter);
+}
+
+void Player::add_pending(const sf::Packet& packet)
+{
+	// if this the first packet, reset timers
+	if (pending.size() == 0)
+	{
+		timeout = 0;
+		poll = 0;
+	}
+	pending.push_back(new sf::Packet(packet));
+}
+
+bool Player::acknowledged(const sf::Int16& ack_num)
+{
+	if (pending.empty())
+		return false;
+
+	if (ack_num != ack_count)
+		return false;
+
+	++ack_count;
+	delete pending.front();
+	pending.pop_front();
+
+	return true;
 }

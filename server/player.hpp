@@ -5,6 +5,7 @@ class Player
 	sf::IpAddress ip;
 	std::string name;
 	std::string dump_letters;
+	std::string peel;
 	sf::Int16 dump_n {0};
 	std::list<char> hand;
 
@@ -44,6 +45,11 @@ public:
 		return hand;
 	}
 
+	inline const std::string& get_peel() const
+	{
+		return peel;
+	}
+
 	inline float get_timeout() const
 	{
 		return timeout;
@@ -54,35 +60,17 @@ public:
 		return poll;
 	}
 
-	std::string get_hand_str() const;
-
-	inline char last_peel() const
-	{
-		return hand.back();
-	}
-
 	void give_dump(const std::string& letters);
 	void give_peel(const std::string& letters);
 
-	void give_split(const std::string& letters);
+	void add_pending(const sf::Packet& packet);
 
-	void add_pending(const sf::Packet& packet)
+	inline bool has_pending() const
 	{
-		// if this the first packet, reset timers
-		if (pending.size() == 0)
-		{
-			timeout = 0;
-			poll = 0;
-		}
-		pending.push_back(new sf::Packet(packet));
+		return !pending.empty();
 	}
 
-	bool has_pending() const
-	{
-		return pending.size() > 0;
-	}
-
-	const sf::Packet& get_pending() const
+	inline const sf::Packet& get_pending() const
 	{
 		return *pending.front();
 	}
@@ -93,22 +81,9 @@ public:
 		poll += elapsed;
 	}
 
-	bool acknowledged(const sf::Int16& ack_num)
-	{
-		if (pending.size() == 0)
-			return false;
+	bool acknowledged(const sf::Int16& ack_num);
 
-		if (ack_num != ack_count)
-			return false;
-
-		++ack_count;
-		delete pending.front();
-		pending.pop_front();
-
-		return true;
-	}
-
-	void reset_ack()
+	inline void reset_ack()
 	{
 		ack_count = 0;
 		// pending should already be empty

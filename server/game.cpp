@@ -111,7 +111,7 @@ void Game::try_to_start()
 		return;
 
 	// if not enough players
-	if (players.size() < 1) // TODO for debugging only
+	if (players.size() < 2) // TODO for debugging only
 		return;
 
 	// if players aren't ready

@@ -243,22 +243,27 @@ int main(int argc, char* argv[])
 						break;
 					}
 
+					// let everyone else know about the connection
+					sf::Packet join;
+					join << sv_info << id << sf::Uint8(0) << name;
+					for (auto& pair : game->get_players())
+					{
+						if (!pair.second.has_pending())
+							socket.send(join, pair.second.get_ip(), client_port);
+						pair.second.add_pending(join);
+						game->wait();
+					}
+
 					game->add_player(id, client_ip, name);
 
 					cout << "\n" << name << " has joined the game";
 					cout.flush();
 				}
 
-				// let everyone know about the connection
+				// by now they're definitely a player, confirm connection
 				sf::Packet join;
 				join << sv_info << id << sf::Uint8(0) << name;
-				for (auto& pair : game->get_players())
-				{
-					if (!pair.second.has_pending())
-						socket.send(join, pair.second.get_ip(), client_port);
-					pair.second.add_pending(join);
-					game->wait();
-				}
+				socket.send(join, game->get_players().at(id).get_ip(), client_port);
 
 				break;
 			}
@@ -440,9 +445,9 @@ int main(int argc, char* argv[])
 
 				for (auto& pair : game->get_players())
 				{
-					std::string letters = pair.second.get_hand_str();
+					std::string letters = pair.second.get_peel();
 
-					cout << "\n" << "Sending " << pair.second.get_name() << " " << letters;
+					cout << "\nSending " << pair.second.get_name() << " " << letters;
 
 					sf::Packet peel;
 					peel << sv_peel << sf::Int16(game->get_peel() - 1) << remaining << pair.first << letters;
