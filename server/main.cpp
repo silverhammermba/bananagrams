@@ -172,6 +172,8 @@ int main(int argc, char* argv[])
 
 	string peeler;
 
+	std::vector<string> remove;
+
 	game = new Game(b_num, b_den, max_players);
 
 	cout << "\nWaiting for players to join...";
@@ -182,41 +184,53 @@ int main(int argc, char* argv[])
 		timer.restart();
 
 		// send pending packets
-		for (auto& pair1 : game->get_players())
+		for (auto& pair : game->get_players())
 		{
-			if (pair1.second.has_pending())
+			if (pair.second.has_pending())
 			{
-				pair1.second.step(elapsed);
+				pair.second.step(elapsed);
 
 				// check for timeout
-				if (pair1.second.get_timeout() > 5.f)
+				if (pair.second.get_timeout() > 5.f)
 				{
-					cout << endl << pair1.second.get_name() << " timed out";
+					cout << endl << pair.second.get_name() << " timed out";
 					cout.flush();
 
-					string id = pair1.first;
-
-					game->remove_player(id);
-
-					// notify players of timeout
-					sf::Packet leave;
-					leave << sv_info << id << sf::Uint8(1);
-					for (auto& pair2 : game->get_players())
-					{
-						if (!pair2.second.has_pending())
-							socket.send(leave, pair2.second.get_ip(), client_port);
-						pair2.second.add_pending(leave);
-						game->wait();
-					}
+					remove.push_back(pair.first);
 				}
 				// else send pending packets
-				else if (pair1.second.poll > 0.5f)
+				else if (pair.second.poll > 0.5f)
 				{
-					pair1.second.poll -= 0.5f;
-					sf::Packet pending(pair1.second.get_pending());
-					socket.send(pending, pair1.second.get_ip(), client_port);
+					pair.second.poll -= 0.5f;
+					sf::Packet pending(pair.second.get_pending());
+					socket.send(pending, pair.second.get_ip(), client_port);
 				}
 			}
+		}
+
+		// handle timed out players
+		if (!remove.empty())
+		{
+			// remove them from the game
+			for (const auto& id : remove)
+				game->remove_player(id);
+
+			// notify other players
+			for (const auto& id : remove)
+			{
+				// notify players of timeout
+				sf::Packet leave;
+				leave << sv_info << id << sf::Uint8(1);
+				for (auto& pair : game->get_players())
+				{
+					if (!pair.second.has_pending())
+						socket.send(leave, pair.second.get_ip(), client_port);
+					pair.second.add_pending(leave);
+					game->wait();
+				}
+			}
+
+			remove.clear();
 		}
 
 		// if the game has just ended
@@ -229,9 +243,16 @@ int main(int argc, char* argv[])
 
 			// TODO can winner be empty if there are any players left?
 			if (game->winner.empty())
+			{
 				win << sf::Uint8(0);
+				cout << "\nGame ended in a draw.";
+			}
 			else
+			{
 				win << sf::Uint8(1) << game->winner;
+				cout << endl << game->get_player_name(game->winner) << " won the game!";
+			}
+			cout.flush();
 
 			// send victory notification
 			for (auto& pair : game->get_players())
