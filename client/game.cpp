@@ -618,14 +618,13 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 			}
 			else
 			{
-				string name;
-				packet >> name;
-				// TODO keep track of other players
-
 				switch (event)
 				{
 					case 0: // joining
 					{
+						string name;
+						packet >> name;
+
 						sf::Int16 ack_n = ack_num;
 
 						if (!players.count(id))
@@ -649,12 +648,12 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 						if (players.count(id))
 						{
+							messages.add(players.at(id).get_name() + " left the game", Message::Severity::LOW);
 							players.erase(id);
-							messages.add(name + " left the game", Message::Severity::LOW);
 							++ack_num;
 						}
 						else
-							cerr << "Disconnect for unknown player: " << name << " (" << id << ")\n";
+							cerr << "Disconnect for unknown player: " << id << endl;
 
 						// acknowledge
 						sf::Packet ack;
@@ -667,10 +666,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 						if (players.count(id))
 						{
 							players.at(id).ready = true;
-							messages.add(name + " is ready to play", Message::Severity::LOW);
+							messages.add(players.at(id).get_name() + " is ready to play", Message::Severity::LOW);
 						}
 						else
-							cerr << "Ready for unknown player: " << name << " (" << id << ")\n";
+							cerr << "Ready for unknown player: " << id << endl;
 						break;
 					}
 					case 3: // not ready
@@ -678,10 +677,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 						if (players.count(id))
 						{
 							players.at(id).ready = false;
-							messages.add(name + " is not ready", Message::Severity::LOW);
+							messages.add(players.at(id).get_name() + " is not ready", Message::Severity::LOW);
 						}
 						else
-							cerr << "Unready for unknown player: " << name << " (" << id << ")\n";
+							cerr << "Unready for unknown player: " << id << endl;
 						break;
 					}
 					default:
@@ -796,7 +795,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					// TODO this doesn't work
 					messages.add(players.at(peeler_id).get_name() + ": PEEL!", Message::Severity::HIGH);
 
-				if (remaining < players.size())
+				if (remaining < (int)players.size())
 					messages.add("Final peel!", Message::Severity::HIGH);
 				else
 				{
