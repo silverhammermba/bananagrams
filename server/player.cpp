@@ -11,11 +11,20 @@ Player::~Player()
 		delete packet;
 }
 
-void Player::give_dump(const std::string& letters)
+void Player::give_dump(char chr, const std::string& letters)
 {
-	// TODO remove dumped letter
+	// remove dumped letter
+	for (auto it = hand.begin(); it != hand.end(); ++it)
+		if (*it == chr)
+		{
+			hand.erase(it);
+			break;
+		}
+
+	// add new ones
 	for (auto& letter : letters)
 		hand.push_back(letter);
+
 	dump_letters = letters;
 	++dump_n;
 }

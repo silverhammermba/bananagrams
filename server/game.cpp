@@ -17,8 +17,8 @@ void Game::add_player(const string& id, const sf::IpAddress& ip, const string& n
 
 void Game::remove_player(const string& id)
 {
-	// TODO should randomly insert instead
-	bunch.splice(bunch.end(), players.at(id).get_hand());
+	for (auto chr : players.at(id).get_hand())
+		random_insert(bunch, chr);
 
 	players.erase(id);
 
@@ -49,17 +49,17 @@ string Game::dump(const string& id, const sf::Int16& dump_n, char chr)
 		if (bunch.size() >= 3)
 		{
 			// take three
-			for (unsigned int i = 0; i < 3; i++)
+			for (unsigned int i = 0; i < 3; ++i)
 			{
 				letters.append(1, bunch.back());
 				bunch.pop_back();
 			}
-			players.at(id).give_dump(letters);
+			players.at(id).give_dump(chr, letters);
 
-			random_insert(bunch, (char)chr);
+			random_insert(bunch, chr);
 		}
 		else
-			letters.append(1, (char)chr);
+			letters.append(1, chr);
 
 		return letters;
 	}

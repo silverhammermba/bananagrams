@@ -264,6 +264,7 @@ int main(int argc, char* argv[])
 				sf::Packet join;
 				join << sv_info << id << sf::Uint8(0) << name;
 				socket.send(join, game->get_players().at(id).get_ip(), client_port);
+				// TODO notify new players of existing players
 
 				break;
 			}
@@ -436,7 +437,7 @@ int main(int argc, char* argv[])
 					sf::Packet win;
 					win << sv_done << sf::Uint8(1) << id;
 					socket.send(win, pair.second.get_ip(), client_port);
-					// TODO ack
+					// TODO ack, also this is totally broken
 				}
 			}
 			else

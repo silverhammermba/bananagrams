@@ -1,5 +1,3 @@
-// TODO keep track of letters so they can be readded to bunch upon disconnect
-
 class Player
 {
 	sf::IpAddress ip;
@@ -60,7 +58,7 @@ public:
 		return poll;
 	}
 
-	void give_dump(const std::string& letters);
+	void give_dump(char chr, const std::string& letters);
 	void give_peel(const std::string& letters);
 
 	void add_pending(const sf::Packet& packet);
