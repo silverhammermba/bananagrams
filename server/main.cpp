@@ -7,7 +7,6 @@ using std::endl;
 using std::string;
 
 sf::UdpSocket socket;
-unsigned short client_port;
 
 Game* game;
 
@@ -26,7 +25,7 @@ void shutdown(int s)
 		{
 			sf::Packet sorry;
 			sorry << sv_disconnect << sf::Uint8(4);
-			socket.send(sorry, pair.second.get_ip(), client_port);
+			socket.send(sorry, pair.second.get_ip(), pair.second.get_port());
 		}
 		cout << endl;
 
@@ -86,8 +85,6 @@ int main(int argc, char* argv[])
 		cerr << "Invalid listening port: " << server_port << "!\n";
 		return 1;
 	}
-
-	client_port = server_port + 1;
 
 	// game options
 	unsigned int b_num;
@@ -203,7 +200,7 @@ int main(int argc, char* argv[])
 				{
 					pair.second.poll -= 0.5f;
 					sf::Packet pending(pair.second.get_pending());
-					socket.send(pending, pair.second.get_ip(), client_port);
+					socket.send(pending, pair.second.get_ip(), pair.second.get_port());
 				}
 			}
 		}
@@ -224,7 +221,7 @@ int main(int argc, char* argv[])
 				for (auto& pair : game->get_players())
 				{
 					if (!pair.second.has_pending())
-						socket.send(leave, pair.second.get_ip(), client_port);
+						socket.send(leave, pair.second.get_ip(), pair.second.get_port());
 					pair.second.add_pending(leave);
 					game->wait();
 				}
@@ -258,7 +255,7 @@ int main(int argc, char* argv[])
 			for (auto& pair : game->get_players())
 			{
 				if (!pair.second.has_pending())
-					socket.send(win, pair.second.get_ip(), client_port);
+					socket.send(win, pair.second.get_ip(), pair.second.get_port());
 
 				pair.second.add_pending(win);
 				game->wait();
@@ -345,12 +342,12 @@ int main(int argc, char* argv[])
 					for (auto& pair : game->get_players())
 					{
 						if (!pair.second.has_pending())
-							socket.send(join, pair.second.get_ip(), client_port);
+							socket.send(join, pair.second.get_ip(), pair.second.get_port());
 						pair.second.add_pending(join);
 						game->wait();
 					}
 
-					Player& new_player = game->add_player(id, client_ip, name);
+					Player& new_player = game->add_player(id, client_ip, client_port, name);
 
 					// let new player know about all other players
 					for (auto& pair : game->get_players())
@@ -389,7 +386,7 @@ int main(int argc, char* argv[])
 				for (auto& pair : game->get_players())
 				{
 					if (!pair.second.has_pending())
-						socket.send(leave, pair.second.get_ip(), client_port);
+						socket.send(leave, pair.second.get_ip(), pair.second.get_port());
 					pair.second.add_pending(leave);
 					game->wait();
 				}
@@ -406,7 +403,7 @@ int main(int argc, char* argv[])
 				sf::Packet rdy;
 				rdy << sv_info << id << (ready ? sf::Uint8(2) : sf::Uint8(3));
 				for (const auto& pair : game->get_players())
-					socket.send(rdy, pair.second.get_ip(), client_port);
+					socket.send(rdy, pair.second.get_ip(), pair.second.get_port());
 
 				break;
 			}
@@ -498,7 +495,7 @@ int main(int argc, char* argv[])
 					if (player.has_pending())
 					{
 						sf::Packet pending(player.get_pending());
-						socket.send(pending, player.get_ip(), client_port);
+						socket.send(pending, player.get_ip(), player.get_port());
 					}
 					else // check if game can proceed
 						game->check_waiting();
@@ -542,7 +539,7 @@ int main(int argc, char* argv[])
 					peel << sv_peel << sf::Int16(game->get_peel() - 1) << remaining << pair.first << letters;
 
 					if (!pair.second.has_pending())
-						socket.send(peel, pair.second.get_ip(), client_port);
+						socket.send(peel, pair.second.get_ip(), pair.second.get_port());
 
 					pair.second.add_pending(peel);
 					game->wait();

@@ -1,7 +1,7 @@
 #include "server.hpp"
 
-Player::Player(const sf::IpAddress& _ip, const std::string& _name)
-	: ip {_ip}, name {_name}, dump_letters {""}
+Player::Player(const sf::IpAddress& _ip, unsigned short _port, const std::string& _name)
+	: ip {_ip}, port {_port}, name {_name}, dump_letters {""}
 {
 }
 

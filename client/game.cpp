@@ -471,8 +471,11 @@ MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& n
 	server_ip = sf::IpAddress(ip);
 
 	unsigned short client_port = server_port + 1;
-	// TODO catch errors here
-	socket.bind(client_port);
+
+	// find port to bind to
+	while (socket.bind(client_port) != sf::Socket::Status::Done)
+		++client_port;
+
 	socket.setBlocking(false);
 
 	set_pending(cl_connect);

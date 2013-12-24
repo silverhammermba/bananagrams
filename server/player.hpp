@@ -1,6 +1,7 @@
 class Player
 {
 	sf::IpAddress ip;
+	unsigned short port;
 	std::string name;
 	std::string dump_letters;
 	std::string peel;
@@ -15,12 +16,17 @@ public:
 	float poll;
 
 	explicit Player() {}; // XXX to appease the players map
-	Player(const sf::IpAddress& _ip, const std::string& _name);
+	Player(const sf::IpAddress& _ip, unsigned short _port, const std::string& _name);
 	~Player();
 
 	inline const sf::IpAddress& get_ip() const
 	{
 		return ip;
+	}
+
+	inline unsigned short get_port() const
+	{
+		return port;
 	}
 
 	inline const std::string& get_name() const

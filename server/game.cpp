@@ -14,9 +14,9 @@ Game::Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _playe
 	bunch.erase(it, bunch.end());
 }
 
-Player& Game::add_player(const string& id, const sf::IpAddress& ip, const string& name)
+Player& Game::add_player(const string& id, const sf::IpAddress& ip, unsigned short port, const string& name)
 {
-	players[id] = Player(ip, name);
+	players[id] = Player(ip, port, name);
 	return players[id];
 }
 
