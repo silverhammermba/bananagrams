@@ -48,7 +48,7 @@ public:
 
 	inline bool can_peel() const
 	{
-		return ready_to_peel && !waiting;
+		return ready_to_peel && !waiting && !finished;
 	}
 
 	inline bool is_finished() const
