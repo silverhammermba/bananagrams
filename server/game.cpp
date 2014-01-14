@@ -37,6 +37,8 @@ void Game::remove_player(const string& id)
 			// win by default
 			if (players.size() > 0)
 				winner = players.begin()->first;
+			else
+				winner.clear();
 		}
 	}
 	else
