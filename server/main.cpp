@@ -57,7 +57,6 @@ int main(int argc, char* argv[])
 		("limit", po::value<unsigned int>(),                                       "player limit")
 	;
 
-	// TODO usage string
 	// TODO print help on unrecognized options
 	po::variables_map opts;
 	po::store(po::parse_command_line(argc, argv, desc), opts);
@@ -80,19 +79,18 @@ int main(int argc, char* argv[])
 
 	// check port option
 	unsigned short server_port {opts["port"].as<unsigned short>()};
-	if (server_port == 0)
+	if (server_port == 0 || socket.bind(server_port) != sf::Socket::Status::Done)
 	{
-		cerr << "Invalid listening port: " << server_port << "!\n";
+		std::cerr << "Bad listening port " << server_port << endl;
 		return 1;
 	}
+	socket.setBlocking(false);
 
 	// game options
 	unsigned int b_num;
 	unsigned int b_den;
 	unsigned int max_players;
 	std::map<string, string> dictionary;
-
-	// load options from command line
 
 	// check bunch multiplier option
 	std::stringstream multi_s;
@@ -111,19 +109,11 @@ int main(int argc, char* argv[])
 		auto limit = opts["limit"].as<unsigned int>();
 
 		if (limit > max_players)
-		{
-			cerr << "\nmax player limit is " << max_players << " for this bunch size";
-			cerr.flush();
-		}
+			cerr << "Max player limit is " << max_players << " for this bunch size\n";
 		else if (limit < 2)
-		{
-			cerr << "\nmin player limit is 2";
-			cerr.flush();
-		}
+			cerr << "Min player limit is 2\n";
 		else
-		{
 			max_players = limit;
-		}
 	}
 
 	// check dictionary option
@@ -160,10 +150,6 @@ int main(int argc, char* argv[])
 
 	// LET'S GO!!!
 	std::srand(std::time(nullptr));
-
-	// TODO catch failure
-	socket.bind(server_port);
-	socket.setBlocking(false);
 
 	sf::Clock timer;
 
@@ -502,7 +488,6 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					// TODO getting mismatch for ACK of sv_done
 					cout << "\nMismatched ACK (" << (int)ack_num << ")";
 					cout.flush();
 				}
@@ -518,7 +503,7 @@ int main(int argc, char* argv[])
 		{
 			cout << endl;
 			if (peeler.size() == 0)
-				cout << "Split!"; // TODO somehow getting here after game ended
+				cout << "Split!";
 			else
 				cout << game->get_player_name(peeler) << ": Peel!";
 
