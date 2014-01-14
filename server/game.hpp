@@ -1,5 +1,7 @@
 class Game
 {
+	unsigned int bunch_num;
+	unsigned int bunch_den;
 	unsigned int player_limit;
 	std::list<char> bunch;
 	std::map<std::string, Player> players;

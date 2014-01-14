@@ -3,15 +3,11 @@
 using std::string;
 
 Game::Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _player_limit)
-	: player_limit(_player_limit)
+	: bunch_num(_bunch_num), bunch_den(_bunch_den), player_limit(_player_limit)
 {
 	for (char ch = 'A'; ch <= 'Z'; ++ch)
 		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * _bunch_num) / _bunch_den); ++i)
 			random_insert(bunch, ch);
-
-	auto it = bunch.begin();
-	for (int i = 0; i < 20; ++i, ++it);
-	bunch.erase(it, bunch.end());
 }
 
 Player& Game::add_player(const string& id, const sf::IpAddress& ip, unsigned short port, const string& name)
@@ -105,7 +101,14 @@ bool Game::peel()
 	if (peel_number++ == 0)
 	{
 		playing = true;
-		num_letters = 10; // TODO calculate
+
+		unsigned int num_players = players.size();
+		if (num_players <= (4 * bunch_num) / bunch_den)
+			num_letters = 21;
+		else if (num_players <= (6 * bunch_num) / bunch_den)
+			num_letters = 15;
+		else // num_players <= (8 * bunch_num) / bunch_den
+			num_letters = 11;
 
 		// reset ack counters to track peels
 		for (auto& pair : players)
