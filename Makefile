@@ -26,4 +26,4 @@ server/%.o: server/%.cpp server/server.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f client/*.o server/*.o bananagrams
+	rm -f client/*.o server/*.o bananagrams dedicated_server
