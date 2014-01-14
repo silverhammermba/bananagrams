@@ -798,6 +798,10 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					playing = true;
 					messages.clear();
 					messages.add("SPLIT!", Message::Severity::HIGH);
+
+					// reset ack count
+					ack_n = 0;
+					ack_num = 0;
 				}
 
 				++peel_n;
@@ -818,12 +822,6 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 
 				for (const auto& chr : letters)
 					hand.add_tile(new Tile(chr));
-
-				if (got_peel == 0)
-				{
-					ack_n = 0;
-					ack_num = 0;
-				}
 
 				++ack_num;
 			}
