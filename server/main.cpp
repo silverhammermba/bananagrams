@@ -225,16 +225,16 @@ int main(int argc, char* argv[])
 			sf::Packet win;
 			win << sv_done;
 
-			// TODO can winner be empty if there are any players left?
-			if (game->winner.empty())
-			{
-				win << sf::Uint8(0);
-				cout << "\nGame ended in a draw.";
-			}
-			else
+			// if there is an actual winner
+			if (game->get_players().size() > 1)
 			{
 				win << sf::Uint8(1) << game->winner;
 				cout << endl << game->get_player_name(game->winner) << " won the game!";
+			}
+			else
+			{
+				win << sf::Uint8(0);
+				cout << "\nGame cannot continue. Too many players left.";
 			}
 			cout.flush();
 

@@ -30,11 +30,8 @@ void Game::remove_player(const string& id)
 			ready_to_finish = true;
 			finished = true;
 
-			// win by default
-			if (players.size() > 0)
-				winner = players.begin()->first;
-			else
-				winner.clear();
+			// either the last players wins by default or everyone left
+			winner.clear();
 		}
 	}
 	else
