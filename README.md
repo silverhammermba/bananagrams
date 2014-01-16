@@ -21,12 +21,16 @@ The game is controlled using the keyboard and mouse. The keyboard controls can
 be changed in-game or by editing config.yaml.
 
 MOUSE CONTROLS
+--------------
+
  * Left Click: move the cursor
  * Left Click + Drag: select tiles
  * Right Click (+ Drag): remove tiles
  * Mouse Wheel: zoom
 
 CONTROLS
+--------
+
 * Left, Right, Up, down: move cursor
 * Left Fast, Right Fast, etc.: move cursor two tiles at a time
 * Zoom In, Zoom Out: zoom the view of your grid
