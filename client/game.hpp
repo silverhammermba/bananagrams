@@ -12,12 +12,22 @@ class Game
 	Cursor mcursor {{1, 1}, PPB / 16.0, sf::Color::Transparent, sf::Color {0, 200, 0, 80}};
 	Cursor selection {{1, 1}, 1, sf::Color {255, 255, 255, 25}, sf::Color::White};
 protected:
+	bool playing;
 	Grid grid;
 	Hand hand {font};
 	MessageQ messages {font};
 	Cursor cursor {{1, 1}, PPB / 16.f, sf::Color::Transparent, sf::Color {0, 200, 0}};
 public:
+	Game(bool _playing)
+		: playing(_playing)
+	{
+	}
 	virtual ~Game();
+
+	inline bool in_progress() const
+	{
+		return playing;
+	}
 
 	inline Hand& get_hand()
 	{
@@ -107,7 +117,6 @@ class MultiplayerGame : public Game
 
 	std::string id;
 	bool connected = false;
-	bool playing = false;
 	bool is_ready = false;
 	bool waiting = false;
 	sf::Int16 peel_n {-1};

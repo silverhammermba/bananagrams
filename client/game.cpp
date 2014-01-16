@@ -335,7 +335,7 @@ bool Game::peel()
 }
 
 SingleplayerGame::SingleplayerGame(const std::string& dict, uint8_t _num, uint8_t _den)
-	: dict_filename(dict), num(_num), den(_den)
+	: Game(true), dict_filename(dict), num(_num), den(_den)
 {
 	// TODO cache so we don't have to reload every time?
 	std::ifstream words(dict);
@@ -475,13 +475,16 @@ bool SingleplayerGame::peel()
 		hand.add_tile(tile);
 	}
 	else
+	{
 		messages.add("You win!", Message::Severity::CRITICAL);
+		playing = false;
+	}
 
 	return true;
 }
 
 MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& name)
-	: server_port {default_server_port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
+	: Game(false), server_port {default_server_port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
 {
 	std::string ip {server};
 

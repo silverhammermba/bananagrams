@@ -519,9 +519,12 @@ int main()
 
 	if (game != nullptr)
 	{
-		SingleplayerGame* sp = dynamic_cast<SingleplayerGame*>(game);
-		if (sp != nullptr)
-			sp->save("save.dat");
+		if (game->in_progress())
+		{
+			SingleplayerGame* sp = dynamic_cast<SingleplayerGame*>(game);
+			if (sp != nullptr)
+				sp->save("save.dat");
+		}
 		delete game;
 	}
 
