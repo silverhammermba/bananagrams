@@ -4,7 +4,6 @@
 #include <list>
 #include <map>
 #include <string>
-#include <sstream>
 #include <vector>
 
 #include <boost/program_options.hpp>

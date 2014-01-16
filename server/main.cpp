@@ -58,21 +58,21 @@ int main(int argc, char* argv[])
 		("limit", po::value<unsigned int>(),                                       "player limit")
 	;
 
-	// TODO print help on unrecognized options
 	po::variables_map opts;
-	po::store(po::parse_command_line(argc, argv, desc), opts);
-
-	if (opts.count("help"))
-	{
-		cerr << desc << endl;
-		return 1;
-	}
 
 	try
 	{
+		po::store(po::parse_command_line(argc, argv, desc), opts);
+
+		if (opts.count("help"))
+		{
+			cerr << desc << endl;
+			return 1;
+		}
+
 		po::notify(opts);
 	}
-	catch (po::required_option& e)
+	catch (po::error& e)
 	{
 		cerr << "Error: " << e.what() << endl << endl << desc << endl;
 		return 1;
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 	unsigned short server_port {opts["port"].as<unsigned short>()};
 	if (server_port == 0 || socket.bind(server_port) != sf::Socket::Status::Done)
 	{
-		std::cerr << "Bad listening port: " << server_port << endl;
+		cerr << "Error: bad listening port " << server_port << endl;
 		return 1;
 	}
 	socket.setBlocking(false);
@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
 
 			if (unconverted < multi_s.length() || b_num < 1)
 			{
-				std::cerr << "Invalid bunch multiplier: " << multi_s << endl;
+				cerr << "Error: invalid bunch multiplier " << multi_s << endl;
 				return 1;
 			}
 		}
@@ -124,18 +124,11 @@ int main(int argc, char* argv[])
 		auto limit = opts["limit"].as<unsigned int>();
 
 		if (limit > max_players)
-			cerr << "Max player limit is " << max_players << " for this bunch size\n";
+			cout << "Max player limit is " << max_players << " for this bunch size\n";
 		else if (limit < 2)
-			cerr << "Min player limit is 2\n";
+			cout << "Min player limit is 2\n";
 		else
 			max_players = limit;
-	}
-
-	// check dictionary option
-	if (!opts.count("dict"))
-	{
-		cerr << "No dictionary file specified!\n";
-		return 1;
 	}
 
 	string dict = opts["dict"].as<string>();
@@ -145,7 +138,7 @@ int main(int argc, char* argv[])
 	std::ifstream words(dict);
 	if (!words.is_open())
 	{
-		std::cerr << "\nFailed to open " << dict << "!\n";
+		cerr << "\nError: failed to open " << dict << "!\n";
 		return 1;
 	}
 
