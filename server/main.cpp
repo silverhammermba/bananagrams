@@ -82,26 +82,40 @@ int main(int argc, char* argv[])
 	unsigned short server_port {opts["port"].as<unsigned short>()};
 	if (server_port == 0 || socket.bind(server_port) != sf::Socket::Status::Done)
 	{
-		std::cerr << "Bad listening port " << server_port << endl;
+		std::cerr << "Bad listening port: " << server_port << endl;
 		return 1;
 	}
 	socket.setBlocking(false);
 
 	// game options
-	unsigned int b_num;
+	int b_num;
 	unsigned int b_den;
 	unsigned int max_players;
 	std::map<string, string> dictionary;
 
-	// check bunch multiplier option
-	std::stringstream multi_s;
-	multi_s << opts["bunch"].as<string>();
 	b_num = 1;
 	b_den = 1;
-	if (multi_s.str() == "0.5")
-		b_den = 2;
-	else
-		multi_s >> b_num;
+
+	// check bunch multiplier option
+	if (opts.count("bunch"))
+	{
+		string multi_s;
+		multi_s = opts["bunch"].as<string>();
+
+		if (multi_s == "0.5")
+			b_den = 2;
+		else
+		{
+			size_t unconverted;
+			b_num = std::stoi(multi_s, &unconverted);
+
+			if (unconverted < multi_s.length() || b_num < 1)
+			{
+				std::cerr << "Invalid bunch multiplier: " << multi_s << endl;
+				return 1;
+			}
+		}
+	}
 
 	max_players = (8 * b_num) / b_den;
 
