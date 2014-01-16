@@ -334,10 +334,10 @@ bool Game::peel()
 	return true;
 }
 
-SingleplayerGame::SingleplayerGame(const std::string& dict, int multiplier, int divider)
+SingleplayerGame::SingleplayerGame(const std::string& dict, uint8_t _num, uint8_t _den)
+	: dict_filename(dict), num(_num), den(_den)
 {
-	// TODO validate somehow
-	// TODO cache so we don't have to reload every time
+	// TODO cache so we don't have to reload every time?
 	std::ifstream words(dict);
 
 	if (words.is_open())
@@ -356,7 +356,7 @@ SingleplayerGame::SingleplayerGame(const std::string& dict, int multiplier, int 
 
 		// create tiles for the bunch
 		for (char ch = 'A'; ch <= 'Z'; ++ch)
-			for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * multiplier) / divider); ++i)
+			for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * num) / den); ++i)
 				random_insert(bunch, new Tile(ch));
 
 		// take tiles from the bunch for player
@@ -388,7 +388,36 @@ bool SingleplayerGame::load(const std::string& filename)
 
 void SingleplayerGame::save(const std::string& filename)
 {
-	// TODO
+	std::ofstream save_file(filename);
+
+	// save game parameters
+	save_file.write(dict_filename.c_str(), dict_filename.length() + 1);
+	save_file.write(reinterpret_cast<const char*>(&num), sizeof num);
+	save_file.write(reinterpret_cast<const char*>(&den), sizeof den);
+
+	// save hand
+	for (char ch = 'A'; ch <= 'Z'; ++ch)
+	{
+		if (hand.has_any(ch))
+		{
+			save_file.put(ch);
+			uint8_t count = hand.count(ch);
+			save_file.write(reinterpret_cast<const char*>(&count), sizeof count);
+		}
+	}
+
+	save_file.put('\0');
+
+	// save grid
+	for (Tile* tile : grid.internal())
+	{
+		if (tile == nullptr)
+			save_file.put('\0');
+		else
+			save_file.put(tile->ch());
+	}
+
+	save_file.close();
 }
 
 void SingleplayerGame::dump()
@@ -520,7 +549,6 @@ void MultiplayerGame::step(float time)
 
 		if (time_stale > timeout)
 		{
-			// TODO sometimes this happens immediately after connecting...
 			messages.add("Disconnected from server: server timed out", Message::Severity::CRITICAL);
 			disconnect();
 		}
@@ -887,7 +915,6 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 						messages.add(players.at(winner_id).get_name() + " has won the game!", Message::Severity::CRITICAL);
 				}
 				else
-					// TODO server reports normal victory when all other players leave
 					messages.add("You win! All other players have resigned.", Message::Severity::CRITICAL);
 
 				++ack_num;
@@ -1033,6 +1060,7 @@ void MultiplayerGame::disconnect()
 }
 
 // TODO need display for other players, letters remaining, etc.
+// TODO show ready key reminder at beginning
 void MultiplayerGame::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const
 {
 	Game::draw_on(window, grid_view, gui_view);

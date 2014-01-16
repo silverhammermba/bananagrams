@@ -38,6 +38,11 @@ class Grid
 public:
 	~Grid();
 
+	const std::vector<Tile*>& internal() const
+	{
+		return grid;
+	}
+
 	// return center of bounding box
 	sf::Vector2f get_center() const;
 

@@ -73,11 +73,15 @@ public:
 
 class SingleplayerGame : public Game
 {
-	std::string dict_str {""};
+	std::string dict_filename;
+	// you really shouldn't need more than 36,720 letters
+	uint8_t num;
+	uint8_t den;
+
 	std::map<std::string, std::string> dictionary;
 	std::list<Tile*> bunch;
 public:
-	SingleplayerGame(const std::string& dict, int multiplier = 1, int divider = 1);
+	SingleplayerGame(const std::string& dict, uint8_t _num = 1, uint8_t _den = 1);
 	virtual ~SingleplayerGame();
 
 	bool load(const std::string& filename);

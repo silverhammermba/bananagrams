@@ -517,9 +517,13 @@ int main()
 		window.display();
 	}
 
-	// TODO save game if player hasn't won
 	if (game != nullptr)
+	{
+		SingleplayerGame* sp = dynamic_cast<SingleplayerGame*>(game);
+		if (sp != nullptr)
+			sp->save("save.dat");
 		delete game;
+	}
 
 	// TODO only do this if controls changed
 	controls.write_to_file("config.yaml");

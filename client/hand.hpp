@@ -23,9 +23,14 @@ public:
 	Hand(const sf::Font& font);
 	~Hand();
 
+	inline unsigned int count(char ch) const
+	{
+		return tiles[ch - 'A'].size();
+	}
+
 	inline bool has_any(char ch) const
 	{
-		return tiles[ch - 'A'].size() > 0;
+		return count(ch) > 0;
 	}
 
 	bool is_empty() const;
