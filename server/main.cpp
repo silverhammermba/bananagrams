@@ -522,7 +522,7 @@ int main(int argc, char* argv[])
 					cout << "\nSending " << pair.second.get_name() << " " << letters;
 
 					sf::Packet peel;
-					peel << sv_peel << sf::Int16(game->get_peel() - 1) << remaining << pair.first << letters;
+					peel << sv_peel << sf::Int16(game->get_peel() - 1) << remaining << peeler << letters;
 
 					if (!pair.second.has_pending())
 						socket.send(peel, pair.second.get_ip(), pair.second.get_port());

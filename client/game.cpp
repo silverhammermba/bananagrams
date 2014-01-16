@@ -803,11 +803,11 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					ack_n = 0;
 					ack_num = 0;
 				}
+				// announce if someone else peeled
+				else if (peeler_id != id)
+					messages.add(players.at(peeler_id).get_name() + ": PEEL!", Message::Severity::HIGH);
 
 				++peel_n;
-				if (peeler_id != id)
-					// TODO this doesn't work
-					messages.add(players.at(peeler_id).get_name() + ": PEEL!", Message::Severity::HIGH);
 
 				if (remaining < (int)players.size())
 					messages.add("Final peel!", Message::Severity::HIGH);
