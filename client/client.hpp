@@ -50,7 +50,6 @@ public:
 };
 
 #include "../common.hpp"
-#include "../ack.hpp"
 #include "control.hpp"
 #include "message.hpp"
 #include "cursor.hpp"
