@@ -20,7 +20,8 @@ void shutdown(int s)
 
 	if (game != nullptr)
 	{
-		cout << "\nNotifying players...";
+		if (game->get_players().size() > 0)
+			cout << "\nNotifying players...";
 		for (const auto& pair: game->get_players())
 		{
 			sf::Packet sorry;
@@ -43,7 +44,7 @@ int main(int argc, char* argv[])
 	sigemptyset(&action.sa_mask);
 	action.sa_flags = 0;
 
-	sigaction(SIGINT, &action, nullptr);
+	sigaction(SIGINT , &action, nullptr);
 	sigaction(SIGTERM, &action, nullptr);
 	sigaction(SIGKILL, &action, nullptr);
 
