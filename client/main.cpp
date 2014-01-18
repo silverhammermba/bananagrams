@@ -313,7 +313,8 @@ int main()
 
 	input_readers.push_back(&current);
 
-	loading_text.setString("Loading dictionary...");
+	// this will display too quickly to see if no game is loaded
+	loading_text.setString("Loading saved game...");
 	ltbounds = loading_text.getGlobalBounds();
 	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
 	window.clear(background);

@@ -376,16 +376,15 @@ SingleplayerGame::SingleplayerGame(std::ifstream& save_file)
 	: Game(true)
 {
 	// read dict and bunch size
-	std::string dict;
-	std::getline(save_file, dict, '\0');
+	std::getline(save_file, dict_filename, '\0');
 
 	save_file.read(reinterpret_cast<char*>(&num), sizeof num);
 	save_file.read(reinterpret_cast<char*>(&den), sizeof den);
 
-	std::ifstream words(dict);
+	std::ifstream words(dict_filename);
 	if (!words.is_open())
 	{
-		messages.add("Failed to load saved dictionary '" + dict + "'", Message::Severity::CRITICAL);
+		messages.add("Failed to load saved dictionary '" + dict_filename + "'", Message::Severity::CRITICAL);
 		playing = false;
 		return;
 	}
