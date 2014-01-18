@@ -371,6 +371,88 @@ SingleplayerGame::SingleplayerGame(const std::string& dict, uint8_t _num, uint8_
 		messages.add("Failed to load dictionary '" + dict + "'", Message::Severity::CRITICAL);
 }
 
+// load from file
+SingleplayerGame::SingleplayerGame(const string& filename)
+	: Game(true)
+{
+	std::ifstream save_file(filename);
+
+	if (!save_file.is_open())
+	{
+		messages.add("Failed to load saved game!", Message::Severity::CRITICAL);
+		playing = false;
+		return;
+	}
+
+	// read saved game
+	std::string dict;
+	std::getline(save_file, dict, '\0');
+
+	save_file.read(reinterpret_cast<char*>(&num), sizeof num);
+	save_file.read(reinterpret_cast<char*>(&den), sizeof den);
+
+	// initialize
+	std::ifstream words(dict);
+	if (!words.is_open())
+	{
+		messages.add("Failed to load saved dictionary '" + dict + "'", Message::Severity::CRITICAL);
+		playing = false;
+		return;
+	}
+
+	// parse dictionary
+	string line;
+	while (std::getline(words, line))
+	{
+		auto pos = line.find_first_of(' ');
+		if (pos == string::npos)
+			dictionary[line] = "";
+		else
+			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
+	}
+	words.close();
+
+	// keep track of letters in hand/grid
+	unsigned int counts[26];
+	for (unsigned int i = 0; i < 26; ++i)
+		counts[i] = 0;
+
+	char ch;
+	save_file.get(ch);
+
+	while (ch != '\0')
+	{
+		uint8_t count;
+		save_file.read(reinterpret_cast<char*>(&count), sizeof count);
+
+		counts[ch - 'A'] += count;
+
+		for (unsigned int i = 0; i < count; ++i)
+			hand.add_tile(new Tile(ch));
+
+		save_file.get(ch);
+	}
+
+	save_file.get(ch);
+	while (!save_file.eof())
+	{
+		sf::Vector2i pos;
+		save_file.read(reinterpret_cast<char*>(&pos.x), sizeof pos.x);
+		save_file.read(reinterpret_cast<char*>(&pos.y), sizeof pos.y);
+
+		++counts[ch - 'A'];
+
+		grid.swap(pos, new Tile(ch));
+
+		save_file.get(ch);
+	}
+
+	// create tiles for the bunch
+	for (char ch = 'A'; ch <= 'Z'; ++ch)
+		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * num) / den) - counts[ch - 'A']; ++i)
+			random_insert(bunch, new Tile(ch));
+}
+
 SingleplayerGame::~SingleplayerGame()
 {
 	for (auto tile : bunch)
@@ -378,12 +460,6 @@ SingleplayerGame::~SingleplayerGame()
 	bunch.clear();
 
 	dictionary.clear();
-}
-
-bool SingleplayerGame::load(const std::string& filename)
-{
-	// TODO
-	return false;
 }
 
 void SingleplayerGame::save(const std::string& filename)
@@ -411,10 +487,13 @@ void SingleplayerGame::save(const std::string& filename)
 	// save grid
 	for (Tile* tile : grid.internal())
 	{
-		if (tile == nullptr)
-			save_file.put('\0');
-		else
+		if (tile != nullptr)
+		{
+			auto pos = tile->get_grid_pos();
 			save_file.put(tile->ch());
+			save_file.write(reinterpret_cast<const char*>(&pos.x), sizeof pos.x);
+			save_file.write(reinterpret_cast<const char*>(&pos.y), sizeof pos.y);
+		}
 	}
 
 	save_file.close();

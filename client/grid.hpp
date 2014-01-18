@@ -38,7 +38,7 @@ class Grid
 public:
 	~Grid();
 
-	const std::vector<Tile*>& internal() const
+	inline const std::vector<Tile*>& internal() const
 	{
 		return grid;
 	}
