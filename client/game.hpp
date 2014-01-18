@@ -92,7 +92,7 @@ class SingleplayerGame : public Game
 	std::list<Tile*> bunch;
 public:
 	SingleplayerGame(const std::string& dict, uint8_t _num = 1, uint8_t _den = 1);
-	SingleplayerGame(const std::string& filename);
+	SingleplayerGame(std::ifstream& save_file);
 	virtual ~SingleplayerGame();
 
 	bool load(const std::string& filename);

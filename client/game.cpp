@@ -372,26 +372,16 @@ SingleplayerGame::SingleplayerGame(const std::string& dict, uint8_t _num, uint8_
 }
 
 // load from file
-SingleplayerGame::SingleplayerGame(const string& filename)
+SingleplayerGame::SingleplayerGame(std::ifstream& save_file)
 	: Game(true)
 {
-	std::ifstream save_file(filename);
-
-	if (!save_file.is_open())
-	{
-		messages.add("Failed to load saved game!", Message::Severity::CRITICAL);
-		playing = false;
-		return;
-	}
-
-	// read saved game
+	// read dict and bunch size
 	std::string dict;
 	std::getline(save_file, dict, '\0');
 
 	save_file.read(reinterpret_cast<char*>(&num), sizeof num);
 	save_file.read(reinterpret_cast<char*>(&den), sizeof den);
 
-	// initialize
 	std::ifstream words(dict);
 	if (!words.is_open())
 	{
@@ -420,6 +410,7 @@ SingleplayerGame::SingleplayerGame(const string& filename)
 	char ch;
 	save_file.get(ch);
 
+	// read hand
 	while (ch != '\0')
 	{
 		uint8_t count;
@@ -433,6 +424,7 @@ SingleplayerGame::SingleplayerGame(const string& filename)
 		save_file.get(ch);
 	}
 
+	// read grid
 	save_file.get(ch);
 	while (!save_file.eof())
 	{
@@ -447,7 +439,7 @@ SingleplayerGame::SingleplayerGame(const string& filename)
 		save_file.get(ch);
 	}
 
-	// create tiles for the bunch
+	// add remaining tiles to bunch
 	for (char ch = 'A'; ch <= 'Z'; ++ch)
 		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * num) / den) - counts[ch - 'A']; ++i)
 			random_insert(bunch, new Tile(ch));

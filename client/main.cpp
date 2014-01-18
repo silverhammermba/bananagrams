@@ -320,6 +320,12 @@ int main()
 	window.draw(loading_text);
 	window.display();
 
+	// load saved game
+	std::ifstream save_file("save.dat");
+	if (save_file.is_open())
+		game = new SingleplayerGame(save_file);
+	save_file.close();
+
 	// stuff for game loop
 	MouseControls mouse;
 	input_readers.push_back(&mouse);
