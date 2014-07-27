@@ -187,6 +187,12 @@ void Game::remove()
 		// if below a tile
 		else if (grid.get(pos - Y) != nullptr)
 			next = Y;
+		// if left of a tile
+		else if (grid.get(pos + X) != nullptr)
+			next = X;
+		// if above a tile
+		else if (grid.get(pos + Y) != nullptr)
+			next = Y;
 		else
 			next = last_move;
 
