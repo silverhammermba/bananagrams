@@ -524,14 +524,19 @@ int main()
 		window.display();
 	}
 
+	// cleanup game
 	if (game != nullptr)
 	{
-		if (game->in_progress())
+		// if singleplayer, save game (or delete save if we finished it)
+		SingleplayerGame* sp = dynamic_cast<SingleplayerGame*>(game);
+		if (sp != nullptr)
 		{
-			SingleplayerGame* sp = dynamic_cast<SingleplayerGame*>(game);
-			if (sp != nullptr)
+			if (game->in_progress())
 				sp->save("save.dat");
+			else
+				std::remove("save.dat");
 		}
+
 		delete game;
 	}
 
