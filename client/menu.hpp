@@ -49,6 +49,7 @@ class MenuSystem;
 // stores list of Entries and manages navigation
 class Menu : public InputReader
 {
+	SoundManager& sound;
 	MenuSystem& system; // system managing this menu
 	Menu* parent; // nullptr for no parent
 	sf::Text title;
@@ -57,7 +58,7 @@ class Menu : public InputReader
 	sf::RectangleShape background;
 public:
 	// create menu centered on vw, managed by sys, with parent p, and title ttl
-	Menu(MenuSystem& sys, Menu* p, const std::string& ttl);
+	Menu(SoundManager& _sound, MenuSystem& sys, Menu* p, const std::string& ttl);
 
 	inline Menu* get_parent() const
 	{

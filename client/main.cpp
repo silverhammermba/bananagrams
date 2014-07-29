@@ -90,7 +90,7 @@ int main()
 
 	// initialize menu system
 	MenuSystem current;
-	Menu main {current, nullptr, "BANANAGRAMS"};
+	Menu main {sound, current, nullptr, "BANANAGRAMS"};
 	MenuEntry solitaire {"SOLITAIRE", current};
 	MenuEntry multiplayer {"MULTIPLAYER", current};
 	MenuEntry customize {"CONTROLS", current};
@@ -101,7 +101,7 @@ int main()
 	main.append_entry(&quit);
 
 	// create solitaire menu
-	Menu solitaire_opts {current, &main, "SOLITAIRE"};
+	Menu solitaire_opts {sound, current, &main, "SOLITAIRE"};
 	solitaire.submenu = &solitaire_opts;
 
 	Game* game {nullptr};
@@ -114,7 +114,7 @@ int main()
 	solitaire_opts.append_entry(&dict_entry);
 	solitaire_opts.append_entry(&multiplier);
 
-	Menu multiplayer_menu {current, &main, "MULTIPLAYER"};
+	Menu multiplayer_menu {sound, current, &main, "MULTIPLAYER"};
 	multiplayer.submenu = &multiplayer_menu;
 
 	std::string def_ip = sf::IpAddress::getLocalAddress().toString();
@@ -127,7 +127,7 @@ int main()
 	multiplayer_menu.append_entry(&start_multiplayer);
 
 	// create control menu
-	Menu control_opts {current, &main, "CONTROLS"};
+	Menu control_opts {sound, current, &main, "CONTROLS"};
 	customize.submenu = &control_opts;
 
 	// TODO scrolling menus?
@@ -137,7 +137,7 @@ int main()
 			control_opts.append_entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
 
 	// create quite menu
-	Menu confirm_quit {current, &main, "Really quit?"};
+	Menu confirm_quit {sound, current, &main, "Really quit?"};
 	quit.submenu = &confirm_quit;
 	QuitEntry yes {"YES", window};
 	MenuEntry no {"NO", current, &main};
@@ -541,6 +541,8 @@ int main()
 			}
 			// menu input reader blocks game from getting menu key release
 			controls.reset("menu");
+
+			sound.play("audio/menu_open.wav");
 		}
 
 		// draw
