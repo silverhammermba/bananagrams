@@ -4,6 +4,7 @@ class Entry : public InputReader
 protected:
 	sf::Text text;
 	float scale;
+	bool pending;
 public:
 	Entry(const std::string& txt, float sz=1.f);
 
@@ -30,7 +31,17 @@ public:
 
 	// TODO can I make an implementation for this?
 	// triggered when return is pressed for this entry
-	virtual void select() = 0;
+	virtual void select()
+	{
+		pending = true;
+	}
+
+	inline bool is_pending()
+	{
+		bool p = pending;
+		pending = false;
+		return p;
+	}
 };
 
 class MenuSystem;
@@ -185,7 +196,7 @@ public:
 	virtual void set_menu_pos(float center, float width, float top);
 	virtual void highlight();
 	virtual void lowlight();
-	inline virtual void select() {} // nothing to do
+	// doesn't need a select
 	virtual bool process_event(sf::Event& event);
 	virtual void draw_on(sf::RenderWindow& window) const;
 };
@@ -197,13 +208,21 @@ class SingleplayerEntry : public Entry
 	MenuSystem& system;
 	TextEntry& dict_entry;
 	MultiEntry& multiplier;
-	Game** game;
 
-	SoundManager& sound;
 public:
-	SingleplayerEntry(SoundManager& _sound, const std::string& txt, MenuSystem& sys, TextEntry& dict_entry, MultiEntry& multiplier, Game** game);
+	SingleplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict_entry, MultiEntry& multiplier);
 
 	virtual void select();
+
+	inline const std::string& get_dictionary() const
+	{
+		return dict_entry.get_string();
+	}
+
+	inline const std::string& get_multiplier() const
+	{
+		return multiplier.get_choice();
+	}
 };
 
 // TODO modularize better? how to get settings for starting game?
@@ -212,13 +231,21 @@ class MultiplayerEntry : public Entry
 	MenuSystem& system;
 	TextEntry& server;
 	TextEntry& name;
-	Game** game;
 
-	SoundManager& sound;
 public:
-	MultiplayerEntry(SoundManager& _sound, const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game** g);
+	MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm);
 
 	virtual void select();
+
+	inline const std::string& get_server() const
+	{
+		return server.get_string();
+	}
+
+	inline const std::string& get_name() const
+	{
+		return name.get_string();
+	}
 };
 
 class ControlEntry : public Entry

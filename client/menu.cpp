@@ -65,8 +65,8 @@ void MenuEntry::select()
 
 // TODO add entry for resuming saved game
 
-SingleplayerEntry::SingleplayerEntry(SoundManager& _sound, const std::string& txt, MenuSystem& sys, TextEntry& dict, MultiEntry& mult, Game** g)
-	: Entry {txt}, system(sys), dict_entry(dict), multiplier(mult), game {g} /* XXX GCC bug! */, sound(_sound)
+SingleplayerEntry::SingleplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict, MultiEntry& mult)
+	: Entry {txt}, system(sys), dict_entry(dict), multiplier(mult)
 {
 }
 
