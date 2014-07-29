@@ -1,6 +1,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
+#include <cstdio>
 #include <array>
 #include <iostream>
 #include <fstream>
