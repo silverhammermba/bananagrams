@@ -452,9 +452,8 @@ void QuitEntry::select()
 }
 
 // TODO react to changing view
-// TODO this still feels gross having sound here...
-Menu::Menu(SoundManager& _sound, MenuSystem& sys, Menu* p, const std::string& ttl)
-	: sound(_sound), system(sys), parent {p}, title {ttl, font, (unsigned int)(PPB * 1.5)} // XXX GCC bug!
+Menu::Menu(MenuSystem& sys, Menu* p, const std::string& ttl)
+	: system(sys), parent {p}, title {ttl, font, (unsigned int)(PPB * 1.5)} // XXX GCC bug!
 {
 	title.setColor(ACTIVE);
 
@@ -543,7 +542,7 @@ void Menu::highlight_coords(float x, float y)
 			if (it != highlighted)
 			{
 				highlight(it);
-				sound.play("audio/menu_move.wav");
+				system.play_sound("audio/menu_move.wav");
 			}
 			break;
 		}
@@ -572,21 +571,21 @@ bool Menu::process_event(sf::Event& event)
 					if (parent != nullptr)
 					{
 						system.set_menu(*parent);
-						sound.play("audio/menu_select.wav");
+						system.play_sound("audio/menu_select.wav");
 					}
 					else
 					{
 						system.close();
-						sound.play("audio/menu_open.wav");
+						system.play_sound("audio/menu_open.wav");
 					}
 					break;
 				case sf::Keyboard::Up:
 					highlight_prev();
-					sound.play("audio/menu_move.wav");
+					system.play_sound("audio/menu_move.wav");
 					break;
 				case sf::Keyboard::Down:
 					highlight_next();
-					sound.play("audio/menu_move.wav");
+					system.play_sound("audio/menu_move.wav");
 					break;
 				default:
 					break;
@@ -597,7 +596,7 @@ bool Menu::process_event(sf::Event& event)
 			{
 				case sf::Keyboard::Return:
 					(*highlighted)->select();
-					sound.play("audio/menu_select.wav");
+					system.play_sound("audio/menu_select.wav");
 					break;
 				default:
 					break;
@@ -611,13 +610,18 @@ bool Menu::process_event(sf::Event& event)
 			break;
 		case sf::Event::MouseButtonReleased:
 			(*highlighted)->select();
-			sound.play("audio/menu_select.wav");
+			system.play_sound("audio/menu_select.wav");
 			break;
 		default:
 			break;
 	}
 
 	return false;
+}
+
+MenuSystem::MenuSystem(SoundManager& _sound)
+	: sound(_sound)
+{
 }
 
 bool MenuSystem::process_event(sf::Event& event)

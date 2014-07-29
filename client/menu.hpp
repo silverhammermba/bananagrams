@@ -49,7 +49,6 @@ class MenuSystem;
 // stores list of Entries and manages navigation
 class Menu : public InputReader
 {
-	SoundManager& sound;
 	MenuSystem& system; // system managing this menu
 	Menu* parent; // nullptr for no parent
 	sf::Text title;
@@ -58,7 +57,7 @@ class Menu : public InputReader
 	sf::RectangleShape background;
 public:
 	// create menu centered on vw, managed by sys, with parent p, and title ttl
-	Menu(SoundManager& _sound, MenuSystem& sys, Menu* p, const std::string& ttl);
+	Menu(MenuSystem& sys, Menu* p, const std::string& ttl);
 
 	inline Menu* get_parent() const
 	{
@@ -97,10 +96,12 @@ public:
 // keeps track of current menu, delegates Events
 class MenuSystem : public InputReader
 {
+	SoundManager& sound;
+
 	// TODO dangerous if not initialized
 	Menu* menu_p;
 public:
-	MenuSystem() {}
+	MenuSystem(SoundManager& _sound);
 
 	// use InputReader finished state to determine if menu should be dispayed
 	inline void open()
@@ -123,6 +124,11 @@ public:
 	inline Menu& menu() const
 	{
 		return *menu_p;
+	}
+
+	inline void play_sound(const std::string& file)
+	{
+		sound.play(file);
 	}
 
 	// forward events to current menu
