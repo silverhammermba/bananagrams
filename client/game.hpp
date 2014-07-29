@@ -11,6 +11,9 @@ class Game
 	bool set_view_to_cursor {true};
 	Cursor mcursor {{1, 1}, PPB / 16.0, sf::Color::Transparent, sf::Color {0, 200, 0, 80}};
 	Cursor selection {{1, 1}, 1, sf::Color {255, 255, 255, 25}, sf::Color::White};
+
+	sf::Sound split_s;
+	sf::SoundBuffer split_sb;
 protected:
 	bool playing;
 	Grid grid;
@@ -18,10 +21,7 @@ protected:
 	MessageQ messages {font};
 	Cursor cursor {{1, 1}, PPB / 16.f, sf::Color::Transparent, sf::Color {0, 200, 0}};
 public:
-	Game(bool _playing)
-		: playing(_playing)
-	{
-	}
+	Game(bool _playing);
 	virtual ~Game();
 
 	inline bool in_progress() const
@@ -79,6 +79,11 @@ public:
 	}
 	void set_zoom(float zoom);
 	virtual void draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const;
+
+	inline void split_sound()
+	{
+		split_s.play();
+	}
 };
 
 class SingleplayerGame : public Game

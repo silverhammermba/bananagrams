@@ -4,6 +4,13 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+Game::Game(bool _playing)
+	: playing(_playing)
+{
+	split_sb.loadFromFile("audio/split.wav");
+	split_s.setBuffer(split_sb);
+}
+
 Game::~Game()
 {
 	grid.clear();
@@ -372,6 +379,10 @@ SingleplayerGame::SingleplayerGame(const std::string& dict, uint8_t _num, uint8_
 			bunch.pop_back();
 			hand.add_tile(tile);
 		}
+
+		messages.add("SPLIT!", Message::Severity::HIGH);
+
+		split_sound();
 	}
 	else
 		messages.add("Failed to load dictionary '" + dict + "'", Message::Severity::CRITICAL);
@@ -905,6 +916,8 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 					playing = true;
 					messages.clear();
 					messages.add("SPLIT!", Message::Severity::HIGH);
+
+					split_sound();
 
 					// reset ack count
 					ack_n = 0;
