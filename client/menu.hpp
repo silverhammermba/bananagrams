@@ -219,7 +219,7 @@ public:
 		return dict_entry.get_string();
 	}
 
-	inline const std::string& get_multiplier() const
+	inline unsigned int get_multiplier() const
 	{
 		return multiplier.get_choice();
 	}

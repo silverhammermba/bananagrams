@@ -63,8 +63,6 @@ void MenuEntry::select()
 		system.set_menu(*submenu);
 }
 
-// TODO add entry for resuming saved game
-
 SingleplayerEntry::SingleplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict, MultiEntry& mult)
 	: Entry {txt}, system(sys), dict_entry(dict), multiplier(mult)
 {
@@ -72,35 +70,21 @@ SingleplayerEntry::SingleplayerEntry(const std::string& txt, MenuSystem& sys, Te
 
 void SingleplayerEntry::select()
 {
-	// TODO display loading text
-	int mul {1};
-	int div {1};
-	if (multiplier.get_choice() == 0)
-		div = 2;
-	else
-		mul = multiplier.get_choice();
-	if (*game != nullptr)
-		delete *game;
-	system.close();
-	*game = new SingleplayerGame(sound, dict_entry.get_string(), mul, div);
+	Entry::select(); // lets main know that we're selected
+	system.close(); // main handles game construction, just close the menu
 }
 
-// TODO add entry for disconnecting from game
+// TODO add entry for disconnecting from game?
 
-MultiplayerEntry::MultiplayerEntry(SoundManager& _sound, const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game** g)
-	: Entry {txt}, system(sys), server(srv), name(nm), game {g} /* XXX GCC bug! */, sound(_sound)
+MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm)
+	: Entry {txt}, system(sys), server(srv), name(nm)
 {
 }
 
 void MultiplayerEntry::select()
 {
-	// TODO process name string
-
-	if (*game != nullptr)
-		delete *game;
-	system.close();
-
-	*game = new MultiplayerGame(sound, server.get_string(), name.get_string());
+	Entry::select(); // lets main know that we're selected
+	system.close(); // main handles game construction, just close the menu
 }
 
 TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, const std::string& def_display)

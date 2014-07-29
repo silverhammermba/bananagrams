@@ -108,9 +108,9 @@ int main()
 	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
 	// TODO add infinite bunch option
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
-	SingleplayerEntry start {sound, "START GAME", current, dict_entry, multiplier, &game};
+	SingleplayerEntry start_singleplayer {"START GAME", current, dict_entry, multiplier};
 
-	solitaire_opts.append_entry(&start);
+	solitaire_opts.append_entry(&start_singleplayer);
 	solitaire_opts.append_entry(&dict_entry);
 	solitaire_opts.append_entry(&multiplier);
 
@@ -121,10 +121,10 @@ int main()
 	std::string def_pt = std::to_string(default_server_port);
 	TextEntry server {"SERVER", PPB * 8, def_ip + ":" + def_pt, "localhost"};
 	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
-	MultiplayerEntry join {sound, "JOIN", current, server, name, &game};
+	MultiplayerEntry start_multiplayer {"JOIN", current, server, name};
 	multiplayer_menu.append_entry(&server);
 	multiplayer_menu.append_entry(&name);
-	multiplayer_menu.append_entry(&join);
+	multiplayer_menu.append_entry(&start_multiplayer);
 
 	// create control menu
 	Menu control_opts {current, &main, "CONTROLS"};
@@ -365,6 +365,31 @@ int main()
 				if (!cont)
 					break;
 			}
+		}
+
+		if (start_singleplayer.is_pending())
+		{
+			// TODO display loading text
+			int mul {1};
+			int div {1};
+			if (start_singleplayer.get_multiplier() == 0)
+				div = 2;
+			else
+				mul = start_singleplayer.get_multiplier();
+			if (game != nullptr)
+				delete game;
+
+			game = new SingleplayerGame(sound, start_singleplayer.get_dictionary(), mul, div);
+		}
+
+		if (start_multiplayer.is_pending())
+		{
+			// TODO process name string
+
+			if (game != nullptr)
+				delete game;
+
+			game = new MultiplayerGame(sound, start_multiplayer.get_server(), start_multiplayer.get_name());
 		}
 
 		if (game != nullptr)
