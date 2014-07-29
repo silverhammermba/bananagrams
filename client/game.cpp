@@ -916,6 +916,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 				{
 					std::stringstream rem;
 					rem << remaining;
+					// TODO add message to single player
 					messages.add(rem.str() + " letters remain", Message::Severity::LOW);
 				}
 

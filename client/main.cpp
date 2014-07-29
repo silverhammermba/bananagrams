@@ -100,6 +100,7 @@ int main()
 
 	Game* game {nullptr};
 	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
+	// TODO add infinite bunch option
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
 	SingleplayerEntry start {"START GAME", current, dict_entry, multiplier, &game};
 

@@ -230,6 +230,7 @@ void KeyControls::bind(const string& command, const string& key, repeat_t rep, b
 	defaults[command] = str2key(key);
 }
 
+// TODO don't allow binds of letter keys
 bool KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 {
 	// check if command exists
