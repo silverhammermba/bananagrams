@@ -61,6 +61,12 @@ int main()
 		return 1;
 	}
 
+	SoundManager sound;
+	sound.load("audio/split.wav");
+	sound.load("audio/menu_move.wav");
+	sound.load("audio/menu_open.wav");
+	sound.load("audio/menu_select.wav");
+
 	KeyControls controls;
 	// TODO store last dictionary name, last resolution settings, etc.
 	controls.load_from_file("config.yaml");
@@ -102,7 +108,7 @@ int main()
 	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
 	// TODO add infinite bunch option
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
-	SingleplayerEntry start {"START GAME", current, dict_entry, multiplier, &game};
+	SingleplayerEntry start {sound, "START GAME", current, dict_entry, multiplier, &game};
 
 	solitaire_opts.append_entry(&start);
 	solitaire_opts.append_entry(&dict_entry);
@@ -115,7 +121,7 @@ int main()
 	std::string def_pt = std::to_string(default_server_port);
 	TextEntry server {"SERVER", PPB * 8, def_ip + ":" + def_pt, "localhost"};
 	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
-	MultiplayerEntry join {"JOIN", current, server, name, &game};
+	MultiplayerEntry join {sound, "JOIN", current, server, name, &game};
 	multiplayer_menu.append_entry(&server);
 	multiplayer_menu.append_entry(&name);
 	multiplayer_menu.append_entry(&join);
@@ -325,7 +331,7 @@ int main()
 	// load saved game
 	std::ifstream save_file("save.dat");
 	if (save_file.is_open())
-		game = new SingleplayerGame(save_file);
+		game = new SingleplayerGame(sound, save_file);
 	save_file.close();
 
 	// stuff for game loop

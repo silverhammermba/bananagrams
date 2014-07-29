@@ -10,6 +10,7 @@
 #include <queue>
 #include <string>
 #include <sstream>
+#include <unordered_map>
 #include <vector>
 
 #include <boost/uuid/uuid.hpp>
@@ -52,6 +53,7 @@ public:
 };
 
 #include "../common.hpp"
+#include "sound.hpp"
 #include "control.hpp"
 #include "message.hpp"
 #include "cursor.hpp"

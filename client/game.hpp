@@ -12,16 +12,17 @@ class Game
 	Cursor mcursor {{1, 1}, PPB / 16.0, sf::Color::Transparent, sf::Color {0, 200, 0, 80}};
 	Cursor selection {{1, 1}, 1, sf::Color {255, 255, 255, 25}, sf::Color::White};
 
-	sf::Sound split_s;
-	sf::SoundBuffer split_sb;
 protected:
 	bool playing;
 	Grid grid;
 	Hand hand {font};
 	MessageQ messages {font};
 	Cursor cursor {{1, 1}, PPB / 16.f, sf::Color::Transparent, sf::Color {0, 200, 0}};
+
+	SoundManager& sound;
+
 public:
-	Game(bool _playing);
+	Game(bool _playing, SoundManager& _sound);
 	virtual ~Game();
 
 	inline bool in_progress() const
@@ -82,7 +83,7 @@ public:
 
 	inline void split_sound()
 	{
-		split_s.play();
+		sound.play("audio/split.wav");
 	}
 };
 
@@ -96,8 +97,8 @@ class SingleplayerGame : public Game
 	std::map<std::string, std::string> dictionary;
 	std::list<Tile*> bunch;
 public:
-	SingleplayerGame(const std::string& dict, uint8_t _num = 1, uint8_t _den = 1);
-	SingleplayerGame(std::ifstream& save_file);
+	SingleplayerGame(SoundManager& _sound, const std::string& dict, uint8_t _num = 1, uint8_t _den = 1);
+	SingleplayerGame(SoundManager& _sound, std::ifstream& save_file);
 	virtual ~SingleplayerGame();
 
 	bool load(const std::string& filename);
@@ -136,7 +137,7 @@ class MultiplayerGame : public Game
 
 	std::map<std::string, Player> players;
 public:
-	MultiplayerGame(const std::string& server, const std::string& name);
+	MultiplayerGame(SoundManager& _sound, const std::string& server, const std::string& name);
 	virtual ~MultiplayerGame();
 
 	// create new pending packet and store type

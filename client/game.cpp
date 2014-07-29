@@ -4,11 +4,9 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-Game::Game(bool _playing)
-	: playing(_playing)
+Game::Game(bool _playing, SoundManager& _sound)
+	: playing(_playing), sound(_sound)
 {
-	split_sb.loadFromFile("audio/split.wav");
-	split_s.setBuffer(split_sb);
 }
 
 Game::~Game()
@@ -347,8 +345,8 @@ bool Game::peel()
 	return true;
 }
 
-SingleplayerGame::SingleplayerGame(const std::string& dict, uint8_t _num, uint8_t _den)
-	: Game(true), dict_filename(dict), num(_num), den(_den)
+SingleplayerGame::SingleplayerGame(SoundManager& _sound, const std::string& dict, uint8_t _num, uint8_t _den)
+	: Game(true, _sound), dict_filename(dict), num(_num), den(_den)
 {
 	// TODO cache so we don't have to reload every time?
 	std::ifstream words(dict);
@@ -389,8 +387,8 @@ SingleplayerGame::SingleplayerGame(const std::string& dict, uint8_t _num, uint8_
 }
 
 // load from file
-SingleplayerGame::SingleplayerGame(std::ifstream& save_file)
-	: Game(true)
+SingleplayerGame::SingleplayerGame(SoundManager& _sound, std::ifstream& save_file)
+	: Game(true, _sound)
 {
 	// read dict and bunch size
 	std::getline(save_file, dict_filename, '\0');
@@ -570,8 +568,8 @@ bool SingleplayerGame::peel()
 	return true;
 }
 
-MultiplayerGame::MultiplayerGame(const std::string& server, const std::string& name)
-	: Game(false), server_port {default_server_port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
+MultiplayerGame::MultiplayerGame(SoundManager& _sound, const std::string& server, const std::string& name)
+	: Game(false, _sound), server_port {default_server_port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
 {
 	std::string ip {server};
 

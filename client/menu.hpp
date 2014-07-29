@@ -191,15 +191,17 @@ public:
 };
 
 // TODO modularize better? how to get settings for starting game?
-// TODO change name to SingleplayerEntry for consistency
+// TODO really need a nicer way of creating a game from the menu entry
 class SingleplayerEntry : public Entry
 {
 	MenuSystem& system;
 	TextEntry& dict_entry;
 	MultiEntry& multiplier;
 	Game** game;
+
+	SoundManager& sound;
 public:
-	SingleplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict_entry, MultiEntry& multiplier, Game** game);
+	SingleplayerEntry(SoundManager& _sound, const std::string& txt, MenuSystem& sys, TextEntry& dict_entry, MultiEntry& multiplier, Game** game);
 
 	virtual void select();
 };
@@ -211,8 +213,10 @@ class MultiplayerEntry : public Entry
 	TextEntry& server;
 	TextEntry& name;
 	Game** game;
+
+	SoundManager& sound;
 public:
-	MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game** g);
+	MultiplayerEntry(SoundManager& _sound, const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm, Game** g);
 
 	virtual void select();
 };
