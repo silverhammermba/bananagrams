@@ -38,6 +38,7 @@ void shutdown(int s)
 
 int main(int argc, char* argv[])
 {
+#ifndef __MINGW32__
 	// set up shutdown callback for interrupts
 	struct sigaction action;
 	action.sa_handler = shutdown;
@@ -47,6 +48,7 @@ int main(int argc, char* argv[])
 	sigaction(SIGINT , &action, nullptr);
 	sigaction(SIGTERM, &action, nullptr);
 	sigaction(SIGKILL, &action, nullptr);
+#endif
 
 	// command line arguments
 	po::options_description desc("Bananagrams dedicated server options");

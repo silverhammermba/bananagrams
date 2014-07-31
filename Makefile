@@ -1,14 +1,27 @@
-# TODO maybe try out pendantic/strict ANSI?
-CXXFLAGS=-std=c++11 -Wall -Wextra -Wfatal-errors -ggdb -pg
 CLIENT_SOURCE:=$(wildcard client/*.cpp)
 SERVER_SOURCE:=$(wildcard server/*.cpp)
 
-# TODO have switch to toggle between debug/optimized builds
+# TODO maybe try out pendantic/strict ANSI?
+CXXFLAGS=-std=c++11
 
-all: bananagrams dedicated_server
+ifdef RELEASE
+CXXFLAGS+= -O2
+else
+CXXFLAGS+= -Wall -Wextra -Wfatal-errors -ggdb -pg
+endif
 
-bananagrams: $(patsubst %.cpp,%.o,$(CLIENT_SOURCE))
-	$(CXX) $(CXXFLAGS) -o bananagrams $+ -lyaml-cpp -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-network -lsfml-system
+ifdef WINDOWS
+CXX=x86_64-w64-mingw32-g++
+CXXFLAGS+= -static -DSFML_STATIC
+BOOSTPO=-mt
+SFMLS=-s
+SUFFIX=.exe
+endif
+
+all: bananagrams$(SUFFIX) dedicated_server$(SUFFIX)
+
+bananagrams$(SUFFIX): $(patsubst %.cpp,%.o,$(CLIENT_SOURCE))
+	$(CXX) $(CXXFLAGS) -o bananagrams$(SUFFIX) $+ -lyaml-cpp -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-network -lsfml-system
 
 client/client.hpp: client/*.hpp common.hpp
 	touch client/client.hpp
@@ -16,8 +29,8 @@ client/client.hpp: client/*.hpp common.hpp
 client/%.o: client/%.cpp client/client.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-dedicated_server: $(patsubst %.cpp,%.o,$(SERVER_SOURCE))
-	$(CXX) $(CXXFLAGS) -o dedicated_server $+ -lboost_program_options -lsfml-network -lsfml-system
+dedicated_server$(SUFFIX): $(patsubst %.cpp,%.o,$(SERVER_SOURCE))
+	$(CXX) $(CXXFLAGS) -o dedicated_server$(SUFFIX) $+ -lboost_program_options$(BOOSTPO) -lsfml-network -lsfml-system
 
 server/server.hpp: server/*.hpp common.hpp
 	touch server/server.hpp
@@ -26,4 +39,4 @@ server/%.o: server/%.cpp server/server.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f client/*.o server/*.o bananagrams dedicated_server
+	rm -f client/*.o server/*.o bananagrams$(SUFFIX) dedicated_server$(SUFFIX)
