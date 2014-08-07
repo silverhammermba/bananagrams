@@ -75,3 +75,7 @@ TODO
  * sounds
  * tutorial
  * way to cycle through letter positions on the board
+ * saved games don't work in windows
+ * lone modifier keys (e.g. ctrl for quick place) don't work in windows
+ * window can accept mouse clicks without having keyboard focus, can be
+   confusing
