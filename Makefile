@@ -3,18 +3,18 @@ SERVER_SOURCE:=$(wildcard server/*.cpp)
 
 # TODO maybe try out pendantic/strict ANSI?
 CXXFLAGS=-std=c++11
+BOOST_PO=boost_program_options
 
 ifdef RELEASE
-CXXFLAGS+= -O2
+CXXFLAGS+=-O2
 else
-CXXFLAGS+= -Wall -Wextra -Wfatal-errors -ggdb -pg
+CXXFLAGS+=-Wall -Wextra -Wfatal-errors -ggdb -pg
 endif
 
 ifdef WINDOWS
 CXX=x86_64-w64-mingw32-g++
-CXXFLAGS+= -static -DSFML_STATIC
-BOOSTPO=-mt
-SFMLS=-s
+CXXFLAGS+=-static
+BOOST_PO:=$(BOOST_PO)-mt
 SUFFIX=.exe
 endif
 
@@ -30,7 +30,7 @@ client/%.o: client/%.cpp client/client.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 dedicated_server$(SUFFIX): $(patsubst %.cpp,%.o,$(SERVER_SOURCE))
-	$(CXX) $(CXXFLAGS) -o dedicated_server$(SUFFIX) $+ -lboost_program_options$(BOOSTPO) -lsfml-network -lsfml-system
+	$(CXX) $(CXXFLAGS) -o dedicated_server$(SUFFIX) $+ -l$(BOOST_PO) -lsfml-network -lsfml-system
 
 server/server.hpp: server/*.hpp common.hpp
 	touch server/server.hpp
@@ -39,4 +39,4 @@ server/%.o: server/%.cpp server/server.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f client/*.o server/*.o bananagrams$(SUFFIX) dedicated_server$(SUFFIX)
+	rm -f client/*.o server/*.o bananagrams bananagrams.exe dedicated_server dedicated_server.exe
