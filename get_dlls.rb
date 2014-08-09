@@ -29,4 +29,4 @@ ARGV.each do |arg|
 end
 
 puts $dlls.keys.sort
-STDERR.puts "Missing", $missing.keys.sort
+STDERR.puts "Missing DLLS:", $missing.keys.sort
