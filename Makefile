@@ -20,7 +20,7 @@ CXXFLAGS+=-static
 BOOST_PO:=$(BOOST_PO)-mt
 CLIENT:=$(CLIENT).exe
 SERVER:=$(SERVER).exe
-PKG=bananagrams.zip
+ZIP=bananagrams.zip
 endif
 
 all: $(BINS)
@@ -44,17 +44,17 @@ server/%.o: server/%.cpp server/server.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f client/*.o server/*.o $(BINS) $(PKG)
+	rm -f client/*.o server/*.o $(BINS) $(ZIP)
 
 ifdef WINDOWS
-pkg: all
-	rm -f $(PKG)
-	zip -ru $(PKG) $(BINS) words.txt audio
-	zip -ju $(PKG) /usr/share/fonts/TTF/DejaVuSans.ttf
-	ruby get_dlls.rb $(BINS) | zip -ju@ $(PKG)
+zip: all
+	rm -f $(ZIP)
+	zip -ru $(ZIP) $(BINS) words.txt audio
+	zip -ju $(ZIP) /usr/share/fonts/TTF/DejaVuSans.ttf
+	ruby get_dlls.rb $(BINS) | zip -ju@ $(ZIP)
 	# lib has wrong name, not found by get_dlls
 	cp /usr/x86_64-w64-mingw32/bin/libjpeg-8.dll libjpeg-62.dll
-	zip -u $(PKG) libjpeg-62.dll
+	zip -u $(ZIP) libjpeg-62.dll
 	rm libjpeg-62.dll
 
 endif
