@@ -48,10 +48,11 @@ clean:
 
 ifdef WINDOWS
 pkg: all
+	rm -f $(PKG)
 	zip -ru $(PKG) $(BINS) words.txt audio
-	ruby get_dlls.rb $(BINS) | zip -ju@ $(PKG)
 	zip -ju $(PKG) /usr/share/fonts/TTF/DejaVuSans.ttf
-	# and this motherfucker
+	ruby get_dlls.rb $(BINS) | zip -ju@ $(PKG)
+	# lib has wrong name, not found by get_dlls
 	cp /usr/x86_64-w64-mingw32/bin/libjpeg-8.dll libjpeg-62.dll
 	zip -u $(PKG) libjpeg-62.dll
 	rm libjpeg-62.dll
