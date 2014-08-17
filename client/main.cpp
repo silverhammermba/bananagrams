@@ -90,45 +90,45 @@ int main()
 	state.zoom = 1;
 
 	// initialize menu system
-	MenuSystem current(sound);
-	Menu main {current, nullptr, "BANANAGRAMS"};
-	MenuEntry solitaire {"SOLITAIRE", current};
-	MenuEntry multiplayer {"MULTIPLAYER", current};
-	MenuEntry customize {"CONTROLS", current};
-	MenuEntry quit {"QUIT", current};
+	MenuSystem menu_system(sound);
+	Menu main {menu_system, nullptr, "BANANAGRAMS"};
+	MenuEntry solitaire {"SOLITAIRE", menu_system};
+	MenuEntry multiplayer {"MULTIPLAYER", menu_system};
+	MenuEntry customize {"CONTROLS", menu_system};
+	MenuEntry quit {"QUIT", menu_system};
 	main.append_entry(&solitaire);
 	main.append_entry(&multiplayer);
 	main.append_entry(&customize);
 	main.append_entry(&quit);
 
 	// create solitaire menu
-	Menu solitaire_opts {current, &main, "SOLITAIRE"};
+	Menu solitaire_opts {menu_system, &main, "SOLITAIRE"};
 	solitaire.submenu = &solitaire_opts;
 
 	Game* game {nullptr};
 	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
 	// TODO add infinite bunch option
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
-	SingleplayerEntry start_singleplayer {"START GAME", current, dict_entry, multiplier};
+	SingleplayerEntry start_singleplayer {"START GAME", menu_system, dict_entry, multiplier};
 
 	solitaire_opts.append_entry(&start_singleplayer);
 	solitaire_opts.append_entry(&dict_entry);
 	solitaire_opts.append_entry(&multiplier);
 
-	Menu multiplayer_menu {current, &main, "MULTIPLAYER"};
+	Menu multiplayer_menu {menu_system, &main, "MULTIPLAYER"};
 	multiplayer.submenu = &multiplayer_menu;
 
 	std::string def_ip = sf::IpAddress::getLocalAddress().toString();
 	std::string def_pt = std::to_string(default_server_port);
 	TextEntry server {"SERVER", PPB * 8, def_ip + ":" + def_pt, "localhost"};
 	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
-	MultiplayerEntry start_multiplayer {"JOIN", current, server, name};
+	MultiplayerEntry start_multiplayer {"JOIN", menu_system, server, name};
 	multiplayer_menu.append_entry(&server);
 	multiplayer_menu.append_entry(&name);
 	multiplayer_menu.append_entry(&start_multiplayer);
 
 	// create control menu
-	Menu control_opts {current, &main, "CONTROLS"};
+	Menu control_opts {menu_system, &main, "CONTROLS"};
 	customize.submenu = &control_opts;
 
 	// TODO scrolling menus?
@@ -138,16 +138,16 @@ int main()
 			control_opts.append_entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
 
 	// create quite menu
-	Menu confirm_quit {current, &main, "Really quit?"};
+	Menu confirm_quit {menu_system, &main, "Really quit?"};
 	quit.submenu = &confirm_quit;
 	QuitEntry yes {"YES", window};
-	MenuEntry no {"NO", current, &main};
+	MenuEntry no {"NO", menu_system, &main};
 	confirm_quit.append_entry(&yes);
 	confirm_quit.append_entry(&no);
 
-	current.set_menu(main);
+	menu_system.set_menu(main);
 
-	WindowEvents win_events {state, current, &game};
+	WindowEvents win_events {state, menu_system, &game};
 	input_readers.push_back(&win_events);
 
 	sf::Color background {22, 22, 22};
@@ -319,7 +319,7 @@ int main()
 	if (!window.isOpen())
 		return 0;
 
-	input_readers.push_back(&current);
+	input_readers.push_back(&menu_system);
 
 	// this will display too quickly to see if no game is loaded
 	loading_text.setString("Loading saved game...");
@@ -529,14 +529,14 @@ int main()
 
 		if (controls["menu"])
 		{
-			current.open();
+			menu_system.open();
 
 			// insert menu after window event input reader
 			for (auto it = input_readers.begin(); it != input_readers.end(); ++it)
 			{
 				if (*it == &win_events)
 				{
-					input_readers.insert(++it, &current);
+					input_readers.insert(++it, &menu_system);
 					break;
 				}
 			}
@@ -553,8 +553,8 @@ int main()
 			game->draw_on(window, grid_view, gui_view);
 
 		window.setView(gui_view);
-		if (!current.is_finished())
-			current.menu().draw_on(window);
+		if (!menu_system.is_finished())
+			menu_system.menu().draw_on(window);
 
 		window.display();
 	}

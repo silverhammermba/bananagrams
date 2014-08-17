@@ -10,8 +10,11 @@ struct State
 // for placing tiles
 class Typer : public InputReader
 {
+	bool single;
 	std::queue<char> chars;
 public:
+	// can make it finish after a single key press
+	Typer(bool _single = false);
 	// get next tile to place
 	bool get_ch(char* ch);
 	virtual bool process_event(sf::Event& event);

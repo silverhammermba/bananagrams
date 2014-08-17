@@ -4,22 +4,31 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+Typer::Typer(bool _single)
+{
+	single = _single;
+}
+
 bool Typer::get_ch(char* ch)
 {
-	if (!chars.empty())
-	{
-		*ch = chars.front();
-		chars.pop();
-		return true;
-	}
-	return false;
+	if (chars.empty())
+		return false;
+
+	*ch = chars.front();
+	chars.pop();
+	return true;
 }
 
 bool Typer::process_event(sf::Event& event)
 {
 	// add character to queue (if a letter was pressed)
 	if (event.type == sf::Event::KeyPressed && event.key.code >= sf::Keyboard::Key::A && event.key.code <= sf::Keyboard::Key::Z)
+	{
 		chars.push(event.key.code - sf::Keyboard::Key::A + 'A');
+		if (single)
+			finished = true;
+		return false;
+	}
 	return true;
 }
 

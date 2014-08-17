@@ -1,4 +1,4 @@
-// ABC for entries in Menus
+// base class for entries in Menus
 class Entry : public InputReader
 {
 protected:
@@ -29,7 +29,6 @@ public:
 
 	virtual void draw_on(sf::RenderWindow& window) const;
 
-	// TODO can I make an implementation for this?
 	// triggered when return is pressed for this entry
 	virtual void select()
 	{
