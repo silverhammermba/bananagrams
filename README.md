@@ -40,7 +40,10 @@ CONTROLS
 * Peel: when you have used up your tiles, press this to check your grid and get
   a new tile
 * Center: move the view back to the center of your grid
-* Dump: exchange the tile under the cursor for three new tiles
+* Show: looking for a letter? Type it after this to highlight all occurences of
+  it in your grid
+* Dump: can't use a tile in your hand? Type its letter after this to exchange it
+  for three more tiles
 * Cut: if tiles are selected, lets you move them to a new location. Press it
   twice to return the cut tiles to your hand
 * Paste: place cut tiles back on the grid
@@ -59,12 +62,13 @@ resizing the window again should fix the problem.
 
 Credits
 -------
- * SFML 2.0
- * yaml-cpp 0.5.0
- * Boost 1.53.0
- * WordNet 3.1
+ * SFML
+ * yaml-cpp
+ * Boost
+ * MinGW-w64
+ * WordNet
  * Enable2k North American word list
- * DejaVu 2.33
+ * DejaVu Font
 
 License
 -------
@@ -72,9 +76,8 @@ This program is licensed under the MIT License. See LICENSE.txt
 
 TODO
 ----
- * sounds
+ * more sounds
  * tutorial
- * way to cycle through letter positions on the board
  * saved games don't work in windows
  * lone modifier keys (e.g. ctrl for quick place) don't work in windows
  * window can accept mouse clicks without having keyboard focus, can be
