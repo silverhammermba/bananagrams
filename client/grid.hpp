@@ -88,6 +88,7 @@ public:
 	bool is_continuous();
 	// get map of words to vector of position/direction triplets
 	gridword_map& get_words();
+	bool highlight(char ch);
 	// mark a bad word starting at x, y, oriented in dir
 	void bad_word(int x, int y, int dir);
 

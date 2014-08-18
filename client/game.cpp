@@ -175,7 +175,8 @@ void Game::prompt_show()
 void Game::show(char ch)
 {
 	messages.add("Highlighting " + string(1, ch) + "s.", Message::Severity::HIGH);
-	// TODO
+	if (!grid.highlight(ch))
+		messages.add("There are no " + string(1, ch) + "s in play.", Message::Severity::HIGH);
 }
 
 // TODO it would be nice if we could do the bunch size check here, and not even ask for a letter

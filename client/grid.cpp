@@ -292,6 +292,22 @@ gridword_map& Grid::get_words()
 	return words;
 }
 
+bool Grid::highlight(char ch)
+{
+	bool found = false;
+
+	for (auto tile : grid)
+	{
+		if (tile && tile->ch() == ch)
+		{
+			tile->set_color(sf::Color(50, 50, 255));
+			found = true;
+		}
+	}
+
+	return found;
+}
+
 void Grid::bad_word(int x, int y, int dir)
 {
 	// TODO with multiplayer games, the word might no longer exist!!!
