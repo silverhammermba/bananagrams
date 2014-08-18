@@ -439,13 +439,12 @@ int main()
 			if (controls["remove"])
 				game->remove();
 
+			bool add_single_typer = false;
+
 			if (controls["show"])
 			{
 				if (!waiting_single)
-				{
-					single_typer.reset();
-					input_readers.insert(input_readers.begin(), &single_typer);
-				}
+					add_single_typer = true;
 
 				waiting_single = 1;
 
@@ -455,14 +454,26 @@ int main()
 			if (controls["dump"])
 			{
 				if (!waiting_single)
-				{
-					single_typer.reset();
-					input_readers.insert(input_readers.begin(), &single_typer);
-				}
+					add_single_typer = true;
 
 				waiting_single = 2;
 
 				game->prompt_dump();
+			}
+
+			if (add_single_typer)
+			{
+				single_typer.reset();
+
+				// insert before normal typer
+				for (auto it = input_readers.begin(); it != input_readers.end(); ++it)
+				{
+					if (*it == &typer)
+					{
+						input_readers.insert(it, &single_typer);
+						break;
+					}
+				}
 			}
 
 			char ch;
@@ -487,6 +498,8 @@ int main()
 					// should never get here
 					cerr << "Invalid waiting type value.\n";
 				}
+
+				waiting_single = 0;
 			}
 
 			// if letter key
