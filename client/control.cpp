@@ -221,6 +221,7 @@ KeyControls::KeyControls()
 	bind("menu"           , "escape"         , PRESS, false);
 	bind("peel"           , "space"          , PRESS );
 	bind("center"         , "ctrl c"         , PRESS );
+	bind("show"           , "ctrl s"         , PRESS );
 	bind("dump"           , "ctrl d"         , PRESS );
 	bind("cut"            , "ctrl x"         , PRESS );
 	bind("paste"          , "ctrl p"         , PRESS );

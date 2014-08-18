@@ -31,27 +31,6 @@ extern sf::Font font;
 extern sf::RenderTexture tile_texture[26];
 extern sf::View gui_view;
 
-// TODO better place for this?
-// for classes that handle sf::Events
-class InputReader
-{
-protected:
-	bool finished {false};
-public:
-	virtual ~InputReader() {}
-
-	inline bool is_finished() const
-	{
-		return finished;
-	}
-
-	virtual bool process_event(sf::Event& event)
-	{
-		(void)event; // intentionally unused parameter
-		return true;
-	}
-};
-
 #include "../common.hpp"
 #include "sound.hpp"
 #include "control.hpp"

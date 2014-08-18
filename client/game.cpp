@@ -167,6 +167,23 @@ void Game::remove_at_mouse()
 		hand.add_tile(tile);
 }
 
+void Game::prompt_show()
+{
+	messages.add("Type a letter to highlight in play:", Message::Severity::HIGH);
+}
+
+void Game::show(char ch)
+{
+	messages.add("Highlighting " + string(1, ch) + "s.", Message::Severity::HIGH);
+	// TODO
+}
+
+// TODO it would be nice if we could do the bunch size check here, and not even ask for a letter
+void Game::prompt_dump()
+{
+	messages.add("Type a letter to dump:", Message::Severity::HIGH);
+}
+
 void Game::remove()
 {
 	const sf::Vector2i& pos = cursor.get_pos();
@@ -505,8 +522,9 @@ void SingleplayerGame::save(const std::string& filename)
 	save_file.close();
 }
 
-void SingleplayerGame::dump()
+void SingleplayerGame::dump(char ch)
 {
+	// TODO use ch
 	if (bunch.size() >= 3)
 	{
 		Tile* dumped {grid.remove(cursor.get_pos())};
@@ -1029,7 +1047,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 	}
 }
 
-void MultiplayerGame::dump()
+void MultiplayerGame::dump(char ch)
 {
 	if (!connected)
 	{

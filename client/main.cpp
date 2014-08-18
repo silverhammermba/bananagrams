@@ -341,6 +341,13 @@ int main()
 
 	input_readers.push_back(&controls);
 
+	Typer single_typer(true);
+	// indicates what single_typer is waiting for:
+	// 0 nothing (not in input_readers)
+	// 1 show
+	// 2 dump
+	unsigned int waiting_single = 0;
+
 	Typer typer;
 	input_readers.push_back(&typer);
 
@@ -425,9 +432,6 @@ int main()
 			if (mouse.is_held(1))
 				game->remove_at_mouse();
 
-			if (controls["dump"])
-				game->dump();
-
 			if (controls["peel"])
 				game->peel();
 
@@ -435,8 +439,57 @@ int main()
 			if (controls["remove"])
 				game->remove();
 
-			// if letter key
+			if (controls["show"])
+			{
+				if (!waiting_single)
+				{
+					single_typer.reset();
+					input_readers.insert(input_readers.begin(), &single_typer);
+				}
+
+				waiting_single = 1;
+
+				game->prompt_show();
+			}
+
+			if (controls["dump"])
+			{
+				if (!waiting_single)
+				{
+					single_typer.reset();
+					input_readers.insert(input_readers.begin(), &single_typer);
+				}
+
+				waiting_single = 2;
+
+				game->prompt_dump();
+			}
+
 			char ch;
+
+			if (single_typer.get_ch(&ch))
+			{
+				if (waiting_single == 0)
+				{
+					// should never get here
+					cerr << "Somehow got a single typed character when not waiting...\n";
+				}
+				else if (waiting_single == 1) // show
+				{
+					game->show(ch);
+				}
+				else if (waiting_single == 2) // dump
+				{
+					game->dump(ch);
+				}
+				else
+				{
+					// should never get here
+					cerr << "Invalid waiting type value.\n";
+				}
+			}
+
+			// if letter key
 			if (typer.get_ch(&ch))
 				game->place(ch);
 

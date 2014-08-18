@@ -57,7 +57,10 @@ public:
 	void flip_buffer();
 	void paste();
 	void remove_at_mouse();
-	virtual void dump() = 0;
+	void prompt_show();
+	void show(char ch);
+	void prompt_dump();
+	virtual void dump(char ch) = 0;
 	virtual bool peel();
 	void remove();
 	void place(char ch);
@@ -105,7 +108,7 @@ public:
 	void save(const std::string& filename);
 
 	virtual void ready() {};
-	virtual void dump();
+	virtual void dump(char ch);
 	virtual bool peel();
 };
 
@@ -151,7 +154,7 @@ public:
 
 	virtual void step(float time);
 	virtual void ready();
-	virtual void dump();
+	virtual void dump(char ch);
 	virtual bool peel();
 	bool resolve_peel();
 
