@@ -524,16 +524,14 @@ void SingleplayerGame::save(const std::string& filename)
 
 void SingleplayerGame::dump(char ch)
 {
-	// TODO use ch
-	if (bunch.size() >= 3)
+	if (hand.has_any(ch))
 	{
-		Tile* dumped {grid.remove(cursor.get_pos())};
-		if (dumped == nullptr)
-			messages.add("You need to select a tile to dump.", Message::Severity::LOW);
-		else
+		if (bunch.size() >= 3)
 		{
+			Tile* dumped = hand.remove_tile(ch);
+
 			// take three
-			for (unsigned int i = 0; i < 3; i++)
+			for (unsigned int i = 0; i < 3; ++i)
 			{
 				Tile* tile {bunch.back()};
 				bunch.pop_back();
@@ -541,10 +539,14 @@ void SingleplayerGame::dump(char ch)
 			}
 
 			random_insert<Tile*>(bunch, dumped);
+
+			messages.add("Dumped " + string(1, ch) + ".", Message::Severity::HIGH);
 		}
+		else
+			messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
 	}
 	else
-		messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
+		messages.add("You don't have any " + string(1, ch) + "s in your hand!", Message::Severity::HIGH);
 }
 
 bool SingleplayerGame::peel()
@@ -1055,19 +1057,19 @@ void MultiplayerGame::dump(char ch)
 		return;
 	}
 
-	Tile* selected {grid.get(cursor.get_pos())};
-	if (selected == nullptr)
+	if (!hand.has_any(ch))
 	{
-		messages.add("You need to select a tile to dump.", Message::Severity::LOW);
+		messages.add("You don't have any " + string(1, ch) + "s in your hand!", Message::Severity::HIGH);
 		return;
 	}
-	else if (waiting)
+
+	if (waiting)
 	{
 		messages.add("Waiting for server response. You cannot dump now.", Message::Severity::HIGH);
 		return;
 	}
 
-	selected = grid.remove(cursor.get_pos());
+	Tile* selected = hand.remove_tile(ch);
 	set_pending(cl_dump);
 	(*pending) << ++dump_n << sf::Int8(selected->ch());
 	send_pending();
