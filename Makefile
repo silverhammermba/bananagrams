@@ -52,9 +52,4 @@ zip: all
 	zip -ru $(ZIP) $(BINS) words.txt audio
 	zip -ju $(ZIP) /usr/share/fonts/TTF/DejaVuSans.ttf
 	ruby get_dlls.rb $(BINS) | zip -ju@ $(ZIP)
-	# lib has wrong name, not found by get_dlls
-	cp /usr/x86_64-w64-mingw32/bin/libjpeg-8.dll libjpeg-62.dll
-	zip -u $(ZIP) libjpeg-62.dll
-	rm libjpeg-62.dll
-
 endif
