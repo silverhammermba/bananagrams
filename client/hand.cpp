@@ -1,6 +1,6 @@
 #include "client.hpp"
 
-Hand::Hand(const sf::Font& font)
+Hand::Hand(const sf::Font& font) : rng(std::random_device()())
 {
 	// prepare counts numbers
 	for (char ch = 'A'; ch <= 'Z'; ch++)
@@ -119,12 +119,12 @@ void Hand::scrambled(sf::RenderWindow& window) const
 
 void Hand::reshuffle()
 {
+	// copy to vector for shuffle
+	std::vector<Tile*> v {scram.begin(), scram.end()};
+	std::shuffle(v.begin(), v.end(), rng);
+	// copy back to list
 	scram.clear();
-	for (char ch = 'A'; ch <= 'Z'; ch++)
-	{
-		for (auto tile: tiles[ch - 'A'])
-			random_insert(scram, tile);
-	}
+	std::copy(v.begin(), v.end(), std::back_inserter(scram));
 }
 
 bool Hand::is_empty() const

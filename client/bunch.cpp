@@ -1,5 +1,9 @@
 #include "client.hpp"
 
+Bunch::Bunch() : rng(std::random_device()())
+{
+}
+
 FiniteBunch::FiniteBunch(uint8_t num, uint8_t den, unsigned int* counts)
 {
 	for (char ch = 'A'; ch <= 'Z'; ++ch)
@@ -21,13 +25,37 @@ unsigned int FiniteBunch::size() const
 
 void FiniteBunch::add_tile(Tile* tile)
 {
-	random_insert(tiles, tile);
+	auto pos = std::uniform_int_distribution<>(0, tiles.size())(rng);
+
+	auto it = tiles.begin();
+	for (int i = 0; i != pos; ++i, ++it);
+	tiles.insert(it, tile);
 }
 
 Tile* FiniteBunch::get_tile()
 {
-	if (size == 0) return nullptr;
+	if (tiles.size() == 0) return nullptr;
 	Tile* tile = tiles.back();
 	tiles.pop_back();
 	return tile;
+}
+
+InfiniteBunch::InfiniteBunch()
+	: dist(std::begin(letter_count), std::end(letter_count))
+{
+}
+
+unsigned int InfiniteBunch::size() const
+{
+	return std::numeric_limits<unsigned int>::max();
+}
+
+void InfiniteBunch::add_tile(Tile* tile)
+{
+	delete tile;
+}
+
+Tile* InfiniteBunch::get_tile()
+{
+	return new Tile('A' + dist(rng));
 }

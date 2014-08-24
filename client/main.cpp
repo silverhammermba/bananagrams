@@ -72,8 +72,6 @@ int main()
 	// TODO store last dictionary name, last resolution settings, etc.
 	controls.load_from_file("config.yaml");
 
-	std::srand(std::time(nullptr));
-
 	sf::RenderWindow window {sf::VideoMode(1280, 720), "Bananagrams"};
 	window.setIcon(32, 32, icon);
 	window.setVerticalSyncEnabled(true);

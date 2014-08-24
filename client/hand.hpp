@@ -19,6 +19,9 @@ class Hand
 	void (Hand::*draw_func)(sf::RenderWindow&) const {&Hand::scrambled};
 
 	void reshuffle();
+
+	// for shuffling, ugh
+	std::mt19937 rng;
 public:
 	Hand(const sf::Font& font);
 	~Hand();

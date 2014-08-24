@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
@@ -5,9 +6,11 @@
 #include <array>
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <list>
 #include <map>
 #include <queue>
+#include <random>
 #include <string>
 #include <sstream>
 #include <unordered_map>
