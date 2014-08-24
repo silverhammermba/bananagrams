@@ -390,7 +390,7 @@ SingleplayerGame::SingleplayerGame(SoundManager& _sound, const std::string& dict
 
 		// take tiles from the bunch for player
 		for (unsigned int i = 0; i < 21; i++)
-			hand.add_tile(bunch->get_tile());
+			hand.add_tile(new Tile(bunch->get_tile()));
 
 		messages.add("SPLIT!", Message::Severity::HIGH);
 
@@ -524,11 +524,13 @@ void SingleplayerGame::dump(char ch)
 	{
 		if (bunch->size() >= 3)
 		{
-			Tile* dumped = hand.remove_tile(ch);
+			Tile* dumped_tile = hand.remove_tile(ch);
+			char dumped = dumped_tile->ch();
+			delete dumped_tile;
 
 			// take three
 			for (unsigned int i = 0; i < 3; ++i)
-				hand.add_tile(bunch->get_tile());
+				hand.add_tile(new Tile(bunch->get_tile()));
 
 			bunch->add_tile(dumped);
 
@@ -567,7 +569,7 @@ bool SingleplayerGame::peel()
 
 	if (bunch->size() > 0)
 	{
-		hand.add_tile(bunch->get_tile());
+		hand.add_tile(new Tile(bunch->get_tile()));
 	}
 	else
 	{

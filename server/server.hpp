@@ -10,5 +10,6 @@
 #include <SFML/Network.hpp>
 
 #include "../common.hpp"
+#include "../bunch.hpp"
 #include "player.hpp"
 #include "game.hpp"

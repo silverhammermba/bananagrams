@@ -5,9 +5,15 @@ using std::string;
 Game::Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _player_limit)
 	: bunch_num(_bunch_num), bunch_den(_bunch_den), player_limit(_player_limit)
 {
-	for (char ch = 'A'; ch <= 'Z'; ++ch)
-		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * _bunch_num) / _bunch_den); ++i)
-			random_insert(bunch, ch);
+	if (bunch_den > 0)
+		bunch = new FiniteBunch(bunch_num, bunch_den);
+	else
+		bunch = new InfiniteBunch();
+}
+
+Game::~Game()
+{
+	delete bunch;
 }
 
 Player& Game::add_player(const string& id, const sf::IpAddress& ip, unsigned short port, const string& name)
@@ -19,7 +25,7 @@ Player& Game::add_player(const string& id, const sf::IpAddress& ip, unsigned sho
 void Game::remove_player(const string& id)
 {
 	for (auto chr : players.at(id).get_hand())
-		random_insert(bunch, chr);
+		bunch->add_tile(chr);
 
 	players.erase(id);
 
@@ -58,17 +64,14 @@ string Game::dump(const string& id, const sf::Int16& dump_n, char chr)
 	{
 		string letters;
 
-		if (bunch.size() >= 3)
+		if (bunch->size() >= 3)
 		{
 			// take three
 			for (unsigned int i = 0; i < 3; ++i)
-			{
-				letters.append(1, bunch.back());
-				bunch.pop_back();
-			}
+				letters.append(1, bunch->get_tile());
 			players.at(id).give_dump(chr, letters);
 
-			random_insert(bunch, chr);
+			bunch->add_tile(chr);
 		}
 		else
 			letters.append(1, chr);
@@ -84,7 +87,7 @@ string Game::dump(const string& id, const sf::Int16& dump_n, char chr)
 bool Game::peel()
 {
 	// if there aren't enough letters left
-	if (bunch.size() < players.size())
+	if (bunch->size() < players.size())
 	{
 		ready_to_finish = true;
 		finished = true;
@@ -116,10 +119,7 @@ bool Game::peel()
 	{
 		string letters;
 		for (unsigned int i = 0; i < num_letters; ++i)
-		{
-			letters.append(1, bunch.back());
-			bunch.pop_back();
-		}
+			letters.append(1, bunch->get_tile());
 
 		pair.second.give_peel(letters);
 	}

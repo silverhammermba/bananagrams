@@ -159,8 +159,6 @@ int main(int argc, char* argv[])
 	cout.flush();
 
 	// LET'S GO!!!
-	std::srand(std::time(nullptr));
-
 	sf::Clock timer;
 
 	string peeler;

@@ -3,7 +3,7 @@ class Game
 	unsigned int bunch_num;
 	unsigned int bunch_den;
 	unsigned int player_limit;
-	std::list<char> bunch;
+	Bunch* bunch;
 	std::map<std::string, Player> players;
 	sf::Int16 peel_number {0};
 	bool playing {false};
@@ -17,6 +17,7 @@ public:
 	std::string winner;
 
 	Game(unsigned int _bunch_num, unsigned int _bunch_den, unsigned int _player_limit);
+	~Game();
 
 	inline bool has_player(const std::string& id) const
 	{
@@ -35,7 +36,7 @@ public:
 
 	inline sf::Int16 get_remaining() const
 	{
-		return bunch.size();
+		return bunch->size();
 	}
 
 	inline bool is_full() const

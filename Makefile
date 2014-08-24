@@ -25,7 +25,7 @@ endif
 
 all: $(BINS)
 
-$(CLIENT): $(patsubst %.cpp,%.o,$(CLIENT_SOURCE))
+$(CLIENT): $(patsubst %.cpp,%.o,$(CLIENT_SOURCE)) bunch.o
 	$(CXX) $(CXXFLAGS) -o $(CLIENT) $+ -lyaml-cpp -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-network -lsfml-system
 
 client/client.hpp: client/*.hpp common.hpp
@@ -34,7 +34,7 @@ client/client.hpp: client/*.hpp common.hpp
 client/%.o: client/%.cpp client/client.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(SERVER): $(patsubst %.cpp,%.o,$(SERVER_SOURCE))
+$(SERVER): $(patsubst %.cpp,%.o,$(SERVER_SOURCE)) bunch.o
 	$(CXX) $(CXXFLAGS) -o $(SERVER) $+ -l$(BOOST_PO) -lsfml-network -lsfml-system
 
 server/server.hpp: server/*.hpp common.hpp

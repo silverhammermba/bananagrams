@@ -1,4 +1,6 @@
-#include "client.hpp"
+#include <list>
+#include <random>
+#include "bunch.hpp"
 
 Bunch::Bunch() : rng(std::random_device()())
 {
@@ -8,14 +10,7 @@ FiniteBunch::FiniteBunch(uint8_t num, uint8_t den, unsigned int* counts)
 {
 	for (char ch = 'A'; ch <= 'Z'; ++ch)
 		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * num) / den) - (counts == nullptr ? 0 : counts[ch - 'A']); ++i)
-			add_tile(new Tile(ch));
-}
-
-FiniteBunch::~FiniteBunch()
-{
-	for (auto tile : tiles)
-		delete tile;
-	tiles.clear();
+			add_tile(ch);
 }
 
 unsigned int FiniteBunch::size() const
@@ -23,21 +18,21 @@ unsigned int FiniteBunch::size() const
 	return tiles.size();
 }
 
-void FiniteBunch::add_tile(Tile* tile)
+void FiniteBunch::add_tile(char ch)
 {
 	auto pos = std::uniform_int_distribution<>(0, tiles.size())(rng);
 
 	auto it = tiles.begin();
 	for (int i = 0; i != pos; ++i, ++it);
-	tiles.insert(it, tile);
+	tiles.insert(it, ch);
 }
 
-Tile* FiniteBunch::get_tile()
+char FiniteBunch::get_tile()
 {
-	if (tiles.size() == 0) return nullptr;
-	Tile* tile = tiles.back();
+	if (tiles.size() == 0) return 'A' - 1; // XXX make sure this doesn't happen!
+	char ch = tiles.back();
 	tiles.pop_back();
-	return tile;
+	return ch;
 }
 
 InfiniteBunch::InfiniteBunch()
@@ -50,12 +45,12 @@ unsigned int InfiniteBunch::size() const
 	return std::numeric_limits<unsigned int>::max();
 }
 
-void InfiniteBunch::add_tile(Tile* tile)
+void InfiniteBunch::add_tile(char ch)
 {
-	delete tile;
+	(void)ch; // intentionally unused
 }
 
-Tile* InfiniteBunch::get_tile()
+char InfiniteBunch::get_tile()
 {
-	return new Tile('A' + dist(rng));
+	return 'A' + dist(rng);
 }
