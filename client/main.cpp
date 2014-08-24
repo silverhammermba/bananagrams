@@ -105,7 +105,6 @@ int main()
 
 	Game* game {nullptr};
 	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
-	// TODO add infinite bunch option
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4", "Infinite"}, 1};
 	SingleplayerEntry start_singleplayer {"START GAME", menu_system, dict_entry, multiplier};
 
@@ -646,7 +645,6 @@ int main()
 		delete game;
 	}
 
-	// TODO only do this if controls changed
 	controls.write_to_file("config.yaml");
 
 	return 0;

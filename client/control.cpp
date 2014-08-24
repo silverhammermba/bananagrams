@@ -265,6 +265,8 @@ bool KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 	commands[command].pressed = false;
 	commands[command].ready = true;
 
+	changed = true;
+
 	return true;
 }
 
@@ -313,10 +315,14 @@ void KeyControls::load_from_file(const string& filename)
 			cerr << "Empty binding: " << binding.first.as<string>() << endl;
 		}
 	}
+
+	changed = false;
 }
 
 void KeyControls::write_to_file(const string& filename)
 {
+	if (!changed) return;
+
 	std::ofstream config(filename, std::ios_base::out);
 	if (!config.is_open())
 	{
@@ -329,14 +335,17 @@ void KeyControls::write_to_file(const string& filename)
 	out << YAML::Comment("key bindings");
 	out << YAML::BeginMap;
 
-	for (auto pair : binds)
-	{
-		// if bind is non-default
-		if (std::less<sf::Event::KeyEvent>()(pair.first, defaults[pair.second]) || std::less<sf::Event::KeyEvent>()(defaults[pair.second], pair.first))
-			out << YAML::Key << pair.second
-			    << YAML::Value << YAML::Node(pair.first)
-			    << YAML::Newline;
-	}
+	for (auto& command : order)
+		for (auto pair : binds)
+		{
+			if (pair.second != command) continue;
+
+			// if bind is non-default
+			if (std::less<sf::Event::KeyEvent>()(pair.first, defaults[pair.second]) || std::less<sf::Event::KeyEvent>()(defaults[pair.second], pair.first))
+				out << YAML::Key << pair.second
+					<< YAML::Value << YAML::Node(pair.first)
+					<< YAML::Newline;
+		}
 
 	out << YAML::EndMap;
 

@@ -117,6 +117,9 @@ namespace std
 // abstraction between keyboard and in-game commands
 class KeyControls : public InputReader
 {
+	// have controls been changed?
+	bool changed = false;
+
 	// how holding a key behaves
 	enum repeat_t {PRESS, REPEAT, HOLD};
 
