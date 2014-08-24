@@ -106,7 +106,7 @@ int main()
 	Game* game {nullptr};
 	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
 	// TODO add infinite bunch option
-	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4"}, 1};
+	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4", "Infinite"}, 1};
 	SingleplayerEntry start_singleplayer {"START GAME", menu_system, dict_entry, multiplier};
 
 	solitaire_opts.append_entry(&start_singleplayer);
@@ -376,16 +376,22 @@ int main()
 
 		if (start_singleplayer.is_pending())
 		{
-			// TODO display loading text
 			int mul {1};
 			int div {1};
-			if (start_singleplayer.get_multiplier() == 0)
+
+			// TODO nicer way to do this? decouple?
+			int choice = start_singleplayer.get_multiplier().get_choice();
+			if (choice == 0)
 				div = 2;
+			else if (choice == start_singleplayer.get_multiplier().get_num_choices() - 1)
+				div = 0; // infinite bunch
 			else
-				mul = start_singleplayer.get_multiplier();
+				mul = choice;
+
 			if (game != nullptr)
 				delete game;
 
+			// TODO display loading text
 			game = new SingleplayerGame(sound, start_singleplayer.get_dictionary(), mul, div);
 		}
 

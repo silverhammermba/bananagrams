@@ -383,7 +383,10 @@ SingleplayerGame::SingleplayerGame(SoundManager& _sound, const std::string& dict
 		}
 		words.close();
 
-		bunch = new FiniteBunch(num, den);
+		if (den > 0)
+			bunch = new FiniteBunch(num, den);
+		else
+			bunch = new InfiniteBunch();
 
 		// take tiles from the bunch for player
 		for (unsigned int i = 0; i < 21; i++)
@@ -464,7 +467,10 @@ SingleplayerGame::SingleplayerGame(SoundManager& _sound, std::ifstream& save_fil
 		save_file.get(ch);
 	}
 
-	bunch = new FiniteBunch(num, den, counts);
+	if (den > 0)
+		bunch = new FiniteBunch(num, den, counts);
+	else
+		bunch = new InfiniteBunch();
 }
 
 SingleplayerGame::~SingleplayerGame()

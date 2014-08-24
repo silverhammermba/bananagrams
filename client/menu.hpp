@@ -195,6 +195,10 @@ public:
 	{
 		return choice;
 	}
+	inline unsigned int get_num_choices() const
+	{
+		return choices.size();
+	}
 	virtual float get_width() const;
 	virtual sf::FloatRect bounds() const;
 	void update_choice();
@@ -207,8 +211,6 @@ public:
 	virtual void draw_on(sf::RenderWindow& window) const;
 };
 
-// TODO modularize better? how to get settings for starting game?
-// TODO really need a nicer way of creating a game from the menu entry
 class SingleplayerEntry : public Entry
 {
 	MenuSystem& system;
@@ -225,13 +227,12 @@ public:
 		return dict_entry.get_string();
 	}
 
-	inline unsigned int get_multiplier() const
+	inline MultiEntry& get_multiplier() const
 	{
-		return multiplier.get_choice();
+		return multiplier;
 	}
 };
 
-// TODO modularize better? how to get settings for starting game?
 class MultiplayerEntry : public Entry
 {
 	MenuSystem& system;
