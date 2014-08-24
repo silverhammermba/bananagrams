@@ -98,7 +98,7 @@ class SingleplayerGame : public Game
 	uint8_t den;
 
 	std::map<std::string, std::string> dictionary;
-	std::list<Tile*> bunch;
+	Bunch* bunch;
 public:
 	SingleplayerGame(SoundManager& _sound, const std::string& dict, uint8_t _num = 1, uint8_t _den = 1);
 	SingleplayerGame(SoundManager& _sound, std::ifstream& save_file);

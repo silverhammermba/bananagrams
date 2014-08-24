@@ -383,18 +383,11 @@ SingleplayerGame::SingleplayerGame(SoundManager& _sound, const std::string& dict
 		}
 		words.close();
 
-		// create tiles for the bunch
-		for (char ch = 'A'; ch <= 'Z'; ++ch)
-			for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * num) / den); ++i)
-				random_insert(bunch, new Tile(ch));
+		bunch = new FiniteBunch(num, den);
 
 		// take tiles from the bunch for player
 		for (unsigned int i = 0; i < 21; i++)
-		{
-			auto tile = bunch.back();
-			bunch.pop_back();
-			hand.add_tile(tile);
-		}
+			hand.add_tile(bunch->get_tile());
 
 		messages.add("SPLIT!", Message::Severity::HIGH);
 
@@ -471,17 +464,13 @@ SingleplayerGame::SingleplayerGame(SoundManager& _sound, std::ifstream& save_fil
 		save_file.get(ch);
 	}
 
-	// add remaining tiles to bunch
-	for (char ch = 'A'; ch <= 'Z'; ++ch)
-		for (unsigned int i = 0; i < ((letter_count[ch - 'A'] * num) / den) - counts[ch - 'A']; ++i)
-			random_insert(bunch, new Tile(ch));
+	bunch = new FiniteBunch(num, den, counts);
 }
 
 SingleplayerGame::~SingleplayerGame()
 {
-	for (auto tile : bunch)
-		delete tile;
-	bunch.clear();
+	if (bunch != nullptr)
+		delete bunch;
 
 	dictionary.clear();
 }
@@ -527,19 +516,15 @@ void SingleplayerGame::dump(char ch)
 {
 	if (hand.has_any(ch))
 	{
-		if (bunch.size() >= 3)
+		if (bunch->size() >= 3)
 		{
 			Tile* dumped = hand.remove_tile(ch);
 
 			// take three
 			for (unsigned int i = 0; i < 3; ++i)
-			{
-				Tile* tile {bunch.back()};
-				bunch.pop_back();
-				hand.add_tile(tile);
-			}
+				hand.add_tile(bunch->get_tile());
 
-			random_insert<Tile*>(bunch, dumped);
+			bunch->add_tile(dumped);
 
 			messages.add("Dumped " + string(1, ch) + ".", Message::Severity::HIGH);
 		}
@@ -574,11 +559,9 @@ bool SingleplayerGame::peel()
 	if (!valid)
 		return false;
 
-	if (bunch.size() > 0)
+	if (bunch->size() > 0)
 	{
-		Tile* tile {bunch.back()};
-		bunch.pop_back();
-		hand.add_tile(tile);
+		hand.add_tile(bunch->get_tile());
 	}
 	else
 	{

@@ -37,6 +37,7 @@ extern sf::View gui_view;
 #include "message.hpp"
 #include "cursor.hpp"
 #include "tile.hpp"
+#include "bunch.hpp"
 #include "grid.hpp"
 #include "hand.hpp"
 #include "buffer.hpp"
