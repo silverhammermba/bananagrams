@@ -22,12 +22,7 @@ public:
 	// called by Menu#update_entries
 	virtual void update() {}
 
-	// indicate that entry is current
-	virtual void highlight();
-	// remove that indication
-	virtual void lowlight();
-
-	virtual void draw_on(sf::RenderWindow& window) const;
+	virtual void draw_on(sf::RenderWindow& window, bool selected);
 
 	// triggered when return is pressed for this entry
 	virtual void select()
@@ -51,8 +46,8 @@ class Menu : public InputReader
 	MenuSystem& system; // system managing this menu
 	Menu* parent; // nullptr for no parent
 	sf::Text title;
-	std::list<Entry*> entries;
-	std::list<Entry*>::iterator highlighted;
+	std::vector<Entry*> entries;
+	int selected = -1; // index of selected entry
 	sf::RectangleShape background;
 public:
 	// create menu centered on vw, managed by sys, with parent p, and title ttl
@@ -63,32 +58,27 @@ public:
 		return parent;
 	}
 
-	void add_entry(std::list<Entry*>::iterator it, Entry* entry);
-	inline void append_entry(Entry* entry)
-	{
-		add_entry(entries.end(), entry);
-	}
-	void remove_entry(Entry* entry);
+	void entry(Entry* ent);
 
 	void update_entries()
 	{
-		for (auto& entry : entries)
-			entry->update();
+		for (auto& ent : entries)
+			ent->update();
 	}
 
 	// call when Menu or View changes
 	void update_position();
 
-	// highlight entry
-	void highlight(std::list<Entry*>::iterator it);
-	void highlight_prev();
-	void highlight_next();
-	// use Entry#bounds to highlight
-	void highlight_coords(float x, float y);
+	// select entry
+	void select(int index);
+	void select_prev();
+	void select_next();
+	// use Entry#bounds to select
+	void select_coords(float x, float y);
 
 	void draw_on(sf::RenderWindow& window) const;
 
-	// navigate menu and pass events to the highlighted entry
+	// navigate menu and pass events to the selected entry
 	virtual bool process_event(sf::Event& event);
 };
 
@@ -155,7 +145,7 @@ class TextEntry : public Entry
 	// for setting input position
 	float b_height, i_height, shift;
 	float min_box_width;
-	bool selected {false}; // if input is being handled
+	bool typing {false}; // if input is being handled
 
 	void set_input_pos(); // update position of input Text
 public:
@@ -171,11 +161,9 @@ public:
 	virtual sf::FloatRect bounds() const;
 	// left align text, fill remaining space with box, center input text in box
 	virtual void set_menu_pos(float center, float width, float top);
-	virtual void highlight();
-	virtual void lowlight();
 	virtual void select();
 	virtual bool process_event(sf::Event& event);
-	virtual void draw_on(sf::RenderWindow& window) const;
+	virtual void draw_on(sf::RenderWindow& window, bool selected);
 };
 
 // choose from multiple options
@@ -204,11 +192,9 @@ public:
 	void update_choice();
 	// left align text, center choice in remaining space
 	virtual void set_menu_pos(float center, float width, float top);
-	virtual void highlight();
-	virtual void lowlight();
 	// doesn't need a select
 	virtual bool process_event(sf::Event& event);
-	virtual void draw_on(sf::RenderWindow& window) const;
+	virtual void draw_on(sf::RenderWindow& window, bool selected);
 };
 
 class SingleplayerEntry : public Entry
@@ -266,7 +252,7 @@ class ControlEntry : public Entry
 
 	float b_shift, b_height, i_height, shift;
 	float min_box_width;
-	bool selected {false}; // if input is being handled
+	bool typing = false; // if input is being handled
 public:
 	ControlEntry(Menu& cmenu, KeyControls& ctrls, const std::string& cmd, const sf::Event::KeyEvent& k);
 
@@ -288,11 +274,9 @@ public:
 	virtual sf::FloatRect bounds() const;
 	// left align text, fill remaining space with box, center input text in box
 	virtual void set_menu_pos(float center, float width, float top);
-	virtual void highlight();
-	virtual void lowlight();
 	virtual void select();
 	virtual bool process_event(sf::Event& event);
-	virtual void draw_on(sf::RenderWindow& window) const;
+	virtual void draw_on(sf::RenderWindow& window, bool selected);
 };
 
 // close the window

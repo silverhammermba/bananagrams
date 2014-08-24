@@ -363,6 +363,7 @@ bool Game::peel()
 	return true;
 }
 
+// TODO run server in a separate thread instead, so we can just use mutliplayer code for everything
 SingleplayerGame::SingleplayerGame(SoundManager& _sound, const std::string& dict, uint8_t _num, uint8_t _den)
 	: Game(true, _sound), dict_filename(dict), num(_num), den(_den)
 {

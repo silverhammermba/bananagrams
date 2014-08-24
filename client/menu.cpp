@@ -7,7 +7,6 @@ static const sf::Color INACTIVE {150, 150, 150};
 Entry::Entry(const std::string& txt, float sc)
 	: text {txt, font, (unsigned int)(PPB * sc)}, scale {sc}
 {
-	lowlight();
 }
 
 float Entry::get_width() const
@@ -35,18 +34,13 @@ float Entry::get_scale() const
 	return scale;
 }
 
-void Entry::highlight()
+void Entry::draw_on(sf::RenderWindow& window, bool selected)
 {
-	text.setColor(ACTIVE);
-}
+	if (selected)
+		text.setColor(ACTIVE);
+	else
+		text.setColor(INACTIVE);
 
-void Entry::lowlight()
-{
-	text.setColor(INACTIVE);
-}
-
-void Entry::draw_on(sf::RenderWindow& window) const
-{
 	window.draw(text);
 }
 
@@ -141,24 +135,10 @@ void TextEntry::set_menu_pos(float center, float width, float top)
 	set_input_pos();
 }
 
-void TextEntry::highlight()
-{
-	box.setOutlineColor(ACTIVE);
-	Entry::highlight();
-}
-
-void TextEntry::lowlight()
-{
-	selected = false;
-	box.setOutlineColor(INACTIVE);
-	input.setColor(INACTIVE);
-	Entry::lowlight();
-}
-
 void TextEntry::select()
 {
-	selected = !selected;
-	if (selected)
+	typing = !typing;
+	if (typing)
 	{
 		input.setColor(ACTIVE);
 		if (str == default_str)
@@ -182,7 +162,7 @@ void TextEntry::select()
 
 bool TextEntry::process_event(sf::Event& event)
 {
-	if (selected)
+	if (typing)
 	{
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::BackSpace)
 		{
@@ -203,14 +183,27 @@ bool TextEntry::process_event(sf::Event& event)
 				set_input_pos();
 			}
 		}
+		else if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Return)
+		{
+			typing = false;
+		}
 	}
 
 	return true;
 }
 
-void TextEntry::draw_on(sf::RenderWindow& window) const
+void TextEntry::draw_on(sf::RenderWindow& window, bool selected)
 {
-	window.draw(text);
+	Entry::draw_on(window, selected);
+
+	if (selected)
+		box.setOutlineColor(ACTIVE);
+	else
+	{
+		box.setOutlineColor(INACTIVE);
+		input.setColor(INACTIVE);
+	}
+
 	window.draw(box);
 	window.draw(input);
 }
@@ -231,7 +224,6 @@ MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& c
 
 	// TODO make these arrows nice. maybe use unicode?
 	chooser.setString("< " + choices[0] + " >");
-	lowlight();
 }
 
 float MultiEntry::get_width() const
@@ -261,18 +253,6 @@ void MultiEntry::set_menu_pos(float center, float width, float top)
 	update_choice();
 }
 
-void MultiEntry::highlight()
-{
-	chooser.setColor(ACTIVE);
-	Entry::highlight();
-}
-
-void MultiEntry::lowlight()
-{
-	chooser.setColor(INACTIVE);
-	Entry::lowlight();
-}
-
 bool MultiEntry::process_event(sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed)
@@ -287,10 +267,16 @@ bool MultiEntry::process_event(sf::Event& event)
 	return true;
 }
 
-void MultiEntry::draw_on(sf::RenderWindow& window) const
+void MultiEntry::draw_on(sf::RenderWindow& window, bool selected)
 {
+	Entry::draw_on(window, selected);
+
+	if (selected)
+		chooser.setColor(ACTIVE);
+	else
+		chooser.setColor(INACTIVE);
+
 	window.draw(chooser);
-	Entry::draw_on(window);
 }
 
 // given a_string, return A STRING
@@ -360,26 +346,10 @@ void ControlEntry::set_menu_pos(float center, float width, float top)
 	set_input_pos();
 }
 
-void ControlEntry::highlight()
-{
-	box.setOutlineColor(ACTIVE);
-	Entry::highlight();
-}
-
-void ControlEntry::lowlight()
-{
-	selected = false;
-	box.setOutlineColor(INACTIVE);
-	key_text.setColor(INACTIVE);
-	key_text.setString(key2str(key));
-	set_input_pos();
-	Entry::lowlight();
-}
-
 void ControlEntry::select()
 {
-	selected = !selected;
-	if (selected)
+	typing = !typing;
+	if (typing)
 	{
 		key_text.setColor(ACTIVE);
 		key_text.setString("press a key...");
@@ -408,23 +378,24 @@ void ControlEntry::update()
 
 bool ControlEntry::process_event(sf::Event& event)
 {
-	if (selected)
+	if (typing)
 	{
 		if (event.type == sf::Event::KeyReleased)
 		{
-			if (event.key.code == sf::Keyboard::Key::LAlt || event.key.code == sf::Keyboard::Key::RShift)
+			if (event.key.code == sf::Keyboard::Key::LAlt || event.key.code == sf::Keyboard::Key::RAlt)
 				event.key.alt = false;
-			if (event.key.code == sf::Keyboard::Key::LControl || event.key.code == sf::Keyboard::Key::RShift)
+			if (event.key.code == sf::Keyboard::Key::LControl || event.key.code == sf::Keyboard::Key::RControl)
 				event.key.control = false;
 			if (event.key.code == sf::Keyboard::Key::LShift || event.key.code == sf::Keyboard::Key::RShift)
 				event.key.shift = false;
-			if (event.key.code != sf::Keyboard::Key::Escape && controls.rebind(event.key, command))
+			if (controls.rebind(event.key, command))
 			{
 				control_menu.update_entries();
 				key = event.key;
 			}
-			lowlight();
-			highlight();
+			typing = false;
+			key_text.setString(key2str(key));
+			set_input_pos();
 		}
 
 		return false;
@@ -433,9 +404,18 @@ bool ControlEntry::process_event(sf::Event& event)
 	return true;
 }
 
-void ControlEntry::draw_on(sf::RenderWindow& window) const
+void ControlEntry::draw_on(sf::RenderWindow& window, bool selected)
 {
-	window.draw(text);
+	Entry::draw_on(window, selected);
+
+	if (selected)
+		box.setOutlineColor(ACTIVE);
+	else
+	{
+		box.setOutlineColor(INACTIVE);
+		key_text.setColor(INACTIVE);
+	}
+
 	window.draw(box);
 	window.draw(key_text);
 }
@@ -458,17 +438,14 @@ Menu::Menu(MenuSystem& sys, Menu* p, const std::string& ttl)
 	title.setColor(ACTIVE);
 
 	background.setFillColor(sf::Color(0, 0, 0, 200));
-
-	// TODO dangerous if no entries are added
-	highlighted = entries.begin();
 }
 
-void Menu::add_entry(std::list<Entry*>::iterator it, Entry* entry)
+void Menu::entry(Entry* ent)
 {
-	entries.insert(it, entry);
+	entries.push_back(ent);
 
 	if (entries.size() == 1)
-		highlight(entries.begin());
+		select(0);
 
 	update_position();
 }
@@ -478,17 +455,17 @@ void Menu::update_position()
 	float max_width {title.getGlobalBounds().width};
 
 	// find widest entry
-	for (auto entry : entries)
+	for (auto ent : entries)
 	{
-		float width {entry->get_width()};
+		float width {ent->get_width()};
 		if (width > max_width)
 			max_width = width;
 	}
 
 	// find total height of menu entries
 	float height {PPB * 2.f};
-	for (auto entry : entries)
-		height += PPB * entry->get_scale();
+	for (auto ent : entries)
+		height += PPB * ent->get_scale();
 	height += entries.back()->get_height() - entries.back()->get_scale();
 	float shift {(gui_view.getSize().y - height) / 2};
 
@@ -496,10 +473,10 @@ void Menu::update_position()
 	title.setPosition(gui_view.getCenter().x + title.getGlobalBounds().width / -2, shift);
 
 	float cur_height {0};
-	for (auto entry : entries)
+	for (auto ent : entries)
 	{
-		entry->set_menu_pos(gui_view.getCenter().x, max_width, shift + PPB * 2.0 + cur_height);
-		cur_height += PPB * entry->get_scale();
+		ent->set_menu_pos(gui_view.getCenter().x, max_width, shift + PPB * 2.0 + cur_height);
+		cur_height += PPB * ent->get_scale();
 	}
 
 	// update background rect
@@ -507,41 +484,38 @@ void Menu::update_position()
 	background.setPosition(gui_view.getCenter().x + background.getSize().x / -2, PPB / -2.0);
 }
 
-void Menu::highlight(std::list<Entry*>::iterator it)
+void Menu::select(int index)
 {
-	if (highlighted != entries.end())
-		(*highlighted)->lowlight();
-	(*(highlighted = it))->highlight();
+	if (index < 0 || index >= (int)entries.size())
+	{
+		selected = -1;
+		return;
+	}
+
+	selected = index;
 }
 
-void Menu::highlight_prev()
+void Menu::select_prev()
 {
-	auto it = highlighted;
-	if (it == entries.begin())
-		it = entries.end();
-	--it; // TODO dangerous if menu is empty!
-	highlight(it);
+	select(selected - 1);
 }
 
-void Menu::highlight_next()
+void Menu::select_next()
 {
-	auto it = highlighted;
-	++it; // TODO dangerous if menu is empty!
-	if (it == entries.end())
-		it = entries.begin();
-	highlight(it);
+	select(selected - 1);
 }
 
-void Menu::highlight_coords(float x, float y)
+void Menu::select_coords(float x, float y)
 {
 	sf::Vector2f mouse {x, y};
-	for (auto it = entries.begin(); it != entries.end(); it++)
+	int index = 0;
+	for (auto it = entries.begin(); it != entries.end(); ++it, ++index)
 		if ((*it)->bounds().contains(mouse))
 		{
 			// TODO this code seems a bit scattered
-			if (it != highlighted)
+			if (index != selected)
 			{
-				highlight(it);
+				select(index);
 				system.play_sound("audio/menu_move.wav");
 			}
 			break;
@@ -552,15 +526,16 @@ void Menu::draw_on(sf::RenderWindow& window) const
 {
 	window.draw(background);
 	window.draw(title);
-	for (auto entry: entries)
-		entry->draw_on(window);
+	for (int i = 0; i < (int)entries.size(); ++i)
+		entries[i]->draw_on(window, i == selected);
 }
 
 bool Menu::process_event(sf::Event& event)
 {
-	// only handle event if the highlighted entry tells you to
-	if (!(*highlighted)->process_event(event))
-		return false;
+	// only handle event if the selected entry tells you to
+	// TODO I don't think the bounds check should be here...
+	if (selected < 0 || selected >= (int)entries.size() || !entries[selected]->process_event(event))
+		return false; // always block further input
 
 	switch (event.type)
 	{
@@ -580,11 +555,11 @@ bool Menu::process_event(sf::Event& event)
 					}
 					break;
 				case sf::Keyboard::Up:
-					highlight_prev();
+					select_prev();
 					system.play_sound("audio/menu_move.wav");
 					break;
 				case sf::Keyboard::Down:
-					highlight_next();
+					select_next();
 					system.play_sound("audio/menu_move.wav");
 					break;
 				default:
@@ -595,7 +570,7 @@ bool Menu::process_event(sf::Event& event)
 			switch (event.key.code)
 			{
 				case sf::Keyboard::Return:
-					(*highlighted)->select();
+					entries[selected]->select();
 					system.play_sound("audio/menu_select.wav");
 					break;
 				default:
@@ -603,13 +578,13 @@ bool Menu::process_event(sf::Event& event)
 			}
 			break;
 		case sf::Event::MouseMoved:
-			highlight_coords(event.mouseMove.x, event.mouseMove.y);
+			select_coords(event.mouseMove.x, event.mouseMove.y);
 			break;
 		case sf::Event::MouseButtonPressed:
-			highlight_coords(event.mouseButton.x, event.mouseButton.y);
+			select_coords(event.mouseButton.x, event.mouseButton.y);
 			break;
 		case sf::Event::MouseButtonReleased:
-			(*highlighted)->select();
+			entries[selected]->select();
 			system.play_sound("audio/menu_select.wav");
 			break;
 		default:

@@ -94,10 +94,10 @@ int main()
 	MenuEntry multiplayer {"MULTIPLAYER", menu_system};
 	MenuEntry customize {"CONTROLS", menu_system};
 	MenuEntry quit {"QUIT", menu_system};
-	main.append_entry(&solitaire);
-	main.append_entry(&multiplayer);
-	main.append_entry(&customize);
-	main.append_entry(&quit);
+	main.entry(&solitaire);
+	main.entry(&multiplayer);
+	main.entry(&customize);
+	main.entry(&quit);
 
 	// create solitaire menu
 	Menu solitaire_opts {menu_system, &main, "SOLITAIRE"};
@@ -108,9 +108,9 @@ int main()
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4", "Infinite"}, 1};
 	SingleplayerEntry start_singleplayer {"START GAME", menu_system, dict_entry, multiplier};
 
-	solitaire_opts.append_entry(&start_singleplayer);
-	solitaire_opts.append_entry(&dict_entry);
-	solitaire_opts.append_entry(&multiplier);
+	solitaire_opts.entry(&start_singleplayer);
+	solitaire_opts.entry(&dict_entry);
+	solitaire_opts.entry(&multiplier);
 
 	Menu multiplayer_menu {menu_system, &main, "MULTIPLAYER"};
 	multiplayer.submenu = &multiplayer_menu;
@@ -120,9 +120,9 @@ int main()
 	TextEntry server {"SERVER", PPB * 8, def_ip + ":" + def_pt, "localhost"};
 	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
 	MultiplayerEntry start_multiplayer {"JOIN", menu_system, server, name};
-	multiplayer_menu.append_entry(&server);
-	multiplayer_menu.append_entry(&name);
-	multiplayer_menu.append_entry(&start_multiplayer);
+	multiplayer_menu.entry(&server);
+	multiplayer_menu.entry(&name);
+	multiplayer_menu.entry(&start_multiplayer);
 
 	// create control menu
 	Menu control_opts {menu_system, &main, "CONTROLS"};
@@ -133,15 +133,15 @@ int main()
 	for (auto& command : controls.get_order())
 		for (auto& pair : controls.get_binds())
 			if (pair.second == command && controls.is_rebindable(pair.second))
-				control_opts.append_entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
+				control_opts.entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
 
 	// create quit menu
 	Menu confirm_quit {menu_system, &main, "Really quit?"};
 	quit.submenu = &confirm_quit;
 	QuitEntry yes {"YES", window};
 	MenuEntry no {"NO", menu_system, &main};
-	confirm_quit.append_entry(&yes);
-	confirm_quit.append_entry(&no);
+	confirm_quit.entry(&yes);
+	confirm_quit.entry(&no);
 
 	menu_system.set_menu(main);
 
@@ -382,7 +382,7 @@ int main()
 			int choice = start_singleplayer.get_multiplier().get_choice();
 			if (choice == 0)
 				div = 2;
-			else if (choice == start_singleplayer.get_multiplier().get_num_choices() - 1)
+			else if (choice == (int)start_singleplayer.get_multiplier().get_num_choices() - 1)
 				div = 0; // infinite bunch
 			else
 				mul = choice;
