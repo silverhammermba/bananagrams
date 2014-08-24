@@ -148,6 +148,8 @@ class KeyControls : public InputReader
 		}
 	};
 
+	// order of command names
+	std::vector<std::string> order;
 	// maps keys to command names
 	std::map<sf::Event::KeyEvent, std::string> binds;
 	// maps command names to commands
@@ -165,6 +167,11 @@ public:
 	};
 
 	KeyControls();
+
+	inline const std::vector<std::string>& get_order() const
+	{
+		return order;
+	}
 
 	inline const std::map<sf::Event::KeyEvent, std::string>& get_binds() const
 	{

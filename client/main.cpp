@@ -132,12 +132,13 @@ int main()
 	customize.submenu = &control_opts;
 
 	// TODO scrolling menus?
-	// TODO order these
-	for (auto& pair : controls.get_binds())
-		if (controls.is_rebindable(pair.second))
-			control_opts.append_entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
+	// XXX this is a bit inefficient, but who cares?
+	for (auto& command : controls.get_order())
+		for (auto& pair : controls.get_binds())
+			if (pair.second == command && controls.is_rebindable(pair.second))
+				control_opts.append_entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
 
-	// create quite menu
+	// create quit menu
 	Menu confirm_quit {menu_system, &main, "Really quit?"};
 	quit.submenu = &confirm_quit;
 	QuitEntry yes {"YES", window};

@@ -236,6 +236,7 @@ KeyControls::KeyControls()
 
 void KeyControls::bind(const string& command, const string& key, repeat_t rep, bool rebindable)
 {
+	order.push_back(command);
 	commands[command] = Command(rep, rebindable);
 	defaults[command] = str2key(key);
 }
