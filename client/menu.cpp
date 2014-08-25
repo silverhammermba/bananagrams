@@ -4,6 +4,11 @@
 static const sf::Color ACTIVE {255, 255, 255};
 static const sf::Color INACTIVE {150, 150, 150};
 
+sf::Color color(bool flag)
+{
+	return flag ? ACTIVE : INACTIVE;
+}
+
 Entry::Entry(const std::string& txt, float sc)
 	: text {txt, font, (unsigned int)(PPB * sc)}, scale {sc}
 {
@@ -36,7 +41,7 @@ float Entry::get_scale() const
 
 void Entry::draw_on(sf::RenderWindow& window, bool selected)
 {
-	text.setColor(selected ? ACTIVE : INACTIVE);
+	text.setColor(color(selected));
 	window.draw(text);
 }
 
@@ -160,10 +165,10 @@ void TextEntry::draw_on(sf::RenderWindow& window, bool selected)
 {
 	Entry::draw_on(window, selected);
 
-	box.setOutlineColor(selected ? ACTIVE : INACTIVE);
+	box.setOutlineColor(color(selected));
 	window.draw(box);
 
-	input.setColor(typing ? ACTIVE : INACTIVE);
+	input.setColor(color(typing));
 	window.draw(input);
 }
 
@@ -230,7 +235,7 @@ void MultiEntry::draw_on(sf::RenderWindow& window, bool selected)
 {
 	Entry::draw_on(window, selected);
 
-	chooser.setColor(selected ? ACTIVE : INACTIVE);
+	chooser.setColor(color(selected));
 	window.draw(chooser);
 }
 
@@ -351,10 +356,10 @@ void ControlEntry::draw_on(sf::RenderWindow& window, bool selected)
 {
 	Entry::draw_on(window, selected);
 
-	box.setOutlineColor(selected ? ACTIVE : INACTIVE);
+	box.setOutlineColor(color(selected));
 	window.draw(box);
 
-	key_text.setColor(typing ? ACTIVE : INACTIVE);
+	key_text.setColor(color(typing));
 	window.draw(key_text);
 }
 

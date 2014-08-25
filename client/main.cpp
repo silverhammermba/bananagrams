@@ -392,6 +392,7 @@ int main()
 
 				// TODO display loading text
 				game = new SingleplayerGame(sound, dict_entry.get_string(), mul, div);
+				menu_system.close();
 			}
 
 			if (start_mp.is_pending())
@@ -402,6 +403,7 @@ int main()
 					delete game;
 
 				game = new MultiplayerGame(sound, server.get_string(), name.get_string());
+				menu_system.close();
 			}
 
 			if (quit_yes.is_pending())
