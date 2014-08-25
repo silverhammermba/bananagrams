@@ -24,11 +24,7 @@ public:
 
 	virtual void draw_on(sf::RenderWindow& window, bool selected);
 
-	// triggered when return is pressed for this entry
-	virtual void select()
-	{
-		pending = true;
-	}
+	virtual bool process_event(sf::Event& event);
 
 	inline bool is_pending()
 	{
@@ -50,7 +46,7 @@ class Menu : public InputReader
 	int selected = -1; // index of selected entry
 	sf::RectangleShape background;
 public:
-	// create menu centered on vw, managed by sys, with parent p, and title ttl
+	// create menu managed by sys, with parent p, and title ttl
 	Menu(MenuSystem& sys, Menu* p, const std::string& ttl);
 
 	inline Menu* get_parent() const
@@ -58,6 +54,7 @@ public:
 		return parent;
 	}
 
+	// add an entry
 	void entry(Entry* ent);
 
 	void update_entries()
@@ -124,16 +121,6 @@ public:
 	virtual bool process_event(sf::Event& event);
 };
 
-// change MenuSystem's Menu
-class MenuEntry : public Entry
-{
-	MenuSystem& system;
-public:
-	Menu* submenu;
-	MenuEntry(const std::string& txt, MenuSystem& sys, Menu* sub = nullptr);
-	virtual void select();
-};
-
 // enter text
 class TextEntry : public Entry
 {
@@ -161,7 +148,6 @@ public:
 	virtual sf::FloatRect bounds() const;
 	// left align text, fill remaining space with box, center input text in box
 	virtual void set_menu_pos(float center, float width, float top);
-	virtual void select();
 	virtual bool process_event(sf::Event& event);
 	virtual void draw_on(sf::RenderWindow& window, bool selected);
 };
@@ -197,50 +183,6 @@ public:
 	virtual void draw_on(sf::RenderWindow& window, bool selected);
 };
 
-class SingleplayerEntry : public Entry
-{
-	MenuSystem& system;
-	TextEntry& dict_entry;
-	MultiEntry& multiplier;
-
-public:
-	SingleplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict_entry, MultiEntry& multiplier);
-
-	virtual void select();
-
-	inline const std::string& get_dictionary() const
-	{
-		return dict_entry.get_string();
-	}
-
-	inline MultiEntry& get_multiplier() const
-	{
-		return multiplier;
-	}
-};
-
-class MultiplayerEntry : public Entry
-{
-	MenuSystem& system;
-	TextEntry& server;
-	TextEntry& name;
-
-public:
-	MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm);
-
-	virtual void select();
-
-	inline const std::string& get_server() const
-	{
-		return server.get_string();
-	}
-
-	inline const std::string& get_name() const
-	{
-		return name.get_string();
-	}
-};
-
 class ControlEntry : public Entry
 {
 	Menu& control_menu;
@@ -274,16 +216,6 @@ public:
 	virtual sf::FloatRect bounds() const;
 	// left align text, fill remaining space with box, center input text in box
 	virtual void set_menu_pos(float center, float width, float top);
-	virtual void select();
 	virtual bool process_event(sf::Event& event);
 	virtual void draw_on(sf::RenderWindow& window, bool selected);
-};
-
-// close the window
-class QuitEntry : public Entry
-{
-	sf::RenderWindow& window;
-public:
-	QuitEntry(const std::string& txt, sf::RenderWindow& win);
-	virtual void select();
 };

@@ -89,62 +89,51 @@ int main()
 
 	// initialize menu system
 	MenuSystem menu_system(sound);
-	Menu main {menu_system, nullptr, "BANANAGRAMS"};
-	MenuEntry solitaire {"SOLITAIRE", menu_system};
-	MenuEntry multiplayer {"MULTIPLAYER", menu_system};
-	MenuEntry customize {"CONTROLS", menu_system};
-	MenuEntry quit {"QUIT", menu_system};
-	main.entry(&solitaire);
-	main.entry(&multiplayer);
-	main.entry(&customize);
-	main.entry(&quit);
 
-	// create solitaire menu
-	Menu solitaire_opts {menu_system, &main, "SOLITAIRE"};
-	solitaire.submenu = &solitaire_opts;
+	Menu main_menu {menu_system, nullptr, "BANANAGRAMS"};
+	Entry solitaire   {"SOLITAIRE"};
+	Entry multiplayer {"MULTIPLAYER"};
+	Entry customize   {"CONTROLS"};
+	Entry quit        {"QUIT"};
+	main_menu.entry(&solitaire);
+	main_menu.entry(&multiplayer);
+	main_menu.entry(&customize);
+	main_menu.entry(&quit);
 
-	Game* game {nullptr};
-	TextEntry dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
+	Menu sp_menu {menu_system, &main_menu, "SOLITAIRE"};
+	Entry      start_sp   {"START GAME"};
+	TextEntry  dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
 	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4", "Infinite"}, 1};
-	SingleplayerEntry start_singleplayer {"START GAME", menu_system, dict_entry, multiplier};
+	sp_menu.entry(&start_sp);
+	sp_menu.entry(&dict_entry);
+	sp_menu.entry(&multiplier);
 
-	solitaire_opts.entry(&start_singleplayer);
-	solitaire_opts.entry(&dict_entry);
-	solitaire_opts.entry(&multiplier);
+	// TODO add entry for disconnecting from game?
+	Menu mp_menu {menu_system, &main_menu, "MULTIPLAYER"};
+	Entry     start_mp {"JOIN"};
+	TextEntry server   {"SERVER", PPB * 8, sf::IpAddress::getLocalAddress().toString() + ":" + std::to_string(default_server_port), "localhost"};
+	TextEntry name     {"PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
+	mp_menu.entry(&server);
+	mp_menu.entry(&name);
+	mp_menu.entry(&start_mp);
 
-	Menu multiplayer_menu {menu_system, &main, "MULTIPLAYER"};
-	multiplayer.submenu = &multiplayer_menu;
-
-	std::string def_ip = sf::IpAddress::getLocalAddress().toString();
-	std::string def_pt = std::to_string(default_server_port);
-	TextEntry server {"SERVER", PPB * 8, def_ip + ":" + def_pt, "localhost"};
-	TextEntry name {"PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
-	MultiplayerEntry start_multiplayer {"JOIN", menu_system, server, name};
-	multiplayer_menu.entry(&server);
-	multiplayer_menu.entry(&name);
-	multiplayer_menu.entry(&start_multiplayer);
-
-	// create control menu
-	Menu control_opts {menu_system, &main, "CONTROLS"};
-	customize.submenu = &control_opts;
-
+	Menu control_menu {menu_system, &main_menu, "CONTROLS"};
 	// TODO scrolling menus?
 	// XXX this is a bit inefficient, but who cares?
 	for (auto& command : controls.get_order())
 		for (auto& pair : controls.get_binds())
 			if (pair.second == command && controls.is_rebindable(pair.second))
-				control_opts.entry(new ControlEntry(control_opts, controls, pair.second, pair.first));
+				control_menu.entry(new ControlEntry(control_menu, controls, pair.second, pair.first));
 
-	// create quit menu
-	Menu confirm_quit {menu_system, &main, "Really quit?"};
-	quit.submenu = &confirm_quit;
-	QuitEntry yes {"YES", window};
-	MenuEntry no {"NO", menu_system, &main};
-	confirm_quit.entry(&yes);
-	confirm_quit.entry(&no);
+	Menu quit_menu {menu_system, &main_menu, "Really quit?"};
+	Entry quit_yes {"YES"};
+	Entry quit_no  {"NO"};
+	quit_menu.entry(&quit_yes);
+	quit_menu.entry(&quit_no);
 
-	menu_system.set_menu(main);
+	menu_system.set_menu(main_menu);
 
+	Game* game {nullptr};
 	WindowEvents win_events {state, menu_system, &game};
 	input_readers.push_back(&win_events);
 
@@ -373,35 +362,53 @@ int main()
 			}
 		}
 
-		if (start_singleplayer.is_pending())
+		if (!menu_system.is_finished())
 		{
-			int mul {1};
-			int div {1};
+			if (solitaire.is_pending())
+				menu_system.set_menu(sp_menu);
+			if (multiplayer.is_pending())
+				menu_system.set_menu(mp_menu);
+			if (customize.is_pending())
+				menu_system.set_menu(control_menu);
+			if (quit.is_pending())
+				menu_system.set_menu(quit_menu);
 
-			// TODO nicer way to do this? decouple?
-			int choice = start_singleplayer.get_multiplier().get_choice();
-			if (choice == 0)
-				div = 2;
-			else if (choice == (int)start_singleplayer.get_multiplier().get_num_choices() - 1)
-				div = 0; // infinite bunch
-			else
-				mul = choice;
+			if (start_sp.is_pending())
+			{
+				int mul {1};
+				int div {1};
 
-			if (game != nullptr)
-				delete game;
+				// TODO nicer way to do this? decouple?
+				int choice = multiplier.get_choice();
+				if (choice == 0)
+					div = 2;
+				else if (choice == (int)multiplier.get_num_choices() - 1)
+					div = 0; // infinite bunch
+				else
+					mul = choice;
 
-			// TODO display loading text
-			game = new SingleplayerGame(sound, start_singleplayer.get_dictionary(), mul, div);
-		}
+				if (game != nullptr)
+					delete game;
 
-		if (start_multiplayer.is_pending())
-		{
-			// TODO process name string
+				// TODO display loading text
+				game = new SingleplayerGame(sound, dict_entry.get_string(), mul, div);
+			}
 
-			if (game != nullptr)
-				delete game;
+			if (start_mp.is_pending())
+			{
+				// TODO process name string
 
-			game = new MultiplayerGame(sound, start_multiplayer.get_server(), start_multiplayer.get_name());
+				if (game != nullptr)
+					delete game;
+
+				game = new MultiplayerGame(sound, server.get_string(), name.get_string());
+			}
+
+			if (quit_yes.is_pending())
+				window.close();
+
+			if (quit_no.is_pending())
+				menu_system.set_menu(main_menu);
 		}
 
 		if (game != nullptr)

@@ -36,49 +36,20 @@ float Entry::get_scale() const
 
 void Entry::draw_on(sf::RenderWindow& window, bool selected)
 {
-	if (selected)
-		text.setColor(ACTIVE);
-	else
-		text.setColor(INACTIVE);
-
+	text.setColor(selected ? ACTIVE : INACTIVE);
 	window.draw(text);
 }
 
-MenuEntry::MenuEntry(const std::string& txt, MenuSystem& sys, Menu* sub)
-	: Entry {txt}, system(sys), submenu {sub} // XXX GCC bug!
+// by default, just set pending
+bool Entry::process_event(sf::Event& event)
 {
-}
+	if ((event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Return) || event.type == sf::Event::MouseButtonReleased)
+	{
+		pending = true;
+		return true;
+	}
 
-void MenuEntry::select()
-{
-	if (submenu == nullptr)
-		system.close();
-	else
-		system.set_menu(*submenu);
-}
-
-SingleplayerEntry::SingleplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& dict, MultiEntry& mult)
-	: Entry {txt}, system(sys), dict_entry(dict), multiplier(mult)
-{
-}
-
-void SingleplayerEntry::select()
-{
-	Entry::select(); // lets main know that we're selected
-	system.close(); // main handles game construction, just close the menu
-}
-
-// TODO add entry for disconnecting from game?
-
-MultiplayerEntry::MultiplayerEntry(const std::string& txt, MenuSystem& sys, TextEntry& srv, TextEntry& nm)
-	: Entry {txt}, system(sys), server(srv), name(nm)
-{
-}
-
-void MultiplayerEntry::select()
-{
-	Entry::select(); // lets main know that we're selected
-	system.close(); // main handles game construction, just close the menu
+	return true;
 }
 
 TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, const std::string& def_display)
@@ -96,10 +67,7 @@ TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, 
 
 	// set up input box
 	box.setFillColor(sf::Color::Transparent);
-	box.setOutlineColor(INACTIVE);
 	box.setOutlineThickness(2);
-
-	input.setColor(INACTIVE);
 }
 
 float TextEntry::get_width() const
@@ -135,33 +103,33 @@ void TextEntry::set_menu_pos(float center, float width, float top)
 	set_input_pos();
 }
 
-void TextEntry::select()
-{
-	typing = !typing;
-	if (typing)
-	{
-		input.setColor(ACTIVE);
-		if (str == default_str)
-		{
-			str = "";
-			input.setString(str);
-		}
-	}
-	else
-	{
-		input.setColor(INACTIVE);
-		// TODO some string processing?
-		if (str == "")
-		{
-			str = default_str;
-			input.setString(default_display);
-			set_input_pos();
-		}
-	}
-}
-
 bool TextEntry::process_event(sf::Event& event)
 {
+	// enter toggles input state
+	if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Return)
+	{
+		typing = !typing;
+
+		if (typing)
+		{
+			if (str == default_str)
+			{
+				str = "";
+				input.setString(str);
+			}
+		}
+		else
+		{
+			// TODO some string processing?
+			if (str == "")
+			{
+				str = default_str;
+				input.setString(default_display);
+				set_input_pos();
+			}
+		}
+	}
+
 	if (typing)
 	{
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::BackSpace)
@@ -183,10 +151,6 @@ bool TextEntry::process_event(sf::Event& event)
 				set_input_pos();
 			}
 		}
-		else if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Return)
-		{
-			typing = false;
-		}
 	}
 
 	return true;
@@ -196,15 +160,10 @@ void TextEntry::draw_on(sf::RenderWindow& window, bool selected)
 {
 	Entry::draw_on(window, selected);
 
-	if (selected)
-		box.setOutlineColor(ACTIVE);
-	else
-	{
-		box.setOutlineColor(INACTIVE);
-		input.setColor(INACTIVE);
-	}
-
+	box.setOutlineColor(selected ? ACTIVE : INACTIVE);
 	window.draw(box);
+
+	input.setColor(typing ? ACTIVE : INACTIVE);
 	window.draw(input);
 }
 
@@ -271,11 +230,7 @@ void MultiEntry::draw_on(sf::RenderWindow& window, bool selected)
 {
 	Entry::draw_on(window, selected);
 
-	if (selected)
-		chooser.setColor(ACTIVE);
-	else
-		chooser.setColor(INACTIVE);
-
+	chooser.setColor(selected ? ACTIVE : INACTIVE);
 	window.draw(chooser);
 }
 
@@ -310,10 +265,7 @@ ControlEntry::ControlEntry(Menu& cmenu, KeyControls& ctrls, const std::string& c
 
 	// set up key_text box
 	box.setFillColor(sf::Color::Transparent);
-	box.setOutlineColor(INACTIVE);
 	box.setOutlineThickness(2);
-
-	key_text.setColor(INACTIVE);
 }
 
 float ControlEntry::get_width() const
@@ -343,22 +295,6 @@ void ControlEntry::set_menu_pos(float center, float width, float top)
 	text.setPosition(center - width / 2, top);
 	box.setSize({(float)(PPB * 5), b_height});
 	box.setPosition(center + width / 2 - PPB * 5, top + b_shift);
-	set_input_pos();
-}
-
-void ControlEntry::select()
-{
-	typing = !typing;
-	if (typing)
-	{
-		key_text.setColor(ACTIVE);
-		key_text.setString("press a key...");
-	}
-	else
-	{
-		key_text.setColor(INACTIVE);
-		key_text.setString(key2str(key));
-	}
 	set_input_pos();
 }
 
@@ -400,6 +336,13 @@ bool ControlEntry::process_event(sf::Event& event)
 
 		return false;
 	}
+	else if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Return)
+	{
+		typing = true;
+
+		key_text.setString("press a key...");
+		set_input_pos();
+	}
 
 	return true;
 }
@@ -408,28 +351,13 @@ void ControlEntry::draw_on(sf::RenderWindow& window, bool selected)
 {
 	Entry::draw_on(window, selected);
 
-	if (selected)
-		box.setOutlineColor(ACTIVE);
-	else
-	{
-		box.setOutlineColor(INACTIVE);
-		key_text.setColor(INACTIVE);
-	}
-
+	box.setOutlineColor(selected ? ACTIVE : INACTIVE);
 	window.draw(box);
+
+	key_text.setColor(typing ? ACTIVE : INACTIVE);
 	window.draw(key_text);
 }
 
-
-QuitEntry::QuitEntry(const std::string& txt, sf::RenderWindow& win)
-	: Entry {txt}, window(win) // XXX GCC bug!
-{
-}
-
-void QuitEntry::select()
-{
-	window.close();
-}
 
 // TODO react to changing view
 Menu::Menu(MenuSystem& sys, Menu* p, const std::string& ttl)
@@ -570,7 +498,6 @@ bool Menu::process_event(sf::Event& event)
 			switch (event.key.code)
 			{
 				case sf::Keyboard::Return:
-					entries[selected]->select();
 					system.play_sound("audio/menu_select.wav");
 					break;
 				default:
@@ -584,7 +511,6 @@ bool Menu::process_event(sf::Event& event)
 			select_coords(event.mouseButton.x, event.mouseButton.y);
 			break;
 		case sf::Event::MouseButtonReleased:
-			entries[selected]->select();
 			system.play_sound("audio/menu_select.wav");
 			break;
 		default:
