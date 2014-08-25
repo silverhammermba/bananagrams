@@ -420,17 +420,22 @@ void Menu::select(int index)
 		return;
 	}
 
+	if (selected != -1 && index != selected)
+		system.play_sound("audio/menu_move.wav");
+
 	selected = index;
 }
 
 void Menu::select_prev()
 {
+	if (selected == 0) return;
 	select(selected - 1);
 }
 
 void Menu::select_next()
 {
-	select(selected - 1);
+	if (selected == (int)entries.size() - 1) return;
+	select(selected + 1);
 }
 
 void Menu::select_coords(float x, float y)
@@ -440,12 +445,7 @@ void Menu::select_coords(float x, float y)
 	for (auto it = entries.begin(); it != entries.end(); ++it, ++index)
 		if ((*it)->bounds().contains(mouse))
 		{
-			// TODO this code seems a bit scattered
-			if (index != selected)
-			{
-				select(index);
-				system.play_sound("audio/menu_move.wav");
-			}
+			select(index);
 			break;
 		}
 }
@@ -484,11 +484,9 @@ bool Menu::process_event(sf::Event& event)
 					break;
 				case sf::Keyboard::Up:
 					select_prev();
-					system.play_sound("audio/menu_move.wav");
 					break;
 				case sf::Keyboard::Down:
 					select_next();
-					system.play_sound("audio/menu_move.wav");
 					break;
 				default:
 					break;

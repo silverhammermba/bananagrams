@@ -405,7 +405,10 @@ int main()
 			}
 
 			if (quit_yes.is_pending())
+			{
 				window.close();
+				break;
+			}
 
 			if (quit_no.is_pending())
 				menu_system.set_menu(main_menu);
