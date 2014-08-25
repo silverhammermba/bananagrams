@@ -50,9 +50,9 @@ dictionary.txt: words.txt
 	ruby define.rb <words.txt >dictionary.txt
 
 ifdef WINDOWS
-$(ZIP): all dictionary.txt audio/*
+$(ZIP): all dictionary.txt LICENSE.txt README.md audio/*
 	rm -f $(ZIP)
-	zip -ru $(ZIP) $(BINS) dictionary.txt audio
+	zip -ru $(ZIP) $(BINS) dictionary.txt LICENSE.txt README.md audio
 	zip -ju $(ZIP) /usr/share/fonts/TTF/DejaVuSans.ttf
 	ruby get_dlls.rb $(BINS) | zip -ju@ $(ZIP)
 endif
