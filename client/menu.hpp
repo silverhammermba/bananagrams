@@ -8,6 +8,12 @@ protected:
 public:
 	Entry(const std::string& txt, float sz=1.f);
 
+	// is event the kind of event for selecting an entry?
+	inline bool is_select_event(const sf::Event& event) const
+	{
+		return (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Return) || event.type == sf::Event::MouseButtonReleased;
+	}
+
 	// get minimum width occupied by this entry
 	virtual float get_width() const;
 	// TODO do we need this?

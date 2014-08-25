@@ -48,7 +48,7 @@ void Entry::draw_on(sf::RenderWindow& window, bool selected)
 // by default, just set pending
 bool Entry::process_event(sf::Event& event)
 {
-	if ((event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Return) || event.type == sf::Event::MouseButtonReleased)
+	if (is_select_event(event))
 	{
 		pending = true;
 		return true;
@@ -110,8 +110,8 @@ void TextEntry::set_menu_pos(float center, float width, float top)
 
 bool TextEntry::process_event(sf::Event& event)
 {
-	// enter toggles input state
-	if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Return)
+	// toggle input state
+	if (is_select_event(event))
 	{
 		typing = !typing;
 
@@ -134,8 +134,7 @@ bool TextEntry::process_event(sf::Event& event)
 			}
 		}
 	}
-
-	if (typing)
+	else if (typing)
 	{
 		if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::BackSpace)
 		{
@@ -225,6 +224,12 @@ bool MultiEntry::process_event(sf::Event& event)
 			--choice;
 		else if (choice < choices.size() - 1 && event.key.code == sf::Keyboard::Key::Right)
 			++choice;
+		update_choice();
+	}
+	else if (is_select_event(event))
+	{
+		if (++choice == choices.size())
+			choice = 0;
 		update_choice();
 	}
 
@@ -341,7 +346,7 @@ bool ControlEntry::process_event(sf::Event& event)
 
 		return false;
 	}
-	else if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Key::Return)
+	else if (is_select_event(event))
 	{
 		typing = true;
 
