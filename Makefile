@@ -44,12 +44,15 @@ server/%.o: server/%.cpp server/server.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f client/*.o server/*.o $(BINS) $(ZIP)
+	rm -f client/*.o server/*.o *.o $(BINS) $(ZIP)
+
+dictionary.txt: words.txt
+	ruby define.rb <words.txt >dictionary.txt
 
 ifdef WINDOWS
-zip: all
+$(ZIP): all dictionary.txt audio/*
 	rm -f $(ZIP)
-	zip -ru $(ZIP) $(BINS) words.txt audio
+	zip -ru $(ZIP) $(BINS) dictionary.txt audio
 	zip -ju $(ZIP) /usr/share/fonts/TTF/DejaVuSans.ttf
 	ruby get_dlls.rb $(BINS) | zip -ju@ $(ZIP)
 endif
