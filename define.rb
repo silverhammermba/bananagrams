@@ -80,13 +80,13 @@ def define word
   definition
 end
 
-$stderr.puts "Looking up words..."
-
 $stdin.each_line.with_index do |line, i|
   word, defn = line.strip.split(/\s+/, 2)
   unless defn
     defn = define(word)
   end
-  $stderr.puts "\rDefined #{i + 1} words..."
   $stdout.puts [word, defn].join(' ').strip
+  $stderr.print "\rDefined #{i + 1} words... "
 end
+
+$stderr.puts "Done."

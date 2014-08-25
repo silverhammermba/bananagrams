@@ -28,5 +28,8 @@ ARGV.each do |arg|
   get_dlls arg
 end
 
-puts $dlls.keys.sort
-STDERR.puts "Missing DLLS:", $missing.keys.sort
+$stdout.puts $dlls.keys.sort
+
+exit if $missing.empty?
+$stderr.puts "Missing DLLS:"
+$missing.keys.each { |dll| $stderr.puts "\t#{dll}" }
