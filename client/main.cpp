@@ -43,7 +43,8 @@ public:
 			gui_view.setCenter(event.size.width / 2.0, event.size.height / 2.0);
 			state.grid_view->setSize(event.size.width, event.size.height);
 			state.grid_view->zoom(state.zoom);
-			system.menu().update_position();
+			if (system.menu() != nullptr)
+				system.menu()->update_position();
 
 			if (*game != nullptr)
 				(*game)->get_hand().position_tiles();
@@ -88,7 +89,7 @@ int main()
 	state.zoom = 1;
 
 	// initialize menu system
-	MenuSystem menu_system(sound);
+	MenuSystem menu_system;
 
 	Menu main_menu {menu_system, nullptr, "BANANAGRAMS"};
 	Entry solitaire   {"SOLITAIRE"};
@@ -119,6 +120,7 @@ int main()
 
 	Menu control_menu {menu_system, &main_menu, "CONTROLS"};
 	// TODO scrolling menus?
+	// TODO can we decouple controls object from entries?
 	// XXX this is a bit inefficient, but who cares?
 	for (auto& command : controls.get_order())
 		for (auto& pair : controls.get_binds())
@@ -354,7 +356,11 @@ int main()
 			{
 				bool cont {(*r)->process_event(event)};
 				if ((*r)->is_finished())
+				{
+					if (*r == &menu_system)
+						sound.play("audio/menu_open.wav");
 					r = input_readers.erase(r);
+				}
 				else
 					++r;
 				if (!cont)
@@ -364,17 +370,32 @@ int main()
 
 		if (!menu_system.is_finished())
 		{
+			bool selected = false;
 			if (solitaire.is_pending())
+			{
 				menu_system.set_menu(sp_menu);
+				selected = true;
+			}
 			if (multiplayer.is_pending())
+			{
 				menu_system.set_menu(mp_menu);
+				selected = true;
+			}
 			if (customize.is_pending())
+			{
 				menu_system.set_menu(control_menu);
+				selected = true;
+			}
 			if (quit.is_pending())
+			{
 				menu_system.set_menu(quit_menu);
+				selected = true;
+			}
 
 			if (start_sp.is_pending())
 			{
+				selected = true;
+
 				int mul {1};
 				int div {1};
 
@@ -391,12 +412,16 @@ int main()
 					delete game;
 
 				// TODO display loading text
+				// TODO decouple sound from games
 				game = new SingleplayerGame(sound, dict_entry.get_string(), mul, div);
+				// TODO menu isn't getting cleared for next action
 				menu_system.close();
 			}
 
 			if (start_mp.is_pending())
 			{
+				selected = true;
+
 				// TODO process name string
 
 				if (game != nullptr)
@@ -408,13 +433,27 @@ int main()
 
 			if (quit_yes.is_pending())
 			{
+				selected = true;
+
 				window.close();
 				break;
 			}
 
 			if (quit_no.is_pending())
+			{
+				selected = true;
 				menu_system.set_menu(main_menu);
+			}
+
+			if (selected)
+				sound.play("audio/menu_select.wav");
+
+			if (menu_system.selection_was_changed())
+				sound.play("audio/menu_move.wav");
 		}
+
+		if (menu_system.menu_was_changed())
+			sound.play("audio/menu_select.wav");
 
 		if (game != nullptr)
 		{
@@ -635,8 +674,8 @@ int main()
 			game->draw_on(window, grid_view, gui_view);
 
 		window.setView(gui_view);
-		if (!menu_system.is_finished())
-			menu_system.menu().draw_on(window);
+		if (!menu_system.is_finished() && menu_system.menu() != nullptr)
+			menu_system.menu()->draw_on(window);
 
 		window.display();
 	}

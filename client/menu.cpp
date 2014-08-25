@@ -422,42 +422,43 @@ void Menu::update_position()
 	background.setPosition(gui_view.getCenter().x + background.getSize().x / -2, PPB / -2.0);
 }
 
-void Menu::select(int index)
+// return whether selection was changed
+bool Menu::select(int index)
 {
 	if (index < 0 || index >= (int)entries.size())
 	{
 		selected = -1;
-		return;
+		return false;
 	}
 
-	if (selected != -1 && index != selected)
-		system.play_sound("audio/menu_move.wav");
+	bool changed = (selected != index);
 
 	selected = index;
+
+	return changed;
 }
 
-void Menu::select_prev()
+bool Menu::select_prev()
 {
-	if (selected == 0) return;
-	select(selected - 1);
+	if (selected == 0) return false;
+	return select(selected - 1);
 }
 
-void Menu::select_next()
+bool Menu::select_next()
 {
-	if (selected == (int)entries.size() - 1) return;
-	select(selected + 1);
+	if (selected == (int)entries.size() - 1) return false;
+	return select(selected + 1);
 }
 
-void Menu::select_coords(float x, float y)
+bool Menu::select_coords(float x, float y)
 {
 	sf::Vector2f mouse {x, y};
 	int index = 0;
 	for (auto it = entries.begin(); it != entries.end(); ++it, ++index)
 		if ((*it)->bounds().contains(mouse))
-		{
-			select(index);
-			break;
-		}
+			return select(index);
+
+	return false;
 }
 
 void Menu::draw_on(sf::RenderWindow& window) const
@@ -471,9 +472,11 @@ void Menu::draw_on(sf::RenderWindow& window) const
 bool Menu::process_event(sf::Event& event)
 {
 	// only handle event if the selected entry tells you to
-	// TODO I don't think the bounds check should be here...
-	if (selected < 0 || selected >= (int)entries.size() || !entries[selected]->process_event(event))
-		return false; // always block further input
+	if (selected >= 0 && selected < (int)entries.size())
+	{
+		if (!entries[selected]->process_event(event))
+			return false;
+	}
 
 	switch (event.type)
 	{
@@ -482,44 +485,29 @@ bool Menu::process_event(sf::Event& event)
 			{
 				case sf::Keyboard::Escape:
 					if (parent != nullptr)
-					{
 						system.set_menu(*parent);
-						system.play_sound("audio/menu_select.wav");
-					}
 					else
-					{
 						system.close();
-						system.play_sound("audio/menu_open.wav");
-					}
 					break;
 				case sf::Keyboard::Up:
-					select_prev();
+					if (select_prev())
+						system.changed_selection();
 					break;
 				case sf::Keyboard::Down:
-					select_next();
-					break;
-				default:
-					break;
-			}
-			break;
-		case sf::Event::KeyReleased:
-			switch (event.key.code)
-			{
-				case sf::Keyboard::Return:
-					system.play_sound("audio/menu_select.wav");
+					if (select_next())
+						system.changed_selection();
 					break;
 				default:
 					break;
 			}
 			break;
 		case sf::Event::MouseMoved:
-			select_coords(event.mouseMove.x, event.mouseMove.y);
+			if (select_coords(event.mouseMove.x, event.mouseMove.y))
+				system.changed_selection();
 			break;
 		case sf::Event::MouseButtonPressed:
-			select_coords(event.mouseButton.x, event.mouseButton.y);
-			break;
-		case sf::Event::MouseButtonReleased:
-			system.play_sound("audio/menu_select.wav");
+			if (select_coords(event.mouseButton.x, event.mouseButton.y))
+				system.changed_selection();
 			break;
 		default:
 			break;
@@ -528,14 +516,10 @@ bool Menu::process_event(sf::Event& event)
 	return false;
 }
 
-MenuSystem::MenuSystem(SoundManager& _sound)
-	: sound(_sound)
-{
-}
-
 bool MenuSystem::process_event(sf::Event& event)
 {
-	menu_p->process_event(event);
+	if (menu_p != nullptr)
+		menu_p->process_event(event);
 
 	return false;
 }

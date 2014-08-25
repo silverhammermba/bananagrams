@@ -73,11 +73,11 @@ public:
 	void update_position();
 
 	// select entry
-	void select(int index);
-	void select_prev();
-	void select_next();
+	bool select(int index);
+	bool select_prev();
+	bool select_next();
 	// use Entry#bounds to select
-	void select_coords(float x, float y);
+	bool select_coords(float x, float y);
 
 	void draw_on(sf::RenderWindow& window) const;
 
@@ -88,13 +88,11 @@ public:
 // keeps track of current menu, delegates Events
 class MenuSystem : public InputReader
 {
-	SoundManager& sound;
+	Menu* menu_p = nullptr;
 
-	// TODO dangerous if not initialized
-	Menu* menu_p;
+	bool selection_changed = false;
+	bool menu_changed = false;
 public:
-	MenuSystem(SoundManager& _sound);
-
 	// use InputReader finished state to determine if menu should be dispayed
 	inline void open()
 	{
@@ -106,21 +104,38 @@ public:
 		finished = true;
 	}
 
+	inline void changed_selection()
+	{
+		selection_changed = true;
+	}
+
+	inline bool selection_was_changed()
+	{
+		bool t = selection_changed;
+		selection_changed = false;
+		return t;
+	}
+
+	inline bool menu_was_changed()
+	{
+		bool t = menu_changed;
+		menu_changed = false;
+		return t;
+	}
+
 	// to switch to parent/child menus
 	inline void set_menu(Menu& m)
 	{
+		if (menu_p != nullptr)
+			menu_changed = true;
+
 		menu_p = &m;
 		menu_p->update_position();
 	}
 
-	inline Menu& menu() const
+	inline Menu* menu() const
 	{
-		return *menu_p;
-	}
-
-	inline void play_sound(const std::string& file)
-	{
-		sound.play(file);
+		return menu_p;
 	}
 
 	// forward events to current menu
