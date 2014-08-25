@@ -161,6 +161,8 @@ class KeyControls : public InputReader
 	std::map<std::string, sf::Event::KeyEvent> defaults;
 	// easily create a command and its default
 	void bind(const std::string& command, const std::string& key, repeat_t rep, bool rebindable = true);
+	// check if key is allowed to be bound
+	bool is_not_bindable(const sf::Event::KeyEvent& key) const;
 public:
 	// thrown when rebinding a nonexistant action
 	class NotFound : public std::runtime_error

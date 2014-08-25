@@ -241,7 +241,12 @@ void KeyControls::bind(const string& command, const string& key, repeat_t rep, b
 	defaults[command] = str2key(key);
 }
 
-// TODO don't allow binds of letter keys
+// can't bind unmodified letter keys
+bool KeyControls::is_not_bindable(const sf::Event::KeyEvent& key) const
+{
+	return !key.control && !key.shift && !key.alt && !key.system && key.code >= sf::Keyboard::Key::A && key.code <= sf::Keyboard::Key::Z;
+}
+
 bool KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 {
 	// check if command exists
@@ -249,6 +254,9 @@ bool KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 		throw NotFound(command);
 	// check if command is rebindable
 	if (!is_rebindable(command))
+		return false;
+	// check if this key can be bound
+	if (is_not_bindable(key))
 		return false;
 	// check if key is already bound to an unrebindable command
 	for (auto pair = binds.begin(); pair != binds.end(); ++pair)
