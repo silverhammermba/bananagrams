@@ -365,7 +365,7 @@ bool Game::peel()
 
 // TODO run server in a separate thread instead, so we can just use mutliplayer code for everything
 SingleplayerGame::SingleplayerGame(SoundManager& _sound, const std::string& dict, uint8_t _num, uint8_t _den)
-	: Game(true, _sound), dict_filename(dict), num(_num), den(_den)
+	: Game(true, _sound), dict_filename(dict), num(_num), den(_den), rng(std::random_device()())
 {
 	// TODO cache so we don't have to reload every time?
 	std::ifstream words(dict);
@@ -403,7 +403,7 @@ SingleplayerGame::SingleplayerGame(SoundManager& _sound, const std::string& dict
 
 // load from file
 SingleplayerGame::SingleplayerGame(SoundManager& _sound, std::ifstream& save_file)
-	: Game(true, _sound)
+	: Game(true, _sound), rng(std::random_device()())
 {
 	// read dict and bunch size
 	std::getline(save_file, dict_filename, '\0');
@@ -555,7 +555,7 @@ bool SingleplayerGame::peel()
 	// check words
 	for (auto word : words)
 	{
-		if (dictionary.find(word.first) == dictionary.end())
+		if (dictionary.count(word.first) == 0)
 		{
 			valid = false;
 			messages.add(word.first + " is not a word.", Message::Severity::HIGH);
@@ -567,6 +567,22 @@ bool SingleplayerGame::peel()
 
 	if (!valid)
 		return false;
+
+	std::vector<std::string> definitions;
+
+	for (auto word : words)
+	{
+		if (spelled.count(word.first) == 0)
+		{
+			if (dictionary[word.first].length() > 0)
+				definitions.push_back(word.first + ": " + dictionary[word.first]);
+
+			spelled[word.first] = true;
+		}
+	}
+
+	if (definitions.size() > 0)
+		messages.add(definitions[std::uniform_int_distribution<>(0, definitions.size() - 1)(rng)], Message::Severity::LOW);
 
 	if (bunch->size() > 0)
 	{

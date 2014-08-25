@@ -11,7 +11,6 @@ class Game
 	bool set_view_to_cursor {true};
 	Cursor mcursor {{1, 1}, PPB / 16.0, sf::Color::Transparent, sf::Color {0, 200, 0, 80}};
 	Cursor selection {{1, 1}, 1, sf::Color {255, 255, 255, 25}, sf::Color::White};
-
 protected:
 	bool playing;
 	Grid grid;
@@ -93,12 +92,15 @@ public:
 class SingleplayerGame : public Game
 {
 	std::string dict_filename;
-	// you really shouldn't need more than 36,720 letters
+	// you really shouldn't need more than 36,720 letters with a finite bunch
 	uint8_t num;
 	uint8_t den;
 
 	std::map<std::string, std::string> dictionary;
+	std::map<std::string, bool> spelled;
 	Bunch* bunch;
+
+	std::mt19937 rng;
 public:
 	SingleplayerGame(SoundManager& _sound, const std::string& dict, uint8_t _num = 1, uint8_t _den = 1);
 	SingleplayerGame(SoundManager& _sound, std::ifstream& save_file);
