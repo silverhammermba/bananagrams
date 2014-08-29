@@ -35,7 +35,7 @@ client/%.o: client/%.cpp client/client.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(SERVER): $(patsubst %.cpp,%.o,$(SERVER_SOURCE)) bunch.o
-	$(CXX) $(CXXFLAGS) -o $(SERVER) $+ -l$(BOOST_PO) -lsfml-network -lsfml-system
+	$(CXX) $(CXXFLAGS) -o $(SERVER) $+ -l$(BOOST_PO) -lsfml-network -lsfml-system -pthread
 
 server/server.hpp: server/*.hpp common.hpp
 	touch server/server.hpp
