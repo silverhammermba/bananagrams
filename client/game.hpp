@@ -106,7 +106,6 @@ public:
 	SingleplayerGame(SoundManager& _sound, std::ifstream& save_file);
 	virtual ~SingleplayerGame();
 
-	bool load(const std::string& filename);
 	void save(const std::string& filename);
 
 	virtual void ready() {};

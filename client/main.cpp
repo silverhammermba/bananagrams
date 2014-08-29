@@ -19,36 +19,28 @@ sf::View gui_view;
 // class for handling game-related events
 class WindowEvents : public InputReader
 {
-	State& state;
-	MenuSystem& system;
-	Game** game;
+	bool got_close = false;
+	bool got_resize = false;
 public:
-	WindowEvents(State& s, MenuSystem& sys, Game** g)
-		: state(s), system(sys), game {g}
+	inline bool closed() const
 	{
+		return got_close;
+	}
+
+	inline bool resized()
+	{
+		bool r = got_resize;
+		got_resize = false;
+		return r;
 	}
 
 	virtual bool process_event(sf::Event& event)
 	{
 		if (event.type == sf::Event::Closed)
-		{
-			state.window->close();
-
-			finished = true;
-			return false;
-		}
+			got_close = true;
 		else if (event.type == sf::Event::Resized)
-		{
-			gui_view.setSize(event.size.width, event.size.height);
-			gui_view.setCenter(event.size.width / 2.0, event.size.height / 2.0);
-			state.grid_view->setSize(event.size.width, event.size.height);
-			state.grid_view->zoom(state.zoom);
-			if (system.menu() != nullptr)
-				system.menu()->update_position();
+			got_resize = true;
 
-			if (*game != nullptr)
-				(*game)->get_hand().position_tiles();
-		}
 		return true;
 	}
 };
@@ -112,9 +104,9 @@ int main()
 	// TODO add entry for disconnecting from game?
 	Menu mp_menu {menu_system, &main_menu, "MULTIPLAYER"};
 	Entry     start_mp {"JOIN"};
-	TextEntry server   {"SERVER", PPB * 8, sf::IpAddress::getLocalAddress().toString() + ":" + std::to_string(default_server_port), "localhost"};
+	TextEntry server_ip   {"SERVER", PPB * 8, sf::IpAddress::getLocalAddress().toString() + ":" + std::to_string(default_server_port), "localhost"};
 	TextEntry name     {"PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
-	mp_menu.entry(&server);
+	mp_menu.entry(&server_ip);
 	mp_menu.entry(&name);
 	mp_menu.entry(&start_mp);
 
@@ -135,8 +127,9 @@ int main()
 
 	menu_system.set_menu(main_menu);
 
-	Game* game {nullptr};
-	WindowEvents win_events {state, menu_system, &game};
+	Client* client {nullptr};
+	Server* server {nullptr};
+	WindowEvents win_events;
 	input_readers.push_back(&win_events);
 
 	sf::Color background {22, 22, 22};
@@ -169,6 +162,7 @@ int main()
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape)
 				skip = true;
 		}
+		// TODO handle winevents here?
 
 		float elapsed {clock.getElapsedTime().asSeconds()};
 
@@ -221,6 +215,7 @@ int main()
 						break;
 				}
 			}
+			// TODO handle winevents here?
 
 			// TODO make tiles prettier
 			if (!tile_texture[load_char - 'A'].create(PPB, PPB))
@@ -321,7 +316,10 @@ int main()
 	// load saved game
 	std::ifstream save_file("save.dat");
 	if (save_file.is_open())
-		game = new SingleplayerGame(sound, save_file);
+	{
+		server = new Server(save_file);
+		client = new Client(sf::IpAddress("127.0.0.1"), default_server_port, "");
+	}
 	save_file.close();
 
 	// stuff for game loop
@@ -368,6 +366,24 @@ int main()
 			}
 		}
 
+		if (win_events.closed())
+			window.close();
+
+		if (win_events.resized())
+		{
+			gui_view.setSize(event.size.width, event.size.height);
+			gui_view.setCenter(event.size.width / 2.0, event.size.height / 2.0);
+
+			state.grid_view->setSize(event.size.width, event.size.height);
+			state.grid_view->zoom(state.zoom);
+
+			if (menu_system.menu() != nullptr)
+				menu_system.menu()->update_position();
+
+			if (client != nullptr)
+				client->get_hand().position_tiles();
+		}
+
 		if (!menu_system.is_finished())
 		{
 			bool selected = false;
@@ -408,12 +424,13 @@ int main()
 				else
 					mul = choice;
 
-				if (game != nullptr)
-					delete game;
+				delete server;
+				delete client;
 
 				// TODO display loading text
 				// TODO decouple sound from games
-				game = new SingleplayerGame(sound, dict_entry.get_string(), mul, div);
+				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
+				client = new Client(sf::IpAddress("127.0.0.1"), default_server_port, "");
 				// TODO menu isn't getting cleared for next action
 				menu_system.close();
 			}
@@ -422,12 +439,26 @@ int main()
 			{
 				selected = true;
 
+				delete server;
+				delete client;
+
+				std::string ip {server_ip.get_string()};
+				unsigned short server_port = default_server_port;
+
+				// process server string
+				// TODO make this a little more robust...
+				size_t port_p {server_ip.get_string().find(':')};
+				if (port_p != std::string::npos)
+				{
+					std::stringstream port_s;
+					port_s << server_ip.get_string().substr(port_p + 1);
+					port_s >> server_port;
+
+					ip = server_ip.get_string().substr(0, port_p);
+				}
+
 				// TODO process name string
-
-				if (game != nullptr)
-					delete game;
-
-				game = new MultiplayerGame(sound, server.get_string(), name.get_string());
+				client = new Client(sf::IpAddress(ip), server_port, name.get_string());
 				menu_system.close();
 			}
 
@@ -455,44 +486,44 @@ int main()
 		if (menu_system.menu_was_changed())
 			sound.play("audio/menu_select.wav");
 
-		if (game != nullptr)
+		if (client != nullptr)
 		{
 			if (mouse.was_moved())
-				game->update_mouse_pos(window, grid_view, mouse.get_pos());
+				client->update_mouse_pos(window, grid_view, mouse.get_pos());
 
 			if (mouse.was_pressed(0))
-				game->select();
+				client->select();
 
-			if (game->is_selecting())
-				game->resize_selection();
+			if (client->is_selecting())
+				client->resize_selection();
 
 			if (mouse.was_released(0))
 			{
-				if (game->complete_selection() == 1 && controls["quick_place"])
-					game->quick_place();
+				if (client->complete_selection() == 1 && controls["quick_place"])
+					client->quick_place();
 			}
 
 			if (controls["ready"])
-				game->ready(); // multiplayer only
+				client->ready(); // multiplayer only
 
 			if (controls["cut"])
-				game->cut();
+				client->cut();
 
 			if (controls["flip"])
-				game->flip_buffer();
+				client->flip_buffer();
 
 			if (controls["paste"])
-				game->paste();
+				client->paste();
 
 			if (mouse.is_held(1))
-				game->remove_at_mouse();
+				client->remove_at_mouse();
 
 			if (controls["peel"])
-				game->peel();
+				client->peel();
 
 			// if backspace
 			if (controls["remove"])
-				game->remove();
+				client->remove();
 
 			bool add_single_typer = false;
 
@@ -503,7 +534,7 @@ int main()
 
 				waiting_single = 1;
 
-				game->prompt_show();
+				client->prompt_show();
 			}
 
 			if (controls["dump"])
@@ -513,7 +544,7 @@ int main()
 
 				waiting_single = 2;
 
-				game->prompt_dump();
+				client->prompt_dump();
 			}
 
 			if (add_single_typer)
@@ -542,11 +573,11 @@ int main()
 				}
 				else if (waiting_single == 1) // show
 				{
-					game->show(ch);
+					client->show(ch);
 				}
 				else if (waiting_single == 2) // dump
 				{
-					game->dump(ch);
+					client->dump(ch);
 				}
 				else
 				{
@@ -559,7 +590,7 @@ int main()
 
 			// if letter key
 			if (typer.get_ch(&ch))
-				game->place(ch);
+				client->place(ch);
 
 			// frame-time-dependent stuff
 			float time {clock.getElapsedTime().asSeconds()};
@@ -567,8 +598,8 @@ int main()
 
 			if (controls["center"])
 			{
-				grid_view.setCenter(game->get_grid_center());
-				game->set_cursor_to_view();
+				grid_view.setCenter(client->get_grid_center());
+				client->set_cursor_to_view();
 			}
 
 			// zoom with mouse wheel
@@ -582,10 +613,10 @@ int main()
 				sf::Vector2f after {(pos.x * gsize.x) / wsize.x + center.x - gsize.x / 2, (pos.y * gsize.y) / wsize.y + center.y - gsize.y / 2};
 				grid_view.move(before - after);
 
-				game->set_cursor_to_view();
+				client->set_cursor_to_view();
 			}
 
-			game->update_cursor(grid_view);
+			client->update_cursor(grid_view);
 
 			int zoom {0};
 			if (controls["zoom_in"])
@@ -615,12 +646,12 @@ int main()
 				delta += -Y * 2;
 			if (controls["down_fast"])
 				delta += Y * 2;
-			game->move_cursor(delta);
+			client->move_cursor(delta);
 
 			// these might have changed due to zooming
 			center = grid_view.getCenter();
 			gsize = grid_view.getSize();
-			sf::Vector2f spos = game->get_cursor_center();
+			sf::Vector2f spos = client->get_cursor_center();
 			// TODO refactor
 			// measure difference from a box in the center of the screen
 			sf::Vector2f diff {(std::abs(spos.x - center.x) > gsize.x / 4 ? spos.x - center.x - (spos.x >= center.x ? gsize.x / 4 : gsize.x / -4) : 0), (std::abs(spos.y - center.y) > gsize.y / 4 ? spos.y  - center.y - (spos.y >= center.y ? gsize.y / 4 : gsize.y / -4) : 0)};
@@ -633,19 +664,19 @@ int main()
 				grid_view.setSize(wsize.x, wsize.y);
 			state.zoom = grid_view.getSize().x / wsize.x;
 
-			game->set_zoom(state.zoom);
+			client->set_zoom(state.zoom);
 
 			// animate tiles
-			game->step(time);
+			client->step(time);
 
 			if (controls["scramble_tiles"])
-				game->get_hand().set_scrambled();
+				client->get_hand().set_scrambled();
 			if (controls["sort_tiles"])
-				game->get_hand().set_sorted();
+				client->get_hand().set_sorted();
 			if (controls["count_tiles"])
-				game->get_hand().set_counts();
+				client->get_hand().set_counts();
 			if (controls["stack_tiles"])
-				game->get_hand().set_stacked();
+				client->get_hand().set_stacked();
 		}
 
 		if (controls["menu"])
@@ -661,7 +692,7 @@ int main()
 					break;
 				}
 			}
-			// menu input reader blocks game from getting menu key release
+			// menu input reader blocks client from getting menu key release
 			controls.reset("menu");
 
 			sound.play("audio/menu_open.wav");
@@ -670,8 +701,8 @@ int main()
 		// draw
 		window.clear(background);
 
-		if (game != nullptr)
-			game->draw_on(window, grid_view, gui_view);
+		if (client != nullptr)
+			client->draw_on(window, grid_view, gui_view);
 
 		window.setView(gui_view);
 		if (!menu_system.is_finished() && menu_system.menu() != nullptr)
@@ -680,21 +711,18 @@ int main()
 		window.display();
 	}
 
-	// cleanup game
-	if (game != nullptr)
-	{
-		// if singleplayer, save game (or delete save if we finished it)
-		SingleplayerGame* sp = dynamic_cast<SingleplayerGame*>(game);
-		if (sp != nullptr)
-		{
-			if (game->in_progress())
-				sp->save("save.dat");
-			else
-				std::remove("save.dat");
-		}
+	// cleanup client
+	delete client;
 
-		delete game;
+	// if singleplayer, save game (or delete save if we finished it)
+	if (server != nullptr)
+	{
+		if (server->in_progress())
+			server->save("save.dat");
+		else
+			std::remove("save.dat");
 	}
+	delete server;
 
 	controls.write_to_file("config.yaml");
 
