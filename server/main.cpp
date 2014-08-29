@@ -1,7 +1,11 @@
 #include "server.hpp"
 
+enum class Status {RUNNING, ABORTED, EXITED};
+
 std::mutex shutdown_lock;
 bool shutdown_signal;
+std::mutex status_lock;
+Status status;
 
 namespace po = boost::program_options;
 using std::cout;
@@ -14,10 +18,8 @@ void shutdown(int s)
 {
 	(void)s; // intentionally unused
 
-	{
-		std::lock_guard<std::mutex> lock(shutdown_lock);
-		shutdown_signal = true;
-	}
+	std::lock_guard<std::mutex> lock(shutdown_lock);
+	shutdown_signal = true;
 }
 
 void start_server(unsigned short server_port, unsigned int bunch_num, unsigned int bunch_den, unsigned int player_limit, const std::map<std::string, std::string>& dictionary)
@@ -26,6 +28,8 @@ void start_server(unsigned short server_port, unsigned int bunch_num, unsigned i
 	if (server_port == 0 || socket.bind(server_port) != sf::Socket::Status::Done)
 	{
 		cerr << "\nError: bad listening port " << server_port;
+		std::lock_guard<std::mutex> lock(status_lock);
+		status = Status::ABORTED;
 		return;
 	}
 	socket.setBlocking(false);
@@ -106,6 +110,9 @@ void start_server(unsigned short server_port, unsigned int bunch_num, unsigned i
 			cout << "\nServer shutting down...";
 			cout.flush();
 
+			std::lock_guard<std::mutex> lock(status_lock);
+			status = Status::ABORTED;
+
 			if (game.get_players().size() > 0)
 			{
 				cout << "\nNotifying players...";
@@ -158,6 +165,10 @@ void start_server(unsigned short server_port, unsigned int bunch_num, unsigned i
 		{
 			cout << "\nRestarting...";
 			cout.flush();
+
+			std::lock_guard<std::mutex> lock(status_lock);
+			status = Status::EXITED;
+
 			break;
 		}
 
@@ -558,12 +569,33 @@ int main(int argc, char* argv[])
 	cout << dictionary.size() << " words found";
 	cout.flush();
 
+	bool done = false;
+	while (!done)
 	{
-		std::lock_guard<std::mutex> lock(shutdown_lock);
-		shutdown_signal = false;
+		{
+			std::lock_guard<std::mutex> locksh(status_lock);
+			std::lock_guard<std::mutex> lockst(shutdown_lock);
+
+			status = Status::RUNNING;
+			shutdown_signal = false;
+		}
+		std::thread server(start_server, server_port, b_num, b_den, max_players, dictionary);
+		server.join();
+
+		switch(status)
+		{
+			case Status::RUNNING:
+				cerr << "\nError: server thread aborted while running!\n";
+				return 1;
+			case Status::ABORTED:
+				done = true;
+				break;
+			case Status::EXITED:
+				cout << "\nRestarting server...";
+				cout.flush();
+				break;
+		}
 	}
-	std::thread server(start_server, server_port, b_num, b_den, max_players, dictionary);
-	server.join();
 
 	cout << endl;
 	return 0;
