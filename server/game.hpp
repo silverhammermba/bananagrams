@@ -69,7 +69,7 @@ public:
 		ready_to_finish = false;
 	}
 
-	inline bool can_restart() const
+	inline bool can_shutdown() const
 	{
 		return finished && !waiting;
 	}

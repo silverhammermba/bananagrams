@@ -154,9 +154,9 @@ void start_server(unsigned short server_port, unsigned int bunch_num, unsigned i
 			}
 		}
 
-		if (game.can_restart())
+		if (game.can_shutdown())
 		{
-			cout << "\nRestarting...";
+			cout << "\nShutting down server...";
 			cout.flush();
 			break;
 		}
