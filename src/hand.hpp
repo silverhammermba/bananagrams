@@ -1,6 +1,14 @@
 #ifndef HAND_HPP
 #define HAND_HPP
 
+#include <list>
+#include <sstream>
+
+#include <SFML/Graphics.hpp>
+
+#include "constants.hpp"
+#include "tile.hpp"
+
 // TODO inefficient
 class Hand
 {
