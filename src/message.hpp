@@ -1,6 +1,11 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
+#include <list>
+#include <string>
+
+#include <SFML/Graphics.hpp>
+
 class Message
 {
 	sf::Text message;
