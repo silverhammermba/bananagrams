@@ -1,7 +1,6 @@
 CLIENT=bananagrams
 SERVER=dedicated_server
-CLIENT_SOURCE:=$(wildcard client/*.cpp)
-SERVER_SOURCE:=$(wildcard server/*.cpp)
+SOURCE:=$(wildcard src/*.cpp)
 BINS=$(CLIENT) $(SERVER)
 
 # TODO maybe try out pendantic/strict ANSI?
@@ -25,26 +24,22 @@ endif
 
 all: $(BINS)
 
-$(CLIENT): $(patsubst %.cpp,%.o,$(CLIENT_SOURCE)) bunch.o
-	$(CXX) $(CXXFLAGS) -o $(CLIENT) $+ -lyaml-cpp -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-network -lsfml-system
+depend: .depend
 
-client/client.hpp: client/*.hpp common.hpp
-	touch client/client.hpp
+.depend: $(SOURCE)
+	rm -f .depend
+	$(CXX) $(CXXFLAGS) -MM $^ > .depend
 
-client/%.o: client/%.cpp client/client.hpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+include .depend
 
-$(SERVER): $(patsubst %.cpp,%.o,$(SERVER_SOURCE)) bunch.o
-	$(CXX) $(CXXFLAGS) -o $(SERVER) $+ -l$(BOOST_PO) -lsfml-network -lsfml-system -pthread
+$(CLIENT): src/client_main.o src/buffer.o src/bunch.o src/client.o src/control.o src/cursor.o src/game.o src/grid.o src/hand.o src/menu.o src/message.o src/player.o src/server.o
+	$(CXX) $(CXXFLAGS) -o $(CLIENT) $^ -lyaml-cpp -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-network -lsfml-system
 
-server/server.hpp: server/*.hpp common.hpp
-	touch server/server.hpp
-
-server/%.o: server/%.cpp server/server.hpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(SERVER): src/server_main.o src/bunch.o src/game.o src/player.o src/server.o
+	$(CXX) $(CXXFLAGS) -o $(SERVER) $^ -l$(BOOST_PO) -lsfml-network -lsfml-system -pthread
 
 clean:
-	rm -f client/*.o server/*.o *.o $(BINS) $(ZIP)
+	rm -f $(patsubst %.cpp,%.o,$(SOURCE)) $(BINS) $(ZIP)
 
 dictionary.txt: words.txt
 	ruby define.rb <words.txt >dictionary.txt
