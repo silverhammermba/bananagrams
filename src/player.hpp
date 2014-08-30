@@ -19,6 +19,7 @@ public:
 	float poll;
 
 	explicit Player() {}; // XXX to appease the players map
+	Player(const std::string& _name);
 	Player(const sf::IpAddress& _ip, unsigned short _port, const std::string& _name);
 	~Player();
 

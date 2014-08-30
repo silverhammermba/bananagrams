@@ -1,5 +1,12 @@
 #include "player.hpp"
 
+// for client
+Player::Player(const std::string& _name)
+	: name {_name}
+{
+}
+
+// for server
 Player::Player(const sf::IpAddress& _ip, unsigned short _port, const std::string& _name)
 	: ip {_ip}, port {_port}, name {_name}, dump_letters {""}
 {
