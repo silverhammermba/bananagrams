@@ -1,6 +1,16 @@
 #ifndef GRID_HPP
 #define GRID_HPP
 
+#include <array>
+#include <map>
+#include <sstream>
+#include <string>
+
+#include <SFML/Graphics.hpp>
+
+#include "constants.hpp"
+#include "tile.hpp"
+
 // for hwords and vwords vectors
 
 // map used for associating strings to position/direction in grid
