@@ -4,36 +4,14 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-Game::Game(bool _playing, SoundManager& _sound)
-	: playing(_playing), sound(_sound)
-{
-}
-
-Game::~Game()
-{
-	grid.clear();
-
-	hand.clear();
-
-	clear_buffer();
-
-	messages.clear();
-}
-
-void Game::step(float time)
-{
-	grid.step(time);
-	messages.step(time);
-}
-
-void Game::clear_buffer()
+void Client::clear_buffer()
 {
 	if (buffer != nullptr)
 		delete buffer;
 	buffer = nullptr;
 }
 
-void Game::update_mouse_pos(const sf::RenderWindow& window, const sf::View& view, const sf::Vector2i& pos)
+void Client::update_mouse_pos(const sf::RenderWindow& window, const sf::View& view, const sf::Vector2i& pos)
 {
 	sf::Vector2u w_size = window.getSize();
 	sf::Vector2f size = view.getSize();
@@ -47,7 +25,7 @@ void Game::update_mouse_pos(const sf::RenderWindow& window, const sf::View& view
 }
 
 // start a selection at the mouse cursor
-void Game::select()
+void Client::select()
 {
 	selecting = true;
 	selected = false;
@@ -55,7 +33,7 @@ void Game::select()
 }
 
 // resize the current selection to the mouse cursor
-void Game::resize_selection()
+void Client::resize_selection()
 {
 	sel2 = mcursor.get_pos();
 	// update selection rect
@@ -64,7 +42,7 @@ void Game::resize_selection()
 }
 
 // finish selection, move cursor (if necessary), return selection size
-unsigned int Game::complete_selection()
+unsigned int Client::complete_selection()
 {
 	selecting = false;
 	selected = true;
@@ -84,7 +62,7 @@ unsigned int Game::complete_selection()
 }
 
 // place tile at cursor if only one letter remaining
-void Game::quick_place()
+void Client::quick_place()
 {
 	// look for remaining tiles
 	char last {'A' - 1};
@@ -115,7 +93,7 @@ void Game::quick_place()
 	}
 }
 
-void Game::cut()
+void Client::cut()
 {
 	if (buffer == nullptr)
 	{
@@ -142,13 +120,13 @@ void Game::cut()
 	}
 }
 
-void Game::flip_buffer()
+void Client::flip_buffer()
 {
 	if (buffer != nullptr)
 		buffer->transpose();
 }
 
-void Game::paste()
+void Client::paste()
 {
 	if (buffer != nullptr)
 	{
@@ -159,7 +137,7 @@ void Game::paste()
 		messages.add("Cannot paste: no tiles were cut.", Message::Severity::LOW);
 }
 
-void Game::remove_at_mouse()
+void Client::remove_at_mouse()
 {
 	// remove tile
 	Tile* tile {grid.remove(mcursor.get_pos())};
@@ -167,12 +145,12 @@ void Game::remove_at_mouse()
 		hand.add_tile(tile);
 }
 
-void Game::prompt_show()
+void Client::prompt_show()
 {
 	messages.add("Type a letter to highlight in play:", Message::Severity::HIGH);
 }
 
-void Game::show(char ch)
+void Client::show(char ch)
 {
 	messages.add("Highlighting " + string(1, ch) + "s.", Message::Severity::HIGH);
 	if (!grid.highlight(ch))
@@ -180,12 +158,12 @@ void Game::show(char ch)
 }
 
 // TODO it would be nice if we could do the bunch size check here, and not even ask for a letter
-void Game::prompt_dump()
+void Client::prompt_dump()
 {
 	messages.add("Type a letter to dump:", Message::Severity::HIGH);
 }
 
-void Game::remove()
+void Client::remove()
 {
 	const sf::Vector2i& pos = cursor.get_pos();
 	// if the cursor is ahead of the last added character, autoadvance
@@ -233,7 +211,7 @@ void Game::remove()
 		hand.add_tile(tile);
 }
 
-void Game::place(char ch)
+void Client::place(char ch)
 {
 	bool placed {false};
 
@@ -282,7 +260,7 @@ void Game::place(char ch)
 		messages.add("You are out of " + string(1, ch) + "s!", Message::Severity::HIGH);
 }
 
-void Game::update_cursor(const sf::View& view)
+void Client::update_cursor(const sf::View& view)
 {
 	if (!set_view_to_cursor)
 	{
@@ -322,14 +300,16 @@ void Game::update_cursor(const sf::View& view)
 	}
 }
 
-void Game::set_zoom(float zoom)
+void Client::set_zoom(float zoom)
 {
 	cursor.set_zoom(zoom);
 	mcursor.set_zoom(zoom);
 	selection.set_zoom(zoom);
 }
 
-void Game::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const
+// TODO need display for other players, letters remaining, etc.
+// TODO show ready key reminder at beginning
+void Client::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const
 {
 	window.setView(grid_view);
 	grid.draw_on(window);
@@ -345,277 +325,9 @@ void Game::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf
 	hand.draw_on(window);
 }
 
-// check if hand is empty and grid is continuous
-bool Game::peel()
+Client::Client(SoundManager& _sound, const sf::IpAddress& ip, unsigned short port, const std::string& name)
+	: playing(false), sound(_sound), server_ip(ip), server_port {port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
 {
-	if (!hand.is_empty())
-	{
-		messages.add("You have not used all of your letters.", Message::Severity::HIGH);
-		return false;
-	}
-
-	if (!grid.is_continuous())
-	{
-		messages.add("Your tiles are not all connected.", Message::Severity::HIGH);
-		return false;
-	}
-
-	return true;
-}
-
-// TODO run server in a separate thread instead, so we can just use mutliplayer code for everything
-SingleplayerGame::SingleplayerGame(SoundManager& _sound, const std::string& dict, uint8_t _num, uint8_t _den)
-	: Game(true, _sound), dict_filename(dict), num(_num), den(_den), rng(std::random_device()())
-{
-	// TODO cache so we don't have to reload every time?
-	std::ifstream words(dict);
-
-	if (words.is_open())
-	{
-		// parse dictionary
-		string line;
-		while (std::getline(words, line))
-		{
-			auto pos = line.find_first_of(' ');
-			if (pos == string::npos)
-				dictionary[line] = "";
-			else
-				dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
-		}
-		words.close();
-
-		if (den > 0)
-			bunch = new FiniteBunch(num, den);
-		else
-			bunch = new InfiniteBunch();
-
-		// take tiles from the bunch for player
-		for (unsigned int i = 0; i < 21; i++)
-			hand.add_tile(new Tile(bunch->get_tile()));
-
-		messages.add("SPLIT!", Message::Severity::HIGH);
-
-		split_sound();
-	}
-	else
-		messages.add("Failed to load dictionary '" + dict + "'", Message::Severity::CRITICAL);
-}
-
-// load from file
-SingleplayerGame::SingleplayerGame(SoundManager& _sound, std::ifstream& save_file)
-	: Game(true, _sound), rng(std::random_device()())
-{
-	// read dict and bunch size
-	std::getline(save_file, dict_filename, '\0');
-
-	save_file.read(reinterpret_cast<char*>(&num), sizeof num);
-	save_file.read(reinterpret_cast<char*>(&den), sizeof den);
-
-	std::ifstream words(dict_filename);
-	if (!words.is_open())
-	{
-		messages.add("Failed to load saved dictionary '" + dict_filename + "'", Message::Severity::CRITICAL);
-		playing = false;
-		return;
-	}
-
-	// parse dictionary
-	string line;
-	while (std::getline(words, line))
-	{
-		auto pos = line.find_first_of(' ');
-		if (pos == string::npos)
-			dictionary[line] = "";
-		else
-			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
-	}
-	words.close();
-
-	// keep track of letters in hand/grid
-	unsigned int counts[26];
-	for (unsigned int i = 0; i < 26; ++i)
-		counts[i] = 0;
-
-	char ch;
-	save_file.get(ch);
-
-	// read hand
-	while (ch != '\0')
-	{
-		uint8_t count;
-		save_file.read(reinterpret_cast<char*>(&count), sizeof count);
-
-		counts[ch - 'A'] += count;
-
-		for (unsigned int i = 0; i < count; ++i)
-			hand.add_tile(new Tile(ch));
-
-		save_file.get(ch);
-	}
-
-	// read grid
-	save_file.get(ch);
-	while (!save_file.eof())
-	{
-		sf::Vector2i pos;
-		save_file.read(reinterpret_cast<char*>(&pos.x), sizeof pos.x);
-		save_file.read(reinterpret_cast<char*>(&pos.y), sizeof pos.y);
-
-		++counts[ch - 'A'];
-
-		grid.swap(pos, new Tile(ch));
-
-		save_file.get(ch);
-	}
-
-	if (den > 0)
-		bunch = new FiniteBunch(num, den, counts);
-	else
-		bunch = new InfiniteBunch();
-}
-
-SingleplayerGame::~SingleplayerGame()
-{
-	if (bunch != nullptr)
-		delete bunch;
-
-	dictionary.clear();
-}
-
-void SingleplayerGame::save(const std::string& filename)
-{
-	std::ofstream save_file(filename);
-
-	// save game parameters
-	save_file.write(dict_filename.c_str(), dict_filename.length() + 1);
-	save_file.write(reinterpret_cast<const char*>(&num), sizeof num);
-	save_file.write(reinterpret_cast<const char*>(&den), sizeof den);
-
-	// save hand
-	for (char ch = 'A'; ch <= 'Z'; ++ch)
-	{
-		if (hand.has_any(ch))
-		{
-			save_file.put(ch);
-			uint8_t count = hand.count(ch);
-			save_file.write(reinterpret_cast<const char*>(&count), sizeof count);
-		}
-	}
-
-	save_file.put('\0');
-
-	// save grid
-	for (Tile* tile : grid.internal())
-	{
-		if (tile != nullptr)
-		{
-			auto pos = tile->get_grid_pos();
-			save_file.put(tile->ch());
-			save_file.write(reinterpret_cast<const char*>(&pos.x), sizeof pos.x);
-			save_file.write(reinterpret_cast<const char*>(&pos.y), sizeof pos.y);
-		}
-	}
-
-	save_file.close();
-}
-
-void SingleplayerGame::dump(char ch)
-{
-	if (hand.has_any(ch))
-	{
-		if (bunch->size() >= 3)
-		{
-			Tile* dumped_tile = hand.remove_tile(ch);
-			char dumped = dumped_tile->ch();
-			delete dumped_tile;
-
-			// take three
-			for (unsigned int i = 0; i < 3; ++i)
-				hand.add_tile(new Tile(bunch->get_tile()));
-
-			bunch->add_tile(dumped);
-
-			messages.add("Dumped " + string(1, ch) + ".", Message::Severity::HIGH);
-		}
-		else
-			messages.add("There are not enough tiles left to dump!", Message::Severity::HIGH);
-	}
-	else
-		messages.add("You don't have any " + string(1, ch) + "s in your hand!", Message::Severity::HIGH);
-}
-
-bool SingleplayerGame::peel()
-{
-	if (!Game::peel())
-		return false;
-
-	auto words = grid.get_words();
-	bool valid {true};
-
-	// check words
-	for (auto word : words)
-	{
-		if (dictionary.count(word.first) == 0)
-		{
-			valid = false;
-			messages.add(word.first + " is not a word.", Message::Severity::HIGH);
-			// color incorrect tiles
-			for (auto& pos: word.second)
-				grid.bad_word(pos[0], pos[1], pos[2]);
-		}
-	}
-
-	if (!valid)
-		return false;
-
-	std::vector<std::string> definitions;
-
-	for (auto word : words)
-	{
-		if (spelled.count(word.first) == 0)
-		{
-			if (dictionary[word.first].length() > 0)
-				definitions.push_back(word.first + ": " + dictionary[word.first]);
-
-			spelled[word.first] = true;
-		}
-	}
-
-	if (definitions.size() > 0)
-		messages.add(definitions[std::uniform_int_distribution<>(0, definitions.size() - 1)(rng)], Message::Severity::LOW);
-
-	if (bunch->size() > 0)
-	{
-		hand.add_tile(new Tile(bunch->get_tile()));
-	}
-	else
-	{
-		messages.add("You win!", Message::Severity::CRITICAL);
-		playing = false;
-	}
-
-	return true;
-}
-
-MultiplayerGame::MultiplayerGame(SoundManager& _sound, const std::string& server, const std::string& name)
-	: Game(false, _sound), server_port {default_server_port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
-{
-	std::string ip {server};
-
-	// process server string
-	// TODO make this a little more robust...
-	size_t port_p {server.find(':')};
-	if (port_p != std::string::npos)
-	{
-		std::stringstream port_s;
-		port_s << server.substr(port_p + 1);
-		port_s >> server_port;
-
-		ip = server.substr(0, port_p);
-	}
-
-	server_ip = sf::IpAddress(ip);
-
 	unsigned short client_port = server_port + 1;
 
 	// find port to bind to
@@ -631,22 +343,31 @@ MultiplayerGame::MultiplayerGame(SoundManager& _sound, const std::string& server
 	poll_pause = 0.f; // haven't sent first packet yet
 	timeout = 30.f; // long timeout for connection
 	polling = 3.f; // and slow polling
-	messages.add("Connecting to " + server + "...", Message::Severity::CRITICAL);
+	messages.add("Connecting to " + server_ip.toString() + "...", Message::Severity::CRITICAL);
 
 	send_pending();
 }
 
-MultiplayerGame::~MultiplayerGame()
+Client::~Client()
 {
+	grid.clear();
+
+	hand.clear();
+
+	clear_buffer();
+
+	messages.clear();
+
 	set_pending(cl_disconnect);
 	send_pending();
 
 	socket.unbind();
 }
 
-void MultiplayerGame::step(float time)
+void Client::step(float time)
 {
-	Game::step(time);
+	grid.step(time);
+	messages.step(time);
 
 	// process incoming packets
 	sf::Packet packet;
@@ -677,7 +398,7 @@ void MultiplayerGame::step(float time)
 	}
 }
 
-void MultiplayerGame::send_pending()
+void Client::send_pending()
 {
 	if (pending == nullptr)
 		cerr << "Attempt to send null packet!\n";
@@ -685,7 +406,7 @@ void MultiplayerGame::send_pending()
 		socket.send(*pending, server_ip, server_port);
 }
 
-void MultiplayerGame::set_pending(sf::Uint8 type)
+void Client::set_pending(sf::Uint8 type)
 {
 	clear_pending(true);
 	pending = new sf::Packet;
@@ -693,7 +414,7 @@ void MultiplayerGame::set_pending(sf::Uint8 type)
 	pending_type = type;
 }
 
-void MultiplayerGame::clear_pending(bool force)
+void Client::clear_pending(bool force)
 {
 	if (pending == nullptr)
 	{
@@ -712,7 +433,7 @@ void MultiplayerGame::clear_pending(bool force)
 	poll_pause = 0.f;
 }
 
-void MultiplayerGame::ready()
+void Client::ready()
 {
 	if (connected)
 	{
@@ -734,7 +455,7 @@ void MultiplayerGame::ready()
 		messages.add("You are not connected to the server!", Message::Severity::HIGH);
 }
 
-void MultiplayerGame::process_packet(sf::Packet& packet)
+void Client::process_packet(sf::Packet& packet)
 {
 	sf::Uint8 type;
 	packet >> type;
@@ -1058,7 +779,7 @@ void MultiplayerGame::process_packet(sf::Packet& packet)
 	}
 }
 
-void MultiplayerGame::dump(char ch)
+void Client::dump(char ch)
 {
 	if (!connected)
 	{
@@ -1089,7 +810,7 @@ void MultiplayerGame::dump(char ch)
 }
 
 // called once all words from peel have been looked up
-bool MultiplayerGame::resolve_peel()
+bool Client::resolve_peel()
 {
 	if (bad_words.size() > 0)
 	{
@@ -1122,7 +843,7 @@ bool MultiplayerGame::resolve_peel()
 	return true;
 }
 
-bool MultiplayerGame::peel()
+bool Client::peel()
 {
 	if (!connected)
 	{
@@ -1139,8 +860,17 @@ bool MultiplayerGame::peel()
 	lookup_words.clear();
 	bad_words.clear();
 
-	if (!Game::peel())
+	if (!hand.is_empty())
+	{
+		messages.add("You have not used all of your letters.", Message::Severity::HIGH);
 		return false;
+	}
+
+	if (!grid.is_continuous())
+	{
+		messages.add("Your tiles are not all connected.", Message::Severity::HIGH);
+		return false;
+	}
 
 	const gridword_map& words {grid.get_words()};
 	std::map<string, bool>::iterator it;
@@ -1172,16 +902,9 @@ bool MultiplayerGame::peel()
 	return resolve_peel();
 }
 
-void MultiplayerGame::disconnect()
+void Client::disconnect()
 {
 	connected = false;
 	playing = false;
 	clear_pending(true);
-}
-
-// TODO need display for other players, letters remaining, etc.
-// TODO show ready key reminder at beginning
-void MultiplayerGame::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const
-{
-	Game::draw_on(window, grid_view, gui_view);
 }
