@@ -1,6 +1,15 @@
 #ifndef BUFFER_HPP
 #define BUFFER_HPP
 
+#include <vector>
+
+#include <SFML/Graphics.hpp>
+
+#include "constants.hpp"
+#include "tile.hpp"
+#include "grid.hpp"
+#include "hand.hpp"
+
 class CutBuffer
 {
 	sf::Vector2i pos;
