@@ -1,6 +1,10 @@
 #ifndef CURSOR_HPP
 #define CURSOR_HPP
 
+#include <SFML/Graphics.hpp>
+
+#include "constants.hpp"
+
 class Cursor
 {
 	sf::Vector2u size;
