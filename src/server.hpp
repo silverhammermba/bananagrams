@@ -23,11 +23,17 @@ class Server
 
 	std::thread thread;
 public:
+	enum class Status {RUNNING, ABORTED, EXITED};
+
 	Server(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players);
-	Server(std::ifstream& save_file);
 	~Server();
 
 	void save(const std::string& filename);
+
+	// tell server thread to return
+	void shutdown();
+	// block until thread returns
+	Status block();
 };
 
 #endif
