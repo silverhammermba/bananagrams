@@ -1,4 +1,4 @@
-#include "client.hpp"
+#include "menu.hpp"
 
 // TODO put these in Entry
 static const sf::Color ACTIVE {255, 255, 255};

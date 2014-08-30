@@ -1,5 +1,3 @@
-#include "server.hpp"
-
 enum class Status {RUNNING, ABORTED, EXITED};
 
 std::mutex shutdown_lock;

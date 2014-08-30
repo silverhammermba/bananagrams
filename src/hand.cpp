@@ -1,4 +1,4 @@
-#include "client.hpp"
+#include "hand.hpp"
 
 Hand::Hand(const sf::Font& font) : rng(std::random_device()())
 {

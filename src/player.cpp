@@ -1,4 +1,4 @@
-#include "server.hpp"
+#include "player.hpp"
 
 Player::Player(const sf::IpAddress& _ip, unsigned short _port, const std::string& _name)
 	: ip {_ip}, port {_port}, name {_name}, dump_letters {""}

@@ -1,5 +1,3 @@
-#include <list>
-#include <random>
 #include "bunch.hpp"
 
 Bunch::Bunch() : rng(std::random_device()())

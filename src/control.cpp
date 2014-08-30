@@ -1,4 +1,4 @@
-#include "client.hpp"
+#include "control.hpp"
 
 using std::cerr;
 using std::endl;

@@ -1,4 +1,4 @@
-#include "client.hpp"
+#include "buffer.hpp"
 
 CutBuffer::CutBuffer(Grid& grid, int left, int top, const sf::Vector2u& sz)
 {

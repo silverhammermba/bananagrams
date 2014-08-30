@@ -1,3 +1,5 @@
+#include "server.hpp"
+
 void Server::save(const std::string& filename)
 {
 	std::ofstream save_file(filename);

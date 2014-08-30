@@ -1,5 +1,3 @@
-#include "client.hpp"
-
 // embedded resources
 #include "icon.hpp"
 
