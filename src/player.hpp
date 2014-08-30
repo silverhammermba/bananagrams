@@ -1,6 +1,11 @@
 #ifndef PLAYER_HPP
 #define PLAYER_HPP
 
+#include <list>
+#include <string>
+
+#include <SFML/Network.hpp>
+
 class Player
 {
 	sf::IpAddress ip;

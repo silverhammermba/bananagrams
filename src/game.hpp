@@ -1,6 +1,14 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 
+#include <map>
+#include <string>
+
+#include <SFML/System.hpp>
+
+#include "bunch.hpp"
+#include "player.hpp"
+
 class Game
 {
 	unsigned int bunch_num;
