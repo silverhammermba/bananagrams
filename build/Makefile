@@ -18,9 +18,9 @@ endif
 
 all: $(CLIENT) $(SERVER)
 
-.depend: $(SOURCE) $(wildcard ../src/*.hpp)
+depend: .depend
 
-.depend: $(SOURCE)
+.depend: $(SOURCE) $(wildcard ../src/*.hpp)
 	rm -f .depend
 	$(CXX) $(CXXFLAGS) -MM $^ > .depend
 
