@@ -1,3 +1,6 @@
+#ifndef SERVER_HPP
+#define SERVER_HPP
+
 class Server
 {
 	// parameters for creation
@@ -26,3 +29,5 @@ public:
 
 	void save(const std::string& filename);
 };
+
+#endif

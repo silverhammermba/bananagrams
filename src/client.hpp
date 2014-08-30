@@ -1,3 +1,6 @@
+#ifndef CLIENT_HPP
+#define CLIENT_HPP
+
 class Game
 {
 	CutBuffer* buffer {nullptr};
@@ -162,3 +165,5 @@ public:
 	void process_packet(sf::Packet& packet);
 	virtual void draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const;
 };
+
+#endif

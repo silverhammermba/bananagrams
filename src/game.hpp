@@ -1,3 +1,6 @@
+#ifndef GAME_HPP
+#define GAME_HPP
+
 class Game
 {
 	unsigned int bunch_num;
@@ -107,3 +110,5 @@ public:
 	void start();
 	void got_ack(const std::string& id, const sf::Int16& ack_num) const;
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef BUFFER_HPP
+#define BUFFER_HPP
+
 class CutBuffer
 {
 	sf::Vector2i pos;
@@ -24,3 +27,5 @@ public:
 
 	void draw_on(sf::RenderWindow & window) const;
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef HAND_HPP
+#define HAND_HPP
+
 // TODO inefficient
 class Hand
 {
@@ -56,3 +59,5 @@ public:
 	void set_counts();
 	void set_stacked();
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef CURSOR_HPP
+#define CURSOR_HPP
+
 class Cursor
 {
 	sf::Vector2u size;
@@ -38,3 +41,5 @@ public:
 		window.draw(cursor);
 	}
 };
+
+#endif

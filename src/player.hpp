@@ -1,3 +1,6 @@
+#ifndef PLAYER_HPP
+#define PLAYER_HPP
+
 class Player
 {
 	sf::IpAddress ip;
@@ -93,3 +96,5 @@ public:
 		// pending should already be empty
 	}
 };
+
+#endif

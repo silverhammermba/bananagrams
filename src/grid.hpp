@@ -1,3 +1,6 @@
+#ifndef GRID_HPP
+#define GRID_HPP
+
 // for hwords and vwords vectors
 
 // map used for associating strings to position/direction in grid
@@ -94,3 +97,5 @@ public:
 
 	void draw_on(sf::RenderWindow& window) const;
 };
+
+#endif

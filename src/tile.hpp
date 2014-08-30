@@ -1,3 +1,6 @@
+#ifndef TILE_HPP
+#define TILE_HPP
+
 class Tile
 {
 	char character;
@@ -57,3 +60,5 @@ public:
 		window.draw(sprite);
 	}
 };
+
+#endif

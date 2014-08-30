@@ -1,3 +1,6 @@
+#ifndef MESSAGE_HPP
+#define MESSAGE_HPP
+
 class Message
 {
 	sf::Text message;
@@ -51,3 +54,5 @@ public:
 
 	void draw_on(sf::RenderWindow& window) const;
 };
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef MENU_HPP
+#define MENU_HPP
+
 // base class for entries in Menus
 class Entry : public InputReader
 {
@@ -240,3 +243,5 @@ public:
 	virtual bool process_event(sf::Event& event);
 	virtual void draw_on(sf::RenderWindow& window, bool selected);
 };
+
+#endif

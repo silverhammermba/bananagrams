@@ -1,3 +1,6 @@
+#ifndef SOUND_HPP
+#define SOUND_HPP
+
 class SoundManager
 {
 	// is there a nice way to map to buffer/sound pairs?
@@ -49,3 +52,5 @@ class SoundManager
 		sounds[filename]->play();
 	}
 };
+
+#endif
