@@ -1,6 +1,13 @@
 #ifndef MENU_HPP
 #define MENU_HPP
 
+#include <string>
+#include <vector>
+
+#include <SFML/Graphics.hpp>
+
+#include "constants.hpp"
+#include "control.hpp" // TODO remove
 #include "input.hpp"
 
 // base class for entries in Menus
