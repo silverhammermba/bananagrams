@@ -1,6 +1,8 @@
 #ifndef MENU_HPP
 #define MENU_HPP
 
+#include "input.hpp"
+
 // base class for entries in Menus
 class Entry : public InputReader
 {

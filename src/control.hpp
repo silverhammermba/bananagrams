@@ -1,6 +1,15 @@
 #ifndef CONTROL_HPP
 #define CONTROL_HPP
 
+#include <fstream>
+#include <iostream>
+#include <queue>
+
+#include <SFML/Graphics.hpp>
+#include <yaml-cpp/yaml.h>
+
+#include "input.hpp"
+
 // for passing around state
 struct State
 {
@@ -8,31 +17,6 @@ struct State
 	sf::RenderWindow* window;
 	sf::View* grid_view;
 	float zoom; // zoom factor for grid view
-};
-
-// for classes that handle sf::Events
-class InputReader
-{
-protected:
-	bool finished {false};
-public:
-	virtual ~InputReader() {}
-
-	inline bool is_finished() const
-	{
-		return finished;
-	}
-
-	void reset()
-	{
-		finished = false;
-	}
-
-	virtual bool process_event(sf::Event& event)
-	{
-		(void)event; // intentionally unused parameter
-		return true;
-	}
 };
 
 // for placing tiles
