@@ -18,7 +18,7 @@ endif
 
 all: $(CLIENT) $(SERVER)
 
-depend: .depend
+.depend: $(SOURCE) $(wildcard ../src/*.hpp)
 
 .depend: $(SOURCE)
 	rm -f .depend
