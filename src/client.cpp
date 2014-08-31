@@ -4,6 +4,49 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+Client::Client(const sf::Font& font, SoundManager& _sound, const sf::IpAddress& ip, unsigned short port, const std::string& name, bool _is_sp)
+	: playing(false), hand(font), messages(font), sound(_sound), server_ip(ip), server_port {port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}, is_sp {_is_sp}
+{
+	unsigned short client_port = server_port + 1;
+
+	// find port to bind to
+	while (socket.bind(client_port) != sf::Socket::Status::Done)
+		++client_port;
+
+	socket.setBlocking(false);
+
+	set_pending(cl_connect);
+	(*pending) << protocol_version << name;
+
+	time_stale = 0.f; // SO FRESH
+	poll_pause = 0.f; // haven't sent first packet yet
+	timeout = 30.f; // long timeout for connection
+	polling = 3.f; // and slow polling
+
+	if (is_sp)
+		messages.add("Loading...", Message::Severity::CRITICAL);
+	else
+		messages.add("Connecting to " + server_ip.toString() + "...", Message::Severity::CRITICAL);
+
+	send_pending();
+}
+
+Client::~Client()
+{
+	grid.clear();
+
+	hand.clear();
+
+	clear_buffer();
+
+	messages.clear();
+
+	set_pending(cl_disconnect);
+	send_pending();
+
+	socket.unbind();
+}
+
 void Client::clear_buffer()
 {
 	if (buffer != nullptr)
@@ -325,45 +368,6 @@ void Client::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const 
 	hand.draw_on(window);
 }
 
-Client::Client(const sf::Font& font, SoundManager& _sound, const sf::IpAddress& ip, unsigned short port, const std::string& name)
-	: playing(false), hand(font), messages(font), sound(_sound), server_ip(ip), server_port {port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
-{
-	unsigned short client_port = server_port + 1;
-
-	// find port to bind to
-	while (socket.bind(client_port) != sf::Socket::Status::Done)
-		++client_port;
-
-	socket.setBlocking(false);
-
-	set_pending(cl_connect);
-	(*pending) << protocol_version << name;
-
-	time_stale = 0.f; // SO FRESH
-	poll_pause = 0.f; // haven't sent first packet yet
-	timeout = 30.f; // long timeout for connection
-	polling = 3.f; // and slow polling
-	messages.add("Connecting to " + server_ip.toString() + "...", Message::Severity::CRITICAL);
-
-	send_pending();
-}
-
-Client::~Client()
-{
-	grid.clear();
-
-	hand.clear();
-
-	clear_buffer();
-
-	messages.clear();
-
-	set_pending(cl_disconnect);
-	send_pending();
-
-	socket.unbind();
-}
-
 void Client::step(float time)
 {
 	grid.step(time);
@@ -387,7 +391,10 @@ void Client::step(float time)
 
 		if (time_stale > timeout)
 		{
-			messages.add("Disconnected from server: server timed out", Message::Severity::CRITICAL);
+			if (is_sp)
+				messages.add("Error: game server timed out", Message::Severity::CRITICAL);
+			else
+				messages.add("Disconnected from server: server timed out", Message::Severity::CRITICAL);
 			disconnect();
 		}
 		else if (poll_pause >= polling)
@@ -439,11 +446,18 @@ void Client::ready()
 	{
 		if (!playing)
 		{
+			// there's no point unreadying in SP
+			if (is_sp && is_ready)
+				return;
+
 			is_ready = !is_ready;
 
 			set_pending(cl_ready);
 			(*pending) << is_ready;
 			send_pending();
+
+			if (is_sp)
+				return;
 
 			if (is_ready)
 				messages.add("You are ready", Message::Severity::LOW);
@@ -451,7 +465,7 @@ void Client::ready()
 				messages.add("You are not ready", Message::Severity::LOW);
 		}
 	}
-	else
+	else if (!is_sp)
 		messages.add("You are not connected to the server!", Message::Severity::HIGH);
 }
 
@@ -466,7 +480,9 @@ void Client::process_packet(sf::Packet& packet)
 		{
 			if (!connected)
 			{
-				messages.add("Connected...", Message::Severity::CRITICAL);
+				if (!is_sp)
+					messages.add("Connected...", Message::Severity::CRITICAL);
+
 				connected = true;
 
 				// want more responsiveness from server
@@ -474,6 +490,9 @@ void Client::process_packet(sf::Packet& packet)
 				polling = 0.5f;
 
 				clear_pending();
+
+				if (is_sp)
+					ready();
 			}
 
 			string uuid;
@@ -783,7 +802,8 @@ void Client::dump(char ch)
 {
 	if (!connected)
 	{
-		messages.add("You are not connected to the server!", Message::Severity::HIGH);
+		if (!is_sp)
+			messages.add("You are not connected to the server!", Message::Severity::HIGH);
 		return;
 	}
 
@@ -795,7 +815,7 @@ void Client::dump(char ch)
 
 	if (waiting)
 	{
-		messages.add("Waiting for server response. You cannot dump now.", Message::Severity::HIGH);
+		messages.add("Waiting for server response. Try again in a moment.", Message::Severity::HIGH);
 		return;
 	}
 
@@ -847,13 +867,14 @@ bool Client::peel()
 {
 	if (!connected)
 	{
-		messages.add("You are not connected to the server!", Message::Severity::HIGH);
+		if (!is_sp)
+			messages.add("You are not connected to the server!", Message::Severity::HIGH);
 		return false;
 	}
 
 	if (waiting)
 	{
-		messages.add("Waiting for server response. You cannot peel now.", Message::Severity::HIGH);
+		messages.add("Waiting for server response. Try again in a moment.", Message::Severity::HIGH);
 		return false;
 	}
 

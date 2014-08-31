@@ -429,7 +429,7 @@ int main()
 				// TODO display loading text
 				// TODO decouple sound from games
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
-				client = new Client(font, sound, sf::IpAddress("127.0.0.1"), default_server_port, "");
+				client = new Client(font, sound, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);
 				// TODO menu isn't getting cleared for next action
 				menu_system.close();
 			}
@@ -457,7 +457,7 @@ int main()
 				}
 
 				// TODO process name string
-				client = new Client(font, sound, sf::IpAddress(ip), server_port, name.get_string());
+				client = new Client(font, sound, sf::IpAddress(ip), server_port, name.get_string(), false);
 				menu_system.close();
 			}
 

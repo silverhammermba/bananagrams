@@ -67,8 +67,10 @@ class Client
 	sf::Int16 ack_num {0};
 
 	std::map<std::string, Player> players;
+
+	bool is_sp;
 public:
-	Client(const sf::Font& font, SoundManager& _sound, const sf::IpAddress& server, unsigned short port, const std::string& name);
+	Client(const sf::Font& font, SoundManager& _sound, const sf::IpAddress& server, unsigned short port, const std::string& name, bool _is_sp);
 	~Client();
 
 	inline bool in_progress() const
