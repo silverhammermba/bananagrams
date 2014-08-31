@@ -325,8 +325,8 @@ void Client::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const 
 	hand.draw_on(window);
 }
 
-Client::Client(SoundManager& _sound, const sf::IpAddress& ip, unsigned short port, const std::string& name)
-	: playing(false), sound(_sound), server_ip(ip), server_port {port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
+Client::Client(const sf::Font& font, SoundManager& _sound, const sf::IpAddress& ip, unsigned short port, const std::string& name)
+	: playing(false), hand(font), messages(font), sound(_sound), server_ip(ip), server_port {port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}
 {
 	unsigned short client_port = server_port + 1;
 

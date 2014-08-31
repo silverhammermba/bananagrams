@@ -9,7 +9,7 @@ sf::Color color(bool flag)
 	return flag ? ACTIVE : INACTIVE;
 }
 
-Entry::Entry(const std::string& txt, float sc)
+Entry::Entry(const sf::Font& font, const std::string& txt, float sc)
 	: text {txt, font, (unsigned int)(PPB * sc)}, scale {sc}
 {
 }
@@ -57,8 +57,8 @@ bool Entry::process_event(sf::Event& event)
 	return true;
 }
 
-TextEntry::TextEntry(const std::string& txt, float mbw, const std::string& def, const std::string& def_display)
-	: Entry {txt}, input {def_display, font,  (unsigned int)((PPB * 2) / 3.0)}, str {def}, default_display {def_display}, default_str {def}, min_box_width {mbw}
+TextEntry::TextEntry(const sf::Font& font, const std::string& txt, float mbw, const std::string& def, const std::string& def_display)
+	: Entry {font, txt}, input {def_display, font,  (unsigned int)((PPB * 2) / 3.0)}, str {def}, default_display {def_display}, default_str {def}, min_box_width {mbw}
 {
 	// get heights and shifts
 	text.setString("A");
@@ -171,8 +171,8 @@ void TextEntry::draw_on(sf::RenderWindow& window, bool selected)
 	window.draw(input);
 }
 
-MultiEntry::MultiEntry(const std::string& txt, const std::vector<std::string>& ch, unsigned int def)
-	: Entry {txt}, choice {def}, choices {ch}, chooser {"", font, PPB}
+MultiEntry::MultiEntry(const sf::Font& font, const std::string& txt, const std::vector<std::string>& ch, unsigned int def)
+	: Entry {font, txt}, choice {def}, choices {ch}, chooser {"", font, PPB}
 {
 	// TODO make sure default is good
 
@@ -259,8 +259,8 @@ std::string cmd2menu(const std::string& cmd)
 	return menu;
 }
 
-ControlEntry::ControlEntry(Menu& cmenu, KeyControls& ctrls, const std::string& cmd, const sf::Event::KeyEvent& k)
-	: Entry {cmd2menu(cmd), 0.5}, control_menu(cmenu), controls(ctrls), command {cmd}, key(k), key_text {key2str(k), font, (unsigned int)((PPB) / 4.0)} // XXX GCC bug!
+ControlEntry::ControlEntry(const sf::Font& font, Menu& cmenu, KeyControls& ctrls, const std::string& cmd, const sf::Event::KeyEvent& k)
+	: Entry {font, cmd2menu(cmd), 0.5}, control_menu(cmenu), controls(ctrls), command {cmd}, key(k), key_text {key2str(k), font, (unsigned int)((PPB) / 4.0)} // XXX GCC bug!
 {
 	// get heights and shifts
 	text.setString("A");
@@ -370,7 +370,7 @@ void ControlEntry::draw_on(sf::RenderWindow& window, bool selected)
 
 
 // TODO react to changing view
-Menu::Menu(MenuSystem& sys, Menu* p, const std::string& ttl)
+Menu::Menu(const sf::Font& font, MenuSystem& sys, Menu* p, const std::string& ttl)
 	: system(sys), parent {p}, title {ttl, font, (unsigned int)(PPB * 1.5)} // XXX GCC bug!
 {
 	title.setColor(ACTIVE);

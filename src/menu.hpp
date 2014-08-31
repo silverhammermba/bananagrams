@@ -18,7 +18,7 @@ protected:
 	float scale;
 	bool pending;
 public:
-	Entry(const std::string& txt, float sz=1.f);
+	Entry(const sf::Font& font, const std::string& txt, float sz=1.f);
 
 	// is event the kind of event for selecting an entry?
 	inline bool is_select_event(const sf::Event& event) const
@@ -65,7 +65,7 @@ class Menu : public InputReader
 	sf::RectangleShape background;
 public:
 	// create menu managed by sys, with parent p, and title ttl
-	Menu(MenuSystem& sys, Menu* p, const std::string& ttl);
+	Menu(const sf::Font& font, MenuSystem& sys, Menu* p, const std::string& ttl);
 
 	inline Menu* get_parent() const
 	{
@@ -170,7 +170,7 @@ class TextEntry : public Entry
 	void set_input_pos(); // update position of input Text
 public:
 	// create text entry at least mbw wide, storing def and displaying def_display for empty input
-	TextEntry(const std::string& txt, float mbw, const std::string& def = "", const std::string& def_display = "");
+	TextEntry(const sf::Font& font, const std::string& txt, float mbw, const std::string& def = "", const std::string& def_display = "");
 
 	inline const std::string& get_string()
 	{
@@ -196,7 +196,7 @@ class MultiEntry : public Entry
 	float set_width;
 public:
 	// create multiple choice entry with choices ch, defaulting to def
-	MultiEntry(const std::string& txt, const std::vector<std::string>& ch, unsigned int def = 0);
+	MultiEntry(const sf::Font& font, const std::string& txt, const std::vector<std::string>& ch, unsigned int def = 0);
 
 	inline unsigned int get_choice() const
 	{
@@ -229,7 +229,7 @@ class ControlEntry : public Entry
 	float min_box_width;
 	bool typing = false; // if input is being handled
 public:
-	ControlEntry(Menu& cmenu, KeyControls& ctrls, const std::string& cmd, const sf::Event::KeyEvent& k);
+	ControlEntry(const sf::Font& font, Menu& cmenu, KeyControls& ctrls, const std::string& cmd, const sf::Event::KeyEvent& k);
 
 	inline const std::string& get_command()
 	{

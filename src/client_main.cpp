@@ -21,7 +21,6 @@ using std::stringstream;
 using std::vector;
 
 // objects needed globally
-sf::Font font;
 sf::RenderTexture tile_texture[26];
 sf::View gui_view;
 
@@ -56,6 +55,7 @@ public:
 
 int main()
 {
+	sf::Font font;
 	// load resources
 	if (!font.loadFromFile("DejaVuSans.ttf"))
 	{
@@ -92,45 +92,45 @@ int main()
 	// initialize menu system
 	MenuSystem menu_system;
 
-	Menu main_menu {menu_system, nullptr, "BANANAGRAMS"};
-	Entry solitaire   {"SOLITAIRE"};
-	Entry multiplayer {"MULTIPLAYER"};
-	Entry customize   {"CONTROLS"};
-	Entry quit        {"QUIT"};
+	Menu main_menu {font, menu_system, nullptr, "BANANAGRAMS"};
+	Entry solitaire   {font, "SOLITAIRE"};
+	Entry multiplayer {font, "MULTIPLAYER"};
+	Entry customize   {font, "CONTROLS"};
+	Entry quit        {font, "QUIT"};
 	main_menu.entry(&solitaire);
 	main_menu.entry(&multiplayer);
 	main_menu.entry(&customize);
 	main_menu.entry(&quit);
 
-	Menu sp_menu {menu_system, &main_menu, "SOLITAIRE"};
-	Entry      start_sp   {"START GAME"};
-	TextEntry  dict_entry {"DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
-	MultiEntry multiplier {"BUNCH x", {"1/2", "1", "2", "3", "4", "Infinite"}, 1};
+	Menu sp_menu {font, menu_system, &main_menu, "SOLITAIRE"};
+	Entry      start_sp   {font, "START GAME"};
+	TextEntry  dict_entry {font, "DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
+	MultiEntry multiplier {font, "BUNCH x", {"1/2", "1", "2", "3", "4", "Infinite"}, 1};
 	sp_menu.entry(&start_sp);
 	sp_menu.entry(&dict_entry);
 	sp_menu.entry(&multiplier);
 
 	// TODO add entry for disconnecting from game?
-	Menu mp_menu {menu_system, &main_menu, "MULTIPLAYER"};
-	Entry     start_mp {"JOIN"};
-	TextEntry server_ip   {"SERVER", PPB * 8, sf::IpAddress::getLocalAddress().toString() + ":" + std::to_string(default_server_port), "localhost"};
-	TextEntry name     {"PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
+	Menu mp_menu {font, menu_system, &main_menu, "MULTIPLAYER"};
+	Entry     start_mp  {font, "JOIN"};
+	TextEntry server_ip {font, "SERVER", PPB * 8, sf::IpAddress::getLocalAddress().toString() + ":" + std::to_string(default_server_port), "localhost"};
+	TextEntry name      {font, "PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
 	mp_menu.entry(&server_ip);
 	mp_menu.entry(&name);
 	mp_menu.entry(&start_mp);
 
-	Menu control_menu {menu_system, &main_menu, "CONTROLS"};
+	Menu control_menu {font, menu_system, &main_menu, "CONTROLS"};
 	// TODO scrolling menus?
 	// TODO can we decouple controls object from entries?
 	// XXX this is a bit inefficient, but who cares?
 	for (auto& command : controls.get_order())
 		for (auto& pair : controls.get_binds())
 			if (pair.second == command && controls.is_rebindable(pair.second))
-				control_menu.entry(new ControlEntry(control_menu, controls, pair.second, pair.first));
+				control_menu.entry(new ControlEntry(font, control_menu, controls, pair.second, pair.first));
 
-	Menu quit_menu {menu_system, &main_menu, "Really quit?"};
-	Entry quit_yes {"YES"};
-	Entry quit_no  {"NO"};
+	Menu quit_menu {font, menu_system, &main_menu, "Really quit?"};
+	Entry quit_yes {font, "YES"};
+	Entry quit_no  {font, "NO"};
 	quit_menu.entry(&quit_yes);
 	quit_menu.entry(&quit_no);
 
@@ -430,7 +430,7 @@ int main()
 				// TODO display loading text
 				// TODO decouple sound from games
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
-				client = new Client(sound, sf::IpAddress("127.0.0.1"), default_server_port, "");
+				client = new Client(font, sound, sf::IpAddress("127.0.0.1"), default_server_port, "");
 				// TODO menu isn't getting cleared for next action
 				menu_system.close();
 			}
@@ -458,7 +458,7 @@ int main()
 				}
 
 				// TODO process name string
-				client = new Client(sound, sf::IpAddress(ip), server_port, name.get_string());
+				client = new Client(font, sound, sf::IpAddress(ip), server_port, name.get_string());
 				menu_system.close();
 			}
 

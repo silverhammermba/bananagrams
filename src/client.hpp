@@ -35,8 +35,8 @@ class Client
 
 	bool playing;
 	Grid grid;
-	Hand hand {font};
-	MessageQ messages {font};
+	Hand hand;
+	MessageQ messages;
 	Cursor cursor {{1, 1}, PPB / 16.f, sf::Color::Transparent, sf::Color {0, 200, 0}};
 
 	SoundManager& sound;
@@ -68,7 +68,7 @@ class Client
 
 	std::map<std::string, Player> players;
 public:
-	Client(SoundManager& _sound, const sf::IpAddress& server, unsigned short port, const std::string& name);
+	Client(const sf::Font& font, SoundManager& _sound, const sf::IpAddress& server, unsigned short port, const std::string& name);
 	~Client();
 
 	inline bool in_progress() const
