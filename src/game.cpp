@@ -5,7 +5,26 @@ using std::string;
 Game::Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_den, unsigned int _player_limit)
 	: bunch_num(_bunch_num), bunch_den(_bunch_den), player_limit(_player_limit)
 {
-	// TODO load dictionary
+	std::ifstream words(dict_filename);
+	if (!words.is_open())
+	{
+		// TODO indicate error somehow?
+		finished = true;
+		return;
+	}
+
+	// parse dictionary
+	string line;
+	while (std::getline(words, line))
+	{
+		auto pos = line.find_first_of(' ');
+		if (pos == string::npos)
+			dictionary[line] = "";
+		else
+			dictionary[line.substr(0, pos)] = line.substr(pos + 1, string::npos);
+	}
+	words.close();
+
 	if (bunch_den > 0)
 		bunch = new FiniteBunch(bunch_num, bunch_den);
 	else

@@ -1,6 +1,7 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 
+#include <fstream>
 #include <map>
 #include <string>
 
