@@ -1,7 +1,7 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <iostream>
+#include <iostream> // TODO handle output in server main
 #include <mutex>
 #include <string>
 #include <thread>

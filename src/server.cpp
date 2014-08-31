@@ -310,6 +310,8 @@ void Server::start(unsigned short port, const std::string& _dict_filename, uint8
 				sf::Packet lookup;
 				lookup << sv_check << word << game.check_word(word);
 
+				// TODO store definition to tell everyone about on next peel?
+
 				socket.send(lookup, client_ip, client_port);
 
 				break;

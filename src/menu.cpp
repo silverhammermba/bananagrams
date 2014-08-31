@@ -144,7 +144,7 @@ bool TextEntry::process_event(sf::Event& event)
 		}
 		else if (event.type == sf::Event::TextEntered)
 		{
-			// TODO I am a terrible person
+			// TODO handle unicode
 			char ch {(char)event.text.unicode};
 			if (ch >= ' ' && ch <= '~')
 			{

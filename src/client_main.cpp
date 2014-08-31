@@ -424,9 +424,9 @@ int main()
 					mul = choice;
 
 				delete server;
+				// TODO put saved games back in
 				delete client;
 
-				// TODO display loading text
 				// TODO decouple sound from games
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
 				client = new Client(font, sound, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);

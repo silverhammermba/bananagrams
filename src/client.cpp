@@ -702,7 +702,6 @@ void Client::process_packet(sf::Packet& packet)
 				{
 					std::stringstream rem;
 					rem << remaining;
-					// TODO add message to single player
 					messages.add(rem.str() + " letters remain", Message::Severity::LOW);
 				}
 
@@ -815,6 +814,7 @@ void Client::dump(char ch)
 
 	if (waiting)
 	{
+		// TODO autoretry
 		messages.add("Waiting for server response. Try again in a moment.", Message::Severity::HIGH);
 		return;
 	}
@@ -874,6 +874,7 @@ bool Client::peel()
 
 	if (waiting)
 	{
+		// TODO auto retry?
 		messages.add("Waiting for server response. Try again in a moment.", Message::Severity::HIGH);
 		return false;
 	}

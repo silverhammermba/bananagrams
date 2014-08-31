@@ -34,6 +34,7 @@ public:
 	// get bounding FloatRect (for mouse selection)
 	virtual sf::FloatRect bounds() const;
 	// position entry given menu center, width, and entry top
+	// TODO this isn't getting called on game launch
 	virtual void set_menu_pos(float center, float width, float top);
 	virtual float get_scale() const;
 

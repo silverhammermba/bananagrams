@@ -1,9 +1,8 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
-#include <SFML/Graphics.hpp> // TODO get rid of this shit
-
-// TODO get rid of these fucking globals
+// TODO get rid of this
+#include <SFML/Graphics.hpp>
 extern sf::View gui_view;
 
 // graphics
