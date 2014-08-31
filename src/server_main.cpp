@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 	bool done = false;
 	while (!done)
 	{
-		Server = new Server(server_port, dict, b_num, b_den, max_players);
+		server = new Server(server_port, dict, b_num, b_den, max_players);
 
 		switch(server->block())
 		{
@@ -127,6 +127,8 @@ int main(int argc, char* argv[])
 				cout.flush();
 				break;
 		}
+
+		delete server;
 	}
 
 	cout << endl;

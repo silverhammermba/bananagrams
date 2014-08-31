@@ -1,21 +1,27 @@
 #include "server.hpp"
 
-std::mutex shutdown_lock;
-bool shutdown_signal;
-std::mutex status_lock;
-Status status;
-
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
 
-void start_server(unsigned short server_port, unsigned int bunch_num, unsigned int bunch_den, unsigned int player_limit, const std::map<std::string, std::string>& dictionary)
+Server::Server(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players)
+	: shutdown_signal(false), status(Server::Status::RUNNING), thread(&Server::start, this, port, _dict_filename, _num, _den, _max_players)
+{
+}
+
+Server::~Server()
+{
+	shutdown();
+	block();
+}
+
+void Server::start(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players)
 {
 	sf::UdpSocket socket;
-	if (server_port == 0 || socket.bind(server_port) != sf::Socket::Status::Done)
+	if (port == 0 || socket.bind(port) != sf::Socket::Status::Done)
 	{
-		cerr << "\nError: bad listening port " << server_port;
+		cerr << "\nError: bad listening port " << port;
 		std::lock_guard<std::mutex> lock(status_lock);
 		status = Status::ABORTED;
 		return;
@@ -28,7 +34,7 @@ void start_server(unsigned short server_port, unsigned int bunch_num, unsigned i
 
 	std::vector<string> remove;
 
-	Game game(bunch_num, bunch_den, player_limit);
+	Game game(_dict_filename, _num, _den, _max_players);
 
 	cout << "\nWaiting for players to join...";
 	cout.flush();
@@ -302,7 +308,7 @@ void start_server(unsigned short server_port, unsigned int bunch_num, unsigned i
 				packet >> word;
 
 				sf::Packet lookup;
-				lookup << sv_check << word << (dictionary.count(word) == 1);
+				lookup << sv_check << word << game.check_word(word);
 
 				socket.send(lookup, client_ip, client_port);
 
@@ -441,28 +447,10 @@ void start_server(unsigned short server_port, unsigned int bunch_num, unsigned i
 	}
 }
 
-Server(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players)
-{
-	{
-		std::lock_guard<std::mutex> locksh(status_lock);
-		std::lock_guard<std::mutex> lockst(shutdown_lock);
-
-		status = Status::RUNNING;
-		shutdown_signal = false;
-	}
-	std::thread server(start_server, port, _num, _den, _max_players, _dict_filename);
-}
-
-~Server()
-{
-	shutdown();
-	block();
-}
-
 void Server::shutdown()
 {
 	std::lock_guard<std::mutex> lock(shutdown_lock);
-	shutdown_lock = true;
+	shutdown_signal = true;
 }
 
 Server::Status Server::block()

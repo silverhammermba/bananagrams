@@ -1,34 +1,36 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
+#include <iostream>
+#include <mutex>
+#include <string>
+#include <thread>
+
+#include <SFML/Network.hpp>
+
+#include "constants.hpp"
+#include "game.hpp"
+
 class Server
 {
-	// parameters for creation
-	std::string dict_filename;
-	uint8_t bunch_num;
-	uint8_t bunch_den;
-	unsigned int player_limit;
-
-	// internal structures
-	Bunch* bunch;
-	std::map<std::string, Player> players;
-
-	// state vars
-	sf::Int16 peel_number {0};
-	bool playing {false};
-	bool ready_to_peel {false}; // game is ready for next peel
-	bool waiting {false}; // waiting for clients to acknowledge critical server packets before next peel
-	bool ready_to_finish {false}; // true if game just finished
-	bool finished {false};
-
-	std::thread thread;
 public:
 	enum class Status {RUNNING, ABORTED, EXITED};
 
+private:
+	std::mutex shutdown_lock;
+	bool shutdown_signal;
+
+	std::mutex status_lock;
+	Status status;
+
+	std::thread thread;
+
+	// function to be run in thread
+	void start(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players);
+
+public:
 	Server(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players);
 	~Server();
-
-	void save(const std::string& filename);
 
 	// tell server thread to return
 	void shutdown();

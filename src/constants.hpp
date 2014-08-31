@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
+#include <SFML/Graphics.hpp> // TODO get rid of this shit
+
 // TODO get rid of these fucking globals
 extern sf::Font font;
 extern sf::RenderTexture tile_texture[26];
