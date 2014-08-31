@@ -9,7 +9,10 @@ class Tile
 public:
 	bool marked; // for checking grid connectedness
 
-	Tile(char ch);
+	Tile(char ch)
+		: character {ch}, sprite {tile_texture[ch - 'A'].getTexture()}
+	{
+	}
 
 	// get character
 	inline char ch() const
