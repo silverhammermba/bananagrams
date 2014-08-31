@@ -1,3 +1,8 @@
+#include <csignal>
+#include <string>
+
+#include <boost/program_options.hpp>
+
 #include "server.hpp"
 
 namespace po = boost::program_options;
@@ -67,7 +72,6 @@ int main(int argc, char* argv[])
 	int b_num;
 	unsigned int b_den;
 	unsigned int max_players;
-	std::map<string, string> dictionary;
 
 	b_num = 1;
 	b_den = 1;
