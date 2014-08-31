@@ -14,7 +14,7 @@
 class Server
 {
 public:
-	enum class Status {RUNNING, ABORTED, EXITED};
+	enum class Status {RUNNING, ABORTED, DONE};
 
 private:
 	std::mutex shutdown_lock;
@@ -29,7 +29,9 @@ private:
 	void start(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players);
 
 public:
+	// just passes along params to thread
 	Server(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players);
+	// makes sure thread exits
 	~Server();
 
 	// tell server thread to return

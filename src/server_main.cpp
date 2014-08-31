@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
 			case Server::Status::ABORTED:
 				done = true;
 				break;
-			case Server::Status::EXITED:
+			case Server::Status::DONE:
 				cout << "\nRestarting server...";
 				cout.flush();
 				break;

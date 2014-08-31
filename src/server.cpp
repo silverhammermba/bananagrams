@@ -161,7 +161,7 @@ void Server::start(unsigned short port, const std::string& _dict_filename, uint8
 			cout.flush();
 
 			std::lock_guard<std::mutex> lock(status_lock);
-			status = Status::EXITED;
+			status = Status::DONE;
 
 			break;
 		}
@@ -455,6 +455,12 @@ void Server::shutdown()
 
 Server::Status Server::block()
 {
+	{
+		std::lock_guard<std::mutex> lock(status_lock);
+		if (status != Status::RUNNING)
+			return status;
+	}
+
 	thread.join();
 	return status;
 }
