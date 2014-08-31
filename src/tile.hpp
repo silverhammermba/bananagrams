@@ -1,6 +1,10 @@
 #ifndef TILE_HPP
 #define TILE_HPP
 
+#include <SFML/Graphics.hpp>
+
+#include "constants.hpp"
+
 class Tile
 {
 	char character;
@@ -9,10 +13,9 @@ class Tile
 public:
 	bool marked; // for checking grid connectedness
 
-	Tile(char ch)
-		: character {ch}, sprite {tile_texture[ch - 'A'].getTexture()}
-	{
-	}
+	static sf::RenderTexture texture[26];
+
+	Tile(char ch);
 
 	// get character
 	inline char ch() const

@@ -21,7 +21,6 @@ using std::stringstream;
 using std::vector;
 
 // objects needed globally
-sf::RenderTexture tile_texture[26];
 sf::View gui_view;
 
 // class for handling game-related events
@@ -227,7 +226,7 @@ int main()
 			// TODO handle winevents here?
 
 			// TODO make tiles prettier
-			if (!tile_texture[load_char - 'A'].create(PPB, PPB))
+			if (!Tile::texture[load_char - 'A'].create(PPB, PPB))
 			{
 				cerr << "Failed to allocate tile texture!\n";
 				return 1;
@@ -255,35 +254,35 @@ int main()
 			float diam {PPB / 4.f};
 			float rad {PPB / 8.f};
 			// draw tile
-			tile_texture[load_char - 'A'].clear(sf::Color(0, 0, 0, 0));
+			Tile::texture[load_char - 'A'].clear(sf::Color(0, 0, 0, 0));
 
 			sf::RectangleShape rect;
 			rect.setFillColor(sf::Color(255, 255, 175));
 
 			rect.setSize(sf::Vector2f {PPB - diam, PPB});
 			rect.setPosition(rad, 0);
-			tile_texture[load_char - 'A'].draw(rect);
+			Tile::texture[load_char - 'A'].draw(rect);
 			rect.setSize(sf::Vector2f {PPB, PPB - diam});
 			rect.setPosition(0, rad);
-			tile_texture[load_char - 'A'].draw(rect);
+			Tile::texture[load_char - 'A'].draw(rect);
 
 			sf::CircleShape circle {rad};
 			circle.setFillColor(sf::Color(255, 255, 175));
 
 			circle.setPosition(0, 0);
-			tile_texture[load_char - 'A'].draw(circle);
+			Tile::texture[load_char - 'A'].draw(circle);
 			circle.setPosition(PPB - diam, 0);
-			tile_texture[load_char - 'A'].draw(circle);
+			Tile::texture[load_char - 'A'].draw(circle);
 			circle.setPosition(0, PPB - diam);
-			tile_texture[load_char - 'A'].draw(circle);
+			Tile::texture[load_char - 'A'].draw(circle);
 			circle.setPosition(PPB - diam, PPB - diam);
-			tile_texture[load_char - 'A'].draw(circle);
+			Tile::texture[load_char - 'A'].draw(circle);
 
-			tile_texture[load_char - 'A'].draw(letter);
-			tile_texture[load_char - 'A'].display();
+			Tile::texture[load_char - 'A'].draw(letter);
+			Tile::texture[load_char - 'A'].display();
 
 			// display generated texture
-			loaded.push_back(sf::Sprite(tile_texture[load_char - 'A'].getTexture()));
+			loaded.push_back(sf::Sprite(Tile::texture[load_char - 'A'].getTexture()));
 
 			window.clear(background);
 

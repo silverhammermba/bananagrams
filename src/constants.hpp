@@ -4,7 +4,6 @@
 #include <SFML/Graphics.hpp> // TODO get rid of this shit
 
 // TODO get rid of these fucking globals
-extern sf::RenderTexture tile_texture[26];
 extern sf::View gui_view;
 
 // graphics

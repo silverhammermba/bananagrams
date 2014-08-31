@@ -29,7 +29,7 @@ include .depend
 %.o: ../src/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(CLIENT): client_main.o buffer.o bunch.o client.o control.o cursor.o game.o grid.o hand.o menu.o message.o player.o server.o
+$(CLIENT): client_main.o buffer.o bunch.o client.o control.o cursor.o game.o grid.o hand.o menu.o message.o player.o server.o tile.o
 	$(CXX) $(CXXFLAGS) -o $(CLIENT) $^ -lyaml-cpp -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-network -lsfml-system
 
 $(SERVER): server_main.o bunch.o game.o player.o server.o
