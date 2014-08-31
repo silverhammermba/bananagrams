@@ -1,6 +1,11 @@
 #ifndef SOUND_HPP
 #define SOUND_HPP
 
+#include <string>
+#include <unordered_map>
+
+#include <SFML/Audio.hpp>
+
 class SoundManager
 {
 	// is there a nice way to map to buffer/sound pairs?

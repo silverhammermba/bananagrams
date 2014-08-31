@@ -1,6 +1,8 @@
 #ifndef ICON_HPP
 #define ICON_HPP
 
+#include <SFML/System.hpp>
+
 // 32x32, length 4096
 static const sf::Uint8 icon[]
 {
