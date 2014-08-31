@@ -154,7 +154,7 @@ void Game::try_to_start()
 		return;
 
 	// if not enough players
-	if (players.size() < 2)
+	if (player_limit > 1 && players.size() < 2)
 		return;
 
 	// if players aren't ready
