@@ -24,7 +24,7 @@ ifdef WINDOWS
 BINS=build/$(CLIENT) build/$(SERVER)
 $(ZIP): all dictionary.txt LICENSE.txt README.md audio/*
 	rm -f $(ZIP)
-	zip -ru $(ZIP) $(BINS) dictionary.txt LICENSE.txt README.md audio
-	zip -ju $(ZIP) /usr/share/fonts/TTF/DejaVuSans.ttf
+	zip -ru $(ZIP) dictionary.txt LICENSE.txt README.md audio
+	zip -ju $(ZIP) $(BINS) /usr/share/fonts/TTF/DejaVuSans.ttf
 	ruby get_dlls.rb $(BINS) | zip -ju@ $(ZIP)
 endif
