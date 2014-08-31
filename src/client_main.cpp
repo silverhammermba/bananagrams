@@ -1,5 +1,16 @@
-// embedded resources
+#include <iostream>
+
+#include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
+
+#include "client.hpp"
+#include "constants.hpp"
+#include "control.hpp"
 #include "icon.hpp"
+#include "input.hpp"
+#include "menu.hpp"
+#include "server.hpp"
+#include "sound.hpp"
 
 // TODO sound
 
@@ -311,15 +322,6 @@ int main()
 	window.draw(loading_text);
 	window.display();
 
-	// load saved game
-	std::ifstream save_file("save.dat");
-	if (save_file.is_open())
-	{
-		server = new Server(save_file);
-		client = new Client(sf::IpAddress("127.0.0.1"), default_server_port, "");
-	}
-	save_file.close();
-
 	// stuff for game loop
 	MouseControls mouse;
 	input_readers.push_back(&mouse);
@@ -428,7 +430,7 @@ int main()
 				// TODO display loading text
 				// TODO decouple sound from games
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
-				client = new Client(sf::IpAddress("127.0.0.1"), default_server_port, "");
+				client = new Client(sound, sf::IpAddress("127.0.0.1"), default_server_port, "");
 				// TODO menu isn't getting cleared for next action
 				menu_system.close();
 			}
@@ -456,7 +458,7 @@ int main()
 				}
 
 				// TODO process name string
-				client = new Client(sf::IpAddress(ip), server_port, name.get_string());
+				client = new Client(sound, sf::IpAddress(ip), server_port, name.get_string());
 				menu_system.close();
 			}
 
@@ -711,16 +713,6 @@ int main()
 
 	// cleanup client
 	delete client;
-
-	// if singleplayer, save game (or delete save if we finished it)
-	if (server != nullptr)
-	{
-		if (server->in_progress())
-			server->save("save.dat");
-		else
-			std::remove("save.dat");
-	}
-	delete server;
 
 	controls.write_to_file("config.yaml");
 
