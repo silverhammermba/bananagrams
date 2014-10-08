@@ -78,8 +78,6 @@ int main()
 	sf::View grid_view {window.getDefaultView()};
 	grid_view.setCenter(PPB / 2.0, PPB / 2.0);
 
-	vector<InputReader*> input_readers;
-
 	State state;
 	state.window = &window;
 	state.grid_view = &grid_view;
@@ -134,6 +132,9 @@ int main()
 
 	Client* client {nullptr};
 	Server* server {nullptr};
+
+	vector<InputReader*> input_readers;
+
 	WindowEvents win_events;
 	input_readers.push_back(&win_events);
 
@@ -367,10 +368,12 @@ int main()
 
 		if (win_events.resized())
 		{
-			gui_view.setSize(event.size.width, event.size.height);
-			gui_view.setCenter(event.size.width / 2.0, event.size.height / 2.0);
+			auto size = window.getSize();
 
-			state.grid_view->setSize(event.size.width, event.size.height);
+			gui_view.setSize(size.x, size.y);
+			gui_view.setCenter(size.x / 2.f, size.y / 2.f);
+
+			state.grid_view->setSize(size.x, size.y);
 			state.grid_view->zoom(state.zoom);
 
 			menu_system.set_view(gui_view);
