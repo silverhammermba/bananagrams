@@ -259,14 +259,18 @@ bool KeyControls::rebind(const sf::Event::KeyEvent& key, const string& command)
 	if (is_not_bindable(key))
 		return false;
 	// check if key is already bound to an unrebindable command
-	for (auto pair = binds.begin(); pair != binds.end(); ++pair)
-		if (std::equal_to<sf::Event::KeyEvent>()(pair->first, key) && !is_rebindable(pair->second))
+	for (auto& pair : binds)
+		if (std::equal_to<sf::Event::KeyEvent>()(pair.first, key) && !is_rebindable(pair.second))
 			return false;
 
 	// remove other binds using this key
-	for (auto pair = binds.begin(); pair != binds.end(); ++pair)
+	for (auto pair = binds.begin(); pair != binds.end();)
+	{
 		if (pair->second == command)
-			binds.erase(pair);
+			binds.erase(pair++);
+		else
+			++pair;
+	}
 
 	binds[key] = command;
 
