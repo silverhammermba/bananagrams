@@ -123,11 +123,11 @@ bool Game::peel()
 		playing = true;
 
 		unsigned int num_players = players.size();
-		if (num_players <= (4 * bunch_num) / bunch_den)
+		if (num_players * bunch_den <= 4 * bunch_num)
 			num_letters = 21;
-		else if (num_players <= (6 * bunch_num) / bunch_den)
+		else if (num_players * bunch_den <= 6 * bunch_num)
 			num_letters = 15;
-		else // num_players <= (8 * bunch_num) / bunch_den
+		else // num_players * bunch_den <= 8 * bunch_num
 			num_letters = 11;
 
 		// reset ack counters to track peels
