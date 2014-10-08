@@ -872,13 +872,6 @@ bool Client::peel()
 		return false;
 	}
 
-	if (waiting)
-	{
-		// TODO auto retry?
-		messages.add("Waiting for server response. Try again in a moment.", Message::Severity::HIGH);
-		return false;
-	}
-
 	lookup_words.clear();
 	bad_words.clear();
 
@@ -894,6 +887,13 @@ bool Client::peel()
 		return false;
 	}
 
+	if (waiting)
+	{
+		// TODO auto retry?
+		messages.add("Waiting for server response. Try again in a moment.", Message::Severity::HIGH);
+		return false;
+	}
+
 	const gridword_map& words {grid.get_words()};
 	std::map<string, bool>::iterator it;
 
@@ -906,22 +906,21 @@ bool Client::peel()
 			bad_words[word.first] = word.second;
 	}
 
-	if (lookup_words.size() > 0)
-	{
-		gridword_map::iterator next_word = lookup_words.begin();
-		cerr << "Requesting lookup of " << next_word->first << endl;
-		set_pending(cl_check);
-		(*pending) << next_word->first;
-
-		send_pending();
-
-		waiting = true;
-
-		return false;
-	}
-
 	// all words are in local dictionary
-	return resolve_peel();
+	if (lookup_words.size() == 0)
+		return resolve_peel();
+
+	// need to request lookups
+	gridword_map::iterator next_word = lookup_words.begin();
+	cerr << "Requesting lookup of " << next_word->first << endl;
+	set_pending(cl_check);
+	(*pending) << next_word->first;
+
+	send_pending();
+
+	waiting = true;
+
+	return false;
 }
 
 void Client::disconnect()
