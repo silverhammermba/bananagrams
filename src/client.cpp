@@ -391,10 +391,15 @@ void Client::step(float time)
 		if (time_stale > timeout)
 		{
 			if (is_sp)
-				messages.add("Error: game server timed out", Message::Severity::CRITICAL);
+			{
+				messages.add("Sorry, this is taking a while to load...", Message::Severity::CRITICAL);
+				time_stale -= timeout;
+			}
 			else
+			{
 				messages.add("Disconnected from server: server timed out", Message::Severity::CRITICAL);
-			disconnect();
+				disconnect();
+			}
 		}
 		else if (poll_pause >= polling)
 		{
