@@ -423,7 +423,6 @@ int main()
 				// TODO put saved games back in
 				delete client;
 
-				// TODO decouple sound from games
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
 				client = new Client(font, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);
 				// TODO menu isn't getting cleared for next action
@@ -484,7 +483,9 @@ int main()
 		if (client != nullptr)
 		{
 			if (client->game_started())
-				sound.play("audio/split.wav");
+			{
+				//sound.play("audio/split.wav"); // TODO this makes the game crash on Windows!?
+			}
 
 			if (mouse.was_moved())
 				client->update_mouse_pos(window, grid_view, mouse.get_pos());
