@@ -20,14 +20,11 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-// objects needed globally
-sf::View gui_view;
-
 // class for handling game-related events
 class WindowEvents : public InputReader
 {
 	bool got_close = false;
-	bool got_resize = false;
+	bool got_resize = true; // TODO tries to set up initial positioning, but doesn't work
 public:
 	inline bool closed() const
 	{
@@ -77,7 +74,7 @@ int main()
 	window.setIcon(32, 32, icon);
 	window.setVerticalSyncEnabled(true);
 
-	gui_view = window.getDefaultView();
+	sf::View gui_view {window.getDefaultView()};
 	sf::View grid_view {window.getDefaultView()};
 	grid_view.setCenter(PPB / 2.0, PPB / 2.0);
 
@@ -376,11 +373,10 @@ int main()
 			state.grid_view->setSize(event.size.width, event.size.height);
 			state.grid_view->zoom(state.zoom);
 
-			if (menu_system.menu() != nullptr)
-				menu_system.menu()->update_position();
+			menu_system.set_view(gui_view);
 
 			if (client != nullptr)
-				client->get_hand().position_tiles();
+				client->get_hand().set_view(gui_view);
 		}
 
 		if (!menu_system.is_finished())

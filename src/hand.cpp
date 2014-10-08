@@ -65,7 +65,7 @@ void Hand::position_tiles()
 			room_per_tile = (PPB * 5) / 3.0;
 		// center tiles
 		float x {(size.x - room_per_tile * (nonempty - 1) - PPB) / 2.0f};
-		for (char ch = 'A'; ch <= 'Z'; ch++)
+		for (char ch = 'A'; ch <= 'Z'; ++ch)
 		{
 			if (has_any(ch))
 			{
@@ -73,7 +73,7 @@ void Hand::position_tiles()
 				for (auto tile: tiles[ch - 'A'])
 				{
 					tile->set_pos(x + (i * PPB) / 16.f, size.y - PPB - padding - (i * PPB) / 16.f);
-					i++;
+					++i;
 				}
 				x += room_per_tile;
 			}
@@ -89,9 +89,15 @@ void Hand::position_tiles()
 	}
 }
 
+void Hand::set_view(const sf::View& view)
+{
+	gui_view = view;
+	position_tiles();
+}
+
 void Hand::counts(sf::RenderWindow& window) const
 {
-	for (auto tile: single)
+	for (auto tile : single)
 	{
 		tile->draw_on(window);
 		window.draw(number[tile->ch() - 'A']);
@@ -101,19 +107,19 @@ void Hand::counts(sf::RenderWindow& window) const
 void Hand::stacks(sf::RenderWindow& window) const
 {
 	for (char ch = 'Z'; ch >= 'A'; --ch)
-		for (auto tile: tiles[ch - 'A'])
+		for (auto tile : tiles[ch - 'A'])
 			tile->draw_on(window);
 }
 
 void Hand::ordered(sf::RenderWindow& window) const
 {
-	for (auto tile: sort)
+	for (auto tile : sort)
 		tile->draw_on(window);
 }
 
 void Hand::scrambled(sf::RenderWindow& window) const
 {
-	for (auto tile: scram)
+	for (auto tile : scram)
 		tile->draw_on(window);
 }
 

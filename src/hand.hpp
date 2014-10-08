@@ -18,6 +18,8 @@ class Hand
 	std::list<Tile*> single; // for counts
 	sf::Text number[26];
 
+	sf::View gui_view;
+
 	// position tiles in std::list in nice rows
 	void position_list(std::list<Tile*>& l);
 
@@ -46,6 +48,8 @@ public:
 	{
 		return count(ch) > 0;
 	}
+
+	void set_view(const sf::View& view);
 
 	bool is_empty() const;
 

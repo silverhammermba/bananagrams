@@ -83,7 +83,7 @@ public:
 	}
 
 	// call when Menu or View changes
-	void update_position();
+	void update_position(const sf::View& gui_view);
 
 	// select entry
 	bool select(int index);
@@ -102,6 +102,8 @@ public:
 class MenuSystem : public InputReader
 {
 	Menu* menu_p = nullptr;
+
+	sf::View gui_view;
 
 	bool selection_changed = false;
 	bool menu_changed = false;
@@ -143,13 +145,15 @@ public:
 			menu_changed = true;
 
 		menu_p = &m;
-		menu_p->update_position();
+		menu_p->update_position(gui_view);
 	}
 
 	inline Menu* menu() const
 	{
 		return menu_p;
 	}
+
+	void set_view(const sf::View& view);
 
 	// forward events to current menu
 	virtual bool process_event(sf::Event& event);

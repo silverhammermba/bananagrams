@@ -384,11 +384,9 @@ void Menu::entry(Entry* ent)
 
 	if (entries.size() == 1)
 		select(0);
-
-	update_position();
 }
 
-void Menu::update_position()
+void Menu::update_position(const sf::View& gui_view)
 {
 	float max_width {title.getGlobalBounds().width};
 
@@ -514,6 +512,13 @@ bool Menu::process_event(sf::Event& event)
 	}
 
 	return false;
+}
+
+void MenuSystem::set_view(const sf::View& view)
+{
+	gui_view = view;
+	if (menu_p != nullptr)
+		menu_p->update_position(gui_view);
 }
 
 bool MenuSystem::process_event(sf::Event& event)

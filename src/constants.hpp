@@ -1,10 +1,6 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
-// TODO get rid of this
-#include <SFML/Graphics.hpp>
-extern sf::View gui_view;
-
 // graphics
 static const unsigned int PPB {48};
 

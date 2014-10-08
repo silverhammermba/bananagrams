@@ -351,7 +351,6 @@ void Client::set_zoom(float zoom)
 }
 
 // TODO need display for other players, letters remaining, etc.
-// TODO show ready key reminder at beginning
 void Client::draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const
 {
 	window.setView(grid_view);
@@ -481,7 +480,10 @@ void Client::process_packet(sf::Packet& packet)
 			if (!connected)
 			{
 				if (!is_sp)
+				{
 					messages.add("Connected...", Message::Severity::CRITICAL);
+					// TODO display ready reminder
+				}
 
 				connected = true;
 
