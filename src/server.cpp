@@ -38,8 +38,11 @@ void Server::start(unsigned short port, const std::string& _dict_filename, uint8
 
 	cout << "\nWaiting for players to join...";
 	cout.flush();
-	while (true) // TODO consumes 100% CPU
+	while (true)
 	{
+		// 60 FPS
+		std::this_thread::sleep_for(std::chrono::milliseconds(16));
+
 		float elapsed = timer.getElapsedTime().asSeconds();
 		timer.restart();
 
