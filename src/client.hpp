@@ -9,7 +9,6 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <SFML/Audio.hpp> // TODO remove
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
 
@@ -17,7 +16,6 @@
 #include "cursor.hpp"
 #include "player.hpp"
 #include "message.hpp" // TODO remove?
-#include "sound.hpp" // TODO remove
 
 class Client
 {
@@ -39,8 +37,6 @@ class Client
 	MessageQ messages;
 	Cursor cursor {{1, 1}, PPB / 16.f, sf::Color::Transparent, sf::Color {0, 200, 0}};
 
-	SoundManager& sound;
-
 	// networking
 	gridword_map lookup_words;
 	gridword_map bad_words;
@@ -54,6 +50,7 @@ class Client
 	float polling;
 
 	std::string id;
+	bool started = false;
 	bool connected = false;
 	bool is_ready = false;
 	bool waiting = false;
@@ -70,7 +67,7 @@ class Client
 
 	bool is_sp;
 public:
-	Client(const sf::Font& font, SoundManager& _sound, const sf::IpAddress& server, unsigned short port, const std::string& name, bool _is_sp);
+	Client(const sf::Font& font, const sf::IpAddress& server, unsigned short port, const std::string& name, bool _is_sp);
 	~Client();
 
 	inline bool in_progress() const
@@ -132,9 +129,11 @@ public:
 	void set_zoom(float zoom);
 	void draw_on(sf::RenderWindow& window, const sf::View& grid_view, const sf::View& gui_view) const;
 
-	inline void split_sound()
+	inline bool game_started()
 	{
-		sound.play("audio/split.wav");
+		bool temp = started;
+		started = false;
+		return temp;
 	}
 
 	// create new pending packet and store type

@@ -4,8 +4,8 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-Client::Client(const sf::Font& font, SoundManager& _sound, const sf::IpAddress& ip, unsigned short port, const std::string& name, bool _is_sp)
-	: playing(false), hand(font), messages(font), sound(_sound), server_ip(ip), server_port {port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}, is_sp {_is_sp}
+Client::Client(const sf::Font& font, const sf::IpAddress& ip, unsigned short port, const std::string& name, bool _is_sp)
+	: playing(false), hand(font), messages(font), server_ip(ip), server_port {port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}, is_sp {_is_sp}
 {
 	unsigned short client_port = server_port + 1;
 
@@ -684,7 +684,7 @@ void Client::process_packet(sf::Packet& packet)
 					messages.clear();
 					messages.add("SPLIT!", Message::Severity::HIGH);
 
-					split_sound();
+					started = true;
 
 					// reset ack count
 					ack_n = 0;

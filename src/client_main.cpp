@@ -429,7 +429,7 @@ int main()
 
 				// TODO decouple sound from games
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
-				client = new Client(font, sound, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);
+				client = new Client(font, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);
 				// TODO menu isn't getting cleared for next action
 				menu_system.close();
 			}
@@ -457,7 +457,7 @@ int main()
 				}
 
 				// TODO process name string
-				client = new Client(font, sound, sf::IpAddress(ip), server_port, name.get_string(), false);
+				client = new Client(font, sf::IpAddress(ip), server_port, name.get_string(), false);
 				menu_system.close();
 			}
 
@@ -487,6 +487,9 @@ int main()
 
 		if (client != nullptr)
 		{
+			if (client->game_started())
+				sound.play("audio/split.wav");
+
 			if (mouse.was_moved())
 				client->update_mouse_pos(window, grid_view, mouse.get_pos());
 
