@@ -528,9 +528,7 @@ int main()
 		if (client != nullptr)
 		{
 			if (client->game_started())
-			{
-				//sound.play("audio/split.wav"); // TODO this makes the game crash on Windows!?
-			}
+				sound.play("audio/split.wav");
 
 			if (mouse.was_moved())
 				client->update_mouse_pos(window, grid_view, mouse.get_pos());
