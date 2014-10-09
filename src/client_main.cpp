@@ -329,6 +329,7 @@ int main()
 	input_readers.push_back(&menu_system);
 
 	// set up GUI view for menu
+	// TODO really need to refactor this view so that it is used more consistantly
 	auto size = window.getSize();
 
 	gui_view.setSize(size.x, size.y);
@@ -454,6 +455,7 @@ int main()
 
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
 				client = new Client(font, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);
+				client->get_hand().set_view(gui_view);
 				// TODO menu isn't getting cleared for next action
 				menu_system.close();
 			}
