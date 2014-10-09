@@ -457,8 +457,14 @@ int main()
 
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
 				client = new Client(gui_view, font, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);
-				// TODO menu isn't getting cleared for next action
+
 				menu_system.close();
+				// should always be the case, but just to be safe...
+				if (input_readers[menu_system_pos] == &menu_system)
+				{
+					input_readers.erase(input_readers.begin() + menu_system_pos);
+					sound.play("audio/menu_open.wav");
+				}
 			}
 
 			if (start_mp.is_pending())
@@ -485,7 +491,14 @@ int main()
 
 				// TODO process name string
 				client = new Client(gui_view, font, sf::IpAddress(ip), server_port, name.get_string(), false);
+
+				// TODO DRY off, repeated from sp
 				menu_system.close();
+				if (input_readers[menu_system_pos] == &menu_system)
+				{
+					input_readers.erase(input_readers.begin() + menu_system_pos);
+					sound.play("audio/menu_open.wav");
+				}
 			}
 
 			if (quit_yes.is_pending())
