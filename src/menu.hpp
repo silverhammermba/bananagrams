@@ -124,6 +124,11 @@ public:
 		finished = true;
 	}
 
+	inline bool is_open() const
+	{
+		return !finished && menu_p != nullptr;
+	}
+
 	inline void changed_selection()
 	{
 		selection_changed = true;

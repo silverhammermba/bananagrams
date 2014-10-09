@@ -743,7 +743,7 @@ int main()
 			client->draw_on(window, grid_view, gui_view);
 
 		window.setView(gui_view);
-		if (!menu_system.is_finished() && menu_system.menu() != nullptr)
+		if (menu_system.is_open())
 			menu_system.menu()->draw_on(window);
 
 		window.display();

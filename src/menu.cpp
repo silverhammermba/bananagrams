@@ -523,7 +523,7 @@ void MenuSystem::set_view(const sf::View& view)
 
 bool MenuSystem::process_event(sf::Event& event)
 {
-	if (!finished && menu_p != nullptr)
+	if (is_open())
 		menu_p->process_event(event);
 
 	return false;
