@@ -73,6 +73,11 @@ public:
 		return parent;
 	}
 
+	inline const std::vector<Entry*>& get_entries() const
+	{
+		return entries;
+	}
+
 	// add an entry
 	void entry(Entry* ent);
 

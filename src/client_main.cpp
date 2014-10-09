@@ -718,5 +718,8 @@ int main()
 
 	controls.write_to_file("config.yaml");
 
+	for (auto entry : control_menu.get_entries())
+		delete entry;
+
 	return 0;
 }
