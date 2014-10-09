@@ -16,7 +16,7 @@ class Entry : public InputReader
 protected:
 	sf::Text text;
 	float scale;
-	bool pending;
+	bool pending = false;
 public:
 	Entry(const sf::Font& font, const std::string& txt, float sz=1.f);
 

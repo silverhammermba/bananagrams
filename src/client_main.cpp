@@ -385,7 +385,7 @@ int main()
 		if (!menu_system.is_finished())
 		{
 			bool selected = false;
-			if (solitaire.is_pending()) // TODO according to valgrind, all of these is_pending checks are uninitialized
+			if (solitaire.is_pending())
 			{
 				menu_system.set_menu(sp_menu);
 				selected = true;
