@@ -713,10 +713,11 @@ int main()
 		window.display();
 	}
 
-	// cleanup client
-	delete client;
-
 	controls.write_to_file("config.yaml");
+
+	// cleanup
+	delete client;
+	delete server;
 
 	for (auto entry : control_menu.get_entries())
 		delete entry;
