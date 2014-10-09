@@ -111,7 +111,7 @@ int main()
 				if ((*r)->is_finished())
 					r = input_readers.erase(r);
 				else
-					r++;
+					++r;
 				if (!cont)
 					break;
 			}
@@ -175,7 +175,7 @@ int main()
 					if ((*r)->is_finished())
 						r = input_readers.erase(r);
 					else
-						r++;
+						++r;
 					if (!cont)
 						break;
 				}
@@ -326,7 +326,9 @@ int main()
 	Client* client {nullptr};
 	Server* server {nullptr};
 
-	input_readers.push_back(&menu_system);
+	// menu system has a reserved place among the input readers
+	unsigned int menu_system_pos = input_readers.size();
+	input_readers.insert(input_readers.begin() + menu_system_pos, &menu_system);
 
 	// set up GUI view for menu
 	// TODO really need to refactor this view so that it is used more consistantly
@@ -713,14 +715,8 @@ int main()
 			menu_system.open();
 
 			// insert menu after window event input reader
-			for (auto it = input_readers.begin(); it != input_readers.end(); ++it)
-			{
-				if (*it == &win_events)
-				{
-					input_readers.insert(++it, &menu_system);
-					break;
-				}
-			}
+			input_readers.insert(input_readers.begin() + menu_system_pos, &menu_system);
+
 			// menu input reader blocks client from getting menu key release
 			controls.reset("menu");
 
