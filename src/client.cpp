@@ -5,8 +5,11 @@ using std::endl;
 using std::string;
 
 Client::Client(const sf::Font& font, const sf::IpAddress& ip, unsigned short port, const std::string& name, bool _is_sp)
-	: playing(false), hand(font), messages(font), server_ip(ip), server_port {port}, id {boost::uuids::to_string(boost::uuids::random_generator()())}, is_sp {_is_sp}
+	: playing(false), hand(font), messages(font), server_ip(ip), server_port {port}, is_sp {_is_sp}
 {
+	std::mt19937 rng {std::random_device {}()};
+	id = boost::uuids::to_string(boost::uuids::basic_random_generator<std::mt19937>(rng)());
+
 	unsigned short client_port = server_port + 1;
 
 	// find port to bind to
@@ -393,7 +396,7 @@ void Client::step(float time)
 			if (is_sp)
 			{
 				messages.add("Sorry, this is taking a while to load...", Message::Severity::CRITICAL);
-				time_stale -= timeout;
+				time_stale -= timeout; // TODO maybe disconnect with error if we've already joined? That shouldn't time out
 			}
 			else
 			{
