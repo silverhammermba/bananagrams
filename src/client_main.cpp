@@ -230,7 +230,15 @@ int main()
 						break;
 				}
 			}
-			// TODO handle winevents here?
+
+			if (win_events.closed())
+				window.close();
+
+			if (win_events.resized())
+			{
+				auto size = window.getSize();
+				gui_view.setSize(size.x, size.y);
+			}
 
 			// TODO make tiles prettier
 			if (!Tile::texture[load_char - 'A'].create(PPB, PPB))
