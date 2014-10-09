@@ -168,7 +168,15 @@ int main()
 			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Key::Escape)
 				skip = true;
 		}
-		// TODO handle winevents here?
+
+		if (win_events.closed())
+			window.close();
+
+		if (win_events.resized())
+		{
+			auto size = window.getSize();
+			gui_view.setSize(size.x, size.y);
+		}
 
 		float elapsed {clock.getElapsedTime().asSeconds()};
 
@@ -182,6 +190,7 @@ int main()
 		if (skip || elapsed > 3)
 			break;
 
+		window.setView(gui_view);
 		window.clear(background);
 		window.draw(loading_text);
 		window.display();
