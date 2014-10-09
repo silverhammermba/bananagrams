@@ -454,8 +454,7 @@ int main()
 				delete client;
 
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
-				client = new Client(font, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);
-				client->get_hand().set_view(gui_view);
+				client = new Client(gui_view, font, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);
 				// TODO menu isn't getting cleared for next action
 				menu_system.close();
 			}
@@ -483,7 +482,7 @@ int main()
 				}
 
 				// TODO process name string
-				client = new Client(font, sf::IpAddress(ip), server_port, name.get_string(), false);
+				client = new Client(gui_view, font, sf::IpAddress(ip), server_port, name.get_string(), false);
 				menu_system.close();
 			}
 

@@ -68,7 +68,7 @@ class Client
 
 	bool is_sp;
 public:
-	Client(const sf::Font& font, const sf::IpAddress& server, unsigned short port, const std::string& name, bool _is_sp);
+	Client(const sf::View& view, const sf::Font& font, const sf::IpAddress& server, unsigned short port, const std::string& name, bool _is_sp);
 	~Client();
 
 	inline bool in_progress() const

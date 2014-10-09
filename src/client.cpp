@@ -4,7 +4,7 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-Client::Client(const sf::Font& font, const sf::IpAddress& ip, unsigned short port, const std::string& name, bool _is_sp)
+Client::Client(const sf::View& view, const sf::Font& font, const sf::IpAddress& ip, unsigned short port, const std::string& name, bool _is_sp)
 	: playing(false), hand(font), messages(font), server_ip(ip), server_port {port}, is_sp {_is_sp}
 {
 	std::mt19937 rng {std::random_device {}()};
@@ -32,6 +32,8 @@ Client::Client(const sf::Font& font, const sf::IpAddress& ip, unsigned short por
 		messages.add("Connecting to " + server_ip.toString() + "...", Message::Severity::CRITICAL);
 
 	send_pending();
+
+	hand.set_view(view);
 }
 
 Client::~Client()
