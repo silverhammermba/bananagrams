@@ -24,7 +24,7 @@ using std::vector;
 class WindowEvents : public InputReader
 {
 	bool got_close = false;
-	bool got_resize = true; // TODO tries to set up initial positioning, but doesn't work
+	bool got_resize = false;
 public:
 	inline bool closed() const
 	{
@@ -82,56 +82,6 @@ int main()
 	state.window = &window;
 	state.grid_view = &grid_view;
 	state.zoom = 1;
-
-	// initialize menu system
-	MenuSystem menu_system;
-
-	Menu main_menu {font, menu_system, nullptr, "BANANAGRAMS"};
-	Entry solitaire   {font, "SOLITAIRE"};
-	Entry multiplayer {font, "MULTIPLAYER"};
-	Entry customize   {font, "CONTROLS"};
-	Entry quit        {font, "QUIT"};
-	main_menu.entry(&solitaire);
-	main_menu.entry(&multiplayer);
-	main_menu.entry(&customize);
-	main_menu.entry(&quit);
-
-	Menu sp_menu {font, menu_system, &main_menu, "SOLITAIRE"};
-	Entry      start_sp   {font, "START GAME"};
-	TextEntry  dict_entry {font, "DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
-	MultiEntry multiplier {font, "BUNCH x", {"1/2", "1", "2", "3", "4", "Infinite"}, 1};
-	sp_menu.entry(&start_sp);
-	sp_menu.entry(&dict_entry);
-	sp_menu.entry(&multiplier);
-
-	// TODO add entry for disconnecting from game?
-	Menu mp_menu {font, menu_system, &main_menu, "MULTIPLAYER"};
-	Entry     start_mp  {font, "JOIN"};
-	TextEntry server_ip {font, "SERVER", PPB * 8, sf::IpAddress::getLocalAddress().toString() + ":" + std::to_string(default_server_port), "localhost"};
-	TextEntry name      {font, "PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
-	mp_menu.entry(&server_ip);
-	mp_menu.entry(&name);
-	mp_menu.entry(&start_mp);
-
-	Menu control_menu {font, menu_system, &main_menu, "CONTROLS"};
-	// TODO scrolling menus?
-	// TODO can we decouple controls object from entries?
-	// XXX this is a bit inefficient, but who cares?
-	for (auto& command : controls.get_order())
-		for (auto& pair : controls.get_binds())
-			if (pair.second == command && controls.is_rebindable(pair.second))
-				control_menu.entry(new ControlEntry(font, control_menu, controls, pair.second, pair.first));
-
-	Menu quit_menu {font, menu_system, &main_menu, "Really quit?"};
-	Entry quit_yes {font, "YES"};
-	Entry quit_no  {font, "NO"};
-	quit_menu.entry(&quit_yes);
-	quit_menu.entry(&quit_no);
-
-	menu_system.set_menu(main_menu);
-
-	Client* client {nullptr};
-	Server* server {nullptr};
 
 	vector<InputReader*> input_readers;
 
@@ -326,9 +276,68 @@ int main()
 	if (!window.isOpen())
 		return 0;
 
+	// initialize menu system
+	MenuSystem menu_system;
+
+	Menu main_menu {font, menu_system, nullptr, "BANANAGRAMS"};
+	Entry solitaire   {font, "SOLITAIRE"};
+	Entry multiplayer {font, "MULTIPLAYER"};
+	Entry customize   {font, "CONTROLS"};
+	Entry quit        {font, "QUIT"};
+	main_menu.entry(&solitaire);
+	main_menu.entry(&multiplayer);
+	main_menu.entry(&customize);
+	main_menu.entry(&quit);
+
+	Menu sp_menu {font, menu_system, &main_menu, "SOLITAIRE"};
+	Entry      start_sp   {font, "START GAME"};
+	TextEntry  dict_entry {font, "DICTIONARY", PPB * 8, "dictionary.txt", "(default dictionary)"};
+	MultiEntry multiplier {font, "BUNCH x", {"1/2", "1", "2", "3", "4", "Infinite"}, 1};
+	sp_menu.entry(&start_sp);
+	sp_menu.entry(&dict_entry);
+	sp_menu.entry(&multiplier);
+
+	// TODO add entry for disconnecting from game?
+	Menu mp_menu {font, menu_system, &main_menu, "MULTIPLAYER"};
+	Entry     start_mp  {font, "JOIN"};
+	TextEntry server_ip {font, "SERVER", PPB * 8, sf::IpAddress::getLocalAddress().toString() + ":" + std::to_string(default_server_port), "localhost"};
+	TextEntry name      {font, "PLAYER NAME", PPB * 8, "Banana Brain", "Banana Brain"};
+	mp_menu.entry(&server_ip);
+	mp_menu.entry(&name);
+	mp_menu.entry(&start_mp);
+
+	Menu control_menu {font, menu_system, &main_menu, "CONTROLS"};
+	// TODO scrolling menus?
+	// TODO can we decouple controls object from entries?
+	// XXX this is a bit inefficient, but who cares?
+	for (auto& command : controls.get_order())
+		for (auto& pair : controls.get_binds())
+			if (pair.second == command && controls.is_rebindable(pair.second))
+				control_menu.entry(new ControlEntry(font, control_menu, controls, pair.second, pair.first));
+
+	Menu quit_menu {font, menu_system, &main_menu, "Really quit?"};
+	Entry quit_yes {font, "YES"};
+	Entry quit_no  {font, "NO"};
+	quit_menu.entry(&quit_yes);
+	quit_menu.entry(&quit_no);
+
+	menu_system.set_menu(main_menu);
+
+	Client* client {nullptr};
+	Server* server {nullptr};
+
 	input_readers.push_back(&menu_system);
 
+	// set up GUI view for menu
+	auto size = window.getSize();
+
+	gui_view.setSize(size.x, size.y);
+	gui_view.setCenter(size.x / 2.f, size.y / 2.f);
+
+	menu_system.set_view(gui_view);
+
 	// this will display too quickly to see if no game is loaded
+	// TODO but will it be positioned correctly if the window was resized?
 	loading_text.setString("Loading saved game...");
 	ltbounds = loading_text.getGlobalBounds();
 	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
