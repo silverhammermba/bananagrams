@@ -46,6 +46,7 @@ Client::~Client()
 
 	set_pending(cl_disconnect);
 	send_pending();
+	clear_pending();
 
 	socket.unbind();
 }
