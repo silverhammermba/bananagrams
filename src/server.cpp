@@ -7,7 +7,7 @@ using std::string;
 
 Server::Server(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players)
 	: shutdown_signal(false),
-	  status(Server::Status::RUNNING),
+	  status(Server::Status::LOADING),
 	  thread(&Server::start, this, port, _dict_filename, _num, _den, _max_players),
 	  dict_filename(_dict_filename),
 	  num(_num),
@@ -26,7 +26,7 @@ Server::Server(const std::string& _dict_filename, uint8_t _num, uint8_t _den)
 Server::Server(std::ifstream& save_file)
 {
 	shutdown_signal = false;
-	status = Server::Status::RUNNING;
+	status = Server::Status::LOADING;
 
 	// read dict and bunch size
 	std::getline(save_file, dict_filename, '\0');
@@ -97,6 +97,11 @@ void Server::start(unsigned short port, const std::string& _dict_filename, uint8
 	std::vector<string> remove;
 
 	Game game(_dict_filename, _num, _den, counts, _max_players);
+
+	{
+		std::lock_guard<std::mutex> lock(status_lock);
+		status = Status::RUNNING;
+	}
 
 	cout << "\nWaiting for players to join...";
 	cout.flush();
@@ -524,10 +529,16 @@ Server::Status Server::block()
 {
 	{
 		std::lock_guard<std::mutex> lock(status_lock);
-		if (status != Status::RUNNING)
+		if (status != Status::RUNNING && status != Status::LOADING)
 			return status;
 	}
 
 	thread.join();
+	return status;
+}
+
+Server::Status Server::get_status()
+{
+	std::lock_guard<std::mutex> lock(status_lock);
 	return status;
 }

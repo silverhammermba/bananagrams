@@ -120,6 +120,9 @@ int main(int argc, char* argv[])
 
 		switch(server->block())
 		{
+			case Server::Status::LOADING:
+				cerr << "\nError: server thread aborted while loading!\n";
+				return 1;
 			case Server::Status::RUNNING:
 				cerr << "\nError: server thread aborted while running!\n";
 				return 1;

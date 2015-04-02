@@ -355,25 +355,30 @@ int main()
 	Typer typer;
 	input_readers.push_back(&typer);
 
-	// this will display too quickly to see if no game is loaded
-	// TODO but will it be positioned correctly if the window was resized?
+	// TODO will this be positioned correctly if the window is resized?
 	loading_text.setString("Loading saved game...");
 	ltbounds = loading_text.getGlobalBounds();
 	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
-	window.clear(background);
-	window.draw(loading_text);
-	window.display();
 
 	// load saved game
 	std::ifstream save_file("save.dat");
 	if (save_file.is_open())
 	{
 		server = new Server(save_file);
-		// TODO wait while server loads
+
+		// wait for server to load
+		while (server->get_status() == Server::Status::LOADING)
+		{
+			window.clear(background);
+			window.draw(loading_text);
+			window.display();
+		}
+
 		client = new Client(gui_view, font);
 		client->load(save_file);
+
+		save_file.close();
 	}
-	save_file.close();
 
 	// game loop
 	while (window.isOpen())

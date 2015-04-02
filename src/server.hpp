@@ -15,7 +15,7 @@
 class Server
 {
 public:
-	enum class Status {RUNNING, ABORTED, DONE};
+	enum class Status {LOADING, RUNNING, ABORTED, DONE};
 
 private:
 	std::mutex shutdown_lock;
@@ -63,6 +63,8 @@ public:
 	{
 		return den;
 	}
+
+	Status get_status();
 };
 
 #endif
