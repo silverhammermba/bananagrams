@@ -6,7 +6,12 @@ using std::endl;
 using std::string;
 
 Server::Server(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players)
-	: shutdown_signal(false), status(Server::Status::RUNNING), thread(&Server::start, this, port, _dict_filename, _num, _den, _max_players)
+	: shutdown_signal(false),
+	  status(Server::Status::RUNNING),
+	  thread(&Server::start, this, port, _dict_filename, _num, _den, _max_players),
+	  dict_filename(_dict_filename),
+	  num(_num),
+	  den(_den)
 {
 }
 

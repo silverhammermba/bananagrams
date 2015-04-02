@@ -452,7 +452,6 @@ int main()
 					mul = choice;
 
 				delete server;
-				// TODO put saved games back in
 				delete client;
 
 				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
@@ -748,6 +747,15 @@ int main()
 	}
 
 	controls.write_to_file("config.yaml");
+
+	// save game
+	if (client && server)
+	{
+		if (client->in_progress())
+			client->save("save.dat", *server);
+		else
+			std::remove("save.dat");
+	}
 
 	// cleanup
 	delete client;

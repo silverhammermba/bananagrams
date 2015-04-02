@@ -17,6 +17,7 @@
 #include "cursor.hpp"
 #include "player.hpp"
 #include "message.hpp" // TODO remove?
+#include "server.hpp"
 
 class Client
 {
@@ -149,6 +150,8 @@ public:
 	bool resolve_peel();
 
 	void process_packet(sf::Packet& packet);
+
+	void save(const std::string& filename, const Server& server) const;
 };
 
 #endif

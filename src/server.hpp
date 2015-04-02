@@ -29,6 +29,10 @@ private:
 	// function to be run in thread
 	void start(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players);
 
+	// for saving the game
+	std::string dict_filename;
+	uint8_t num;
+	uint8_t den;
 public:
 	// just passes along params to thread
 	Server(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players);
@@ -39,6 +43,21 @@ public:
 	void shutdown();
 	// block until thread returns
 	Status block();
+
+	inline const std::string& get_dict_filename() const
+	{
+		return dict_filename;
+	}
+
+	uint8_t get_num() const
+	{
+		return num;
+	}
+
+	uint8_t get_den() const
+	{
+		return den;
+	}
 };
 
 #endif
