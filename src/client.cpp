@@ -26,6 +26,7 @@ Client::Client(const sf::View& view, const sf::Font& font, const sf::IpAddress& 
 	timeout = 30.f; // long timeout for connection
 	polling = 3.f; // and slow polling
 
+	// TODO remove loading text when loading saved game
 	if (is_sp)
 		messages.add("Loading...", Message::Severity::CRITICAL);
 	else
@@ -100,6 +101,12 @@ void Client::load(std::ifstream& save_file)
 	// reset file
 	save_file.clear();
 	save_file.seekg(0);
+
+	// TODO this isn't necessarily true, we need more networking logic to
+	// ensure that we have a server connection without a split
+	// something like sv_connected
+	playing = true;
+	started = true;
 }
 
 void Client::clear_buffer()
@@ -741,11 +748,14 @@ void Client::process_packet(sf::Packet& packet)
 				// first peel is special
 				if (got_peel == 0)
 				{
-					playing = true;
-					messages.clear();
-					messages.add("SPLIT!", Message::Severity::HIGH);
+					if (!playing)
+					{
+						playing = true;
+						messages.clear();
+						messages.add("SPLIT!", Message::Severity::HIGH);
 
-					started = true;
+						started = true;
+					}
 
 					// reset ack count
 					ack_n = 0;

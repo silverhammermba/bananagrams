@@ -210,7 +210,7 @@ void Server::start(unsigned short port, const std::string& _dict_filename, uint8
 			else
 			{
 				win << sf::Uint8(0);
-				cout << "\nGame cannot continue. Too many players left.";
+				cout << "\nGame cannot continue. Too many players quit.";
 			}
 			cout.flush();
 

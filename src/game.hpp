@@ -15,6 +15,7 @@ class Game
 	std::map<std::string, std::string> dictionary;
 	uint8_t bunch_num;
 	uint8_t bunch_den;
+	unsigned int* counts;
 	unsigned int player_limit;
 	Bunch* bunch;
 	std::map<std::string, Player> players;
@@ -29,7 +30,7 @@ class Game
 public:
 	std::string winner;
 
-	Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_den, unsigned int* counts, unsigned int _player_limit);
+	Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_den, unsigned int* _counts, unsigned int _player_limit);
 	~Game();
 
 	inline bool check_word(const std::string& word) const

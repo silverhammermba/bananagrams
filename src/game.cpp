@@ -2,8 +2,8 @@
 
 using std::string;
 
-Game::Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_den, unsigned int* counts, unsigned int _player_limit)
-	: bunch_num(_bunch_num), bunch_den(_bunch_den), player_limit(_player_limit)
+Game::Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_den, unsigned int* _counts, unsigned int _player_limit)
+	: bunch_num(_bunch_num), bunch_den(_bunch_den), counts(_counts), player_limit(_player_limit)
 {
 	std::ifstream words(dict_filename);
 	if (!words.is_open())
@@ -117,8 +117,8 @@ bool Game::peel()
 	unsigned int num_letters = 1;
 	ready_to_peel = false;
 
-	// if this is the first peel
-	if (peel_number++ == 0)
+	// if this is the first peel (and the game hasn't been loaded)
+	if (peel_number++ == 0 && !playing)
 	{
 		playing = true;
 
@@ -162,7 +162,20 @@ void Game::try_to_start()
 		if (!pair.second.ready)
 			return;
 
-	ready_to_peel = true;
+	// if we have no letter counts, this is a regular new game
+	if (counts == nullptr)
+	{
+		ready_to_peel = true;
+	}
+	else // this is a loaded single player game
+	{
+		// so we're already playing (prevents split)
+		playing = true;
+
+		// reset ack counters to track peels
+		for (auto& pair : players)
+			pair.second.reset_ack();
+	}
 }
 
 void Game::check_waiting()
