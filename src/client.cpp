@@ -36,6 +36,12 @@ Client::Client(const sf::View& view, const sf::Font& font, const sf::IpAddress& 
 	hand.set_view(view);
 }
 
+// construct single player game
+Client::Client(const sf::View& view, const sf::Font& font)
+	: Client(view, font, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true)
+{
+}
+
 Client::~Client()
 {
 	grid.clear();
@@ -53,10 +59,52 @@ Client::~Client()
 	socket.unbind();
 }
 
+void Client::load(std::ifstream& save_file)
+{
+	// XXX stuff for server, intentionally unused here
+	std::string dict_filename;
+	uint8_t num;
+	uint8_t den;
+	std::getline(save_file, dict_filename, '\0');
+	save_file.read(reinterpret_cast<char*>(&num), sizeof num);
+	save_file.read(reinterpret_cast<char*>(&den), sizeof den);
+
+	char ch;
+	save_file.get(ch);
+
+	// read hand
+	while (ch != '\0')
+	{
+		uint8_t count;
+		save_file.read(reinterpret_cast<char*>(&count), sizeof count);
+
+		for (unsigned int i = 0; i < count; ++i)
+			hand.add_tile(new Tile(ch));
+
+		save_file.get(ch);
+	}
+
+	// read grid
+	save_file.get(ch);
+	while (!save_file.eof())
+	{
+		sf::Vector2i pos;
+		save_file.read(reinterpret_cast<char*>(&pos.x), sizeof pos.x);
+		save_file.read(reinterpret_cast<char*>(&pos.y), sizeof pos.y);
+
+		grid.swap(pos, new Tile(ch));
+
+		save_file.get(ch);
+	}
+
+	// reset file
+	save_file.clear();
+	save_file.seekg(0);
+}
+
 void Client::clear_buffer()
 {
-	if (buffer != nullptr)
-		delete buffer;
+	delete buffer;
 	buffer = nullptr;
 }
 

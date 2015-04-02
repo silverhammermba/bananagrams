@@ -29,7 +29,7 @@ class Game
 public:
 	std::string winner;
 
-	Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_den, unsigned int _player_limit);
+	Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_den, unsigned int* counts, unsigned int _player_limit);
 	~Game();
 
 	inline bool check_word(const std::string& word) const

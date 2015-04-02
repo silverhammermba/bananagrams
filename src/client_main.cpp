@@ -339,15 +339,6 @@ int main()
 
 	menu_system.set_view(gui_view);
 
-	// this will display too quickly to see if no game is loaded
-	// TODO but will it be positioned correctly if the window was resized?
-	loading_text.setString("Loading saved game...");
-	ltbounds = loading_text.getGlobalBounds();
-	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
-	window.clear(background);
-	window.draw(loading_text);
-	window.display();
-
 	// stuff for game loop
 	MouseControls mouse;
 	input_readers.push_back(&mouse);
@@ -363,6 +354,26 @@ int main()
 
 	Typer typer;
 	input_readers.push_back(&typer);
+
+	// this will display too quickly to see if no game is loaded
+	// TODO but will it be positioned correctly if the window was resized?
+	loading_text.setString("Loading saved game...");
+	ltbounds = loading_text.getGlobalBounds();
+	loading_text.setPosition(center.x - ltbounds.width / 2, center.y - ltbounds.height * 2.5);
+	window.clear(background);
+	window.draw(loading_text);
+	window.display();
+
+	// load saved game
+	std::ifstream save_file("save.dat");
+	if (save_file.is_open())
+	{
+		server = new Server(save_file);
+		// TODO wait while server loads
+		client = new Client(gui_view, font);
+		client->load(save_file);
+	}
+	save_file.close();
 
 	// game loop
 	while (window.isOpen())
@@ -454,8 +465,8 @@ int main()
 				delete server;
 				delete client;
 
-				server = new Server(default_server_port, dict_entry.get_string(), mul, div, 1);
-				client = new Client(gui_view, font, sf::IpAddress("127.0.0.1"), default_server_port, "singleplayer", true);
+				server = new Server(dict_entry.get_string(), mul, div);
+				client = new Client(gui_view, font);
 
 				menu_system.close();
 				// should always be the case, but just to be safe...

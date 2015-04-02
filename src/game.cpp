@@ -2,7 +2,7 @@
 
 using std::string;
 
-Game::Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_den, unsigned int _player_limit)
+Game::Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_den, unsigned int* counts, unsigned int _player_limit)
 	: bunch_num(_bunch_num), bunch_den(_bunch_den), player_limit(_player_limit)
 {
 	std::ifstream words(dict_filename);
@@ -26,7 +26,7 @@ Game::Game(const std::string& dict_filename, uint8_t _bunch_num, uint8_t _bunch_
 	words.close();
 
 	if (bunch_den > 0)
-		bunch = new FiniteBunch(bunch_num, bunch_den);
+		bunch = new FiniteBunch(bunch_num, bunch_den, counts);
 	else
 		bunch = new InfiniteBunch();
 }

@@ -33,9 +33,14 @@ private:
 	std::string dict_filename;
 	uint8_t num;
 	uint8_t den;
+	unsigned int* counts = nullptr;
 public:
 	// just passes along params to thread
 	Server(unsigned short port, const std::string& _dict_filename, uint8_t _num, uint8_t _den, unsigned int _max_players);
+	// for single player
+	Server(const std::string& _dict_filename, uint8_t _num, uint8_t _den);
+	// load game
+	Server(std::ifstream& save_file);
 	// makes sure thread exits
 	~Server();
 

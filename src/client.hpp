@@ -70,7 +70,10 @@ class Client
 	bool is_sp;
 public:
 	Client(const sf::View& view, const sf::Font& font, const sf::IpAddress& server, unsigned short port, const std::string& name, bool _is_sp);
+	Client(const sf::View& view, const sf::Font& font);
 	~Client();
+
+	void load(std::ifstream& save_file);
 
 	inline bool in_progress() const
 	{

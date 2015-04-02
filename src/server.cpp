@@ -15,6 +15,63 @@ Server::Server(unsigned short port, const std::string& _dict_filename, uint8_t _
 {
 }
 
+// single player server
+Server::Server(const std::string& _dict_filename, uint8_t _num, uint8_t _den)
+	: Server(default_server_port, _dict_filename, _num, _den, 1)
+{
+}
+
+// load game
+// TODO it would be nice if we could reuse the singleplayer constructor
+Server::Server(std::ifstream& save_file)
+{
+	shutdown_signal = false;
+	status = Server::Status::RUNNING;
+
+	// read dict and bunch size
+	std::getline(save_file, dict_filename, '\0');
+
+	save_file.read(reinterpret_cast<char*>(&num), sizeof num);
+	save_file.read(reinterpret_cast<char*>(&den), sizeof den);
+
+	// keep track of letters in hand/grid
+	counts = new unsigned int[26]();
+
+	char ch;
+	save_file.get(ch);
+
+	// read hand
+	while (ch != '\0')
+	{
+		uint8_t count;
+		save_file.read(reinterpret_cast<char*>(&count), sizeof count);
+
+		counts[ch - 'A'] += count;
+
+		save_file.get(ch);
+	}
+
+	// read grid
+	save_file.get(ch);
+	while (!save_file.eof())
+	{
+		// XXX for client, intentionally unused
+		sf::Vector2i pos;
+		save_file.read(reinterpret_cast<char*>(&pos.x), sizeof pos.x);
+		save_file.read(reinterpret_cast<char*>(&pos.y), sizeof pos.y);
+
+		++counts[ch - 'A'];
+
+		save_file.get(ch);
+	}
+
+	// reset file
+	save_file.clear();
+	save_file.seekg(0);
+
+	thread = std::thread(&Server::start, this, default_server_port, dict_filename, num, den, 1);
+}
+
 Server::~Server()
 {
 	shutdown();
@@ -39,7 +96,7 @@ void Server::start(unsigned short port, const std::string& _dict_filename, uint8
 
 	std::vector<string> remove;
 
-	Game game(_dict_filename, _num, _den, _max_players);
+	Game game(_dict_filename, _num, _den, counts, _max_players);
 
 	cout << "\nWaiting for players to join...";
 	cout.flush();
