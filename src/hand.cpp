@@ -1,6 +1,6 @@
 #include "hand.hpp"
 
-Hand::Hand(const sf::Font& font) : rng(std::random_device()())
+Hand::Hand(const sf::Font& font)
 {
 	// prepare counts numbers
 	for (char ch = 'A'; ch <= 'Z'; ch++)
@@ -127,7 +127,7 @@ void Hand::reshuffle()
 {
 	// copy to vector for shuffle
 	std::vector<Tile*> v {scram.begin(), scram.end()};
-	std::shuffle(v.begin(), v.end(), rng);
+	std::random_shuffle(v.begin(), v.end());
 	// copy back to list
 	scram.clear();
 	std::copy(v.begin(), v.end(), std::back_inserter(scram));

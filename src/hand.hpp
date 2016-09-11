@@ -1,6 +1,7 @@
 #ifndef HAND_HPP
 #define HAND_HPP
 
+#include <algorithm>
 #include <list>
 #include <sstream>
 
@@ -33,8 +34,6 @@ class Hand
 
 	void reshuffle();
 
-	// for shuffling, ugh
-	std::mt19937 rng;
 public:
 	Hand(const sf::Font& font);
 	~Hand();
